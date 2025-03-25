@@ -2,6 +2,16 @@ from apps.home import blueprint
 from flask import render_template, request
 from jinja2 import TemplateNotFound
 
+from flask import render_template, request, jsonify, current_app
+from datetime import datetime
+import mysql.connector
+import traceback
+from apps import get_db_connection
+
+
+
+
+
 
 # Route for the 'index' page of the home blueprint
 @blueprint.route('/index')
@@ -9,8 +19,14 @@ def index():
     """
     Renders the 'index' page of the home section.
     The segment variable is passed to the template to identify the current page.
+
     """
-    return render_template('home/index.html', segment='index')
+    connection = get_db_connection()
+    cursor = connection.cursor(dictionary=True)
+    cursor.execute('SELECT * FROM product_list WHERE reorder_level > quantity ORDER BY name')
+    products = cursor.fetchall()
+
+    return render_template('home/index.html',products=products, segment='index')
 
 
 # Dynamic route to handle other templates in the 'home' folder
