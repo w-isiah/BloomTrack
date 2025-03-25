@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<!-- Category Edit Form -->
+<div class="card mb-4">
+  <div class="card-header">
+    <h3 class="card-title">Edit Category</h3>
+
+    <div class="card-tools">
+      <div class="btn-group mb-2" role="group" aria-label="Basic outlined example">
+        <a href="/manage_category">
+          <button type="button" class="btn btn-sm btn-outline-primary">View Categories</button>
+        </a>
+        <a href="/add_category">
+          <button type="button" class="btn btn-sm btn-outline-primary">Add Category</button>
+        </a>
+      </div>
+    </div>
+  </div> <!-- /.card-header -->
+
+  <div class="card-body">
+    <div class="widget-content nopadding">
+
+      <!-- Edit Category Form -->
+      <form action="{{ url_for('edit_category',category_id=category.CategoryID) }}" method="POST">
+        
+        <!-- Hidden Category ID Input -->
+        <input type="hidden" name="id" value="{{ category.CategoryID }}">
+
+        <!-- Category Name Input -->
+        <div class="row mb-3">
+          <label for="name" class="col-sm-2 col-form-label">Name: </label>
+          <div class="col-sm-10">
+            <input type="text" name="name" class="form-control" value="{{ category.name }}" id="name" placeholder="Enter Category Name" required>
+          </div>
+        </div>
+
+        <!-- Submit Button -->
+        <div class="form-actions">
+          <button type="submit" style="--bs-btn-padding-y: .25rem; --bs-btn-padding-x: .5rem; --bs-btn-font-size: .75rem;" class="btn btn-sm btn-success">Save Changes</button>
+        </div>
+
+      </form> 
+    </div>
+  </div>
+</div> <!-- /.card-body -->
+
+{% endblock %}

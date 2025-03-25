@@ -1,0 +1,34 @@
+/* Notification Styles */
+.notification {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+    padding: 15px;
+    border-radius: 5px;
+    z-index: 9999;
+    width: 300px;
+    text-align: center;
+    display: none;
+}
+
+.notification-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.close-btn {
+    background: none;
+    border: none;
+    color: #721c24;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+.close-btn:hover {
+    text-decoration: underline;
+}

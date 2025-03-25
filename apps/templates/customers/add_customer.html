@@ -1,0 +1,110 @@
+{% extends 'layouts/base.html' %}
+
+{% block title %}Add Customer{% endblock %}
+
+<!-- Element injected into the BODY element -->
+{% block body_class %}sidebar-mini layout-footer-fixed{% endblock body_class %}
+
+<!-- Specific Page CSS -->
+{% block stylesheets %}
+<!-- Google Font: Source Sans Pro -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
+<!-- Font Awesome -->
+<link rel="stylesheet" href="/static/assets/plugins/fontawesome-free/css/all.min.css">
+<!-- Theme style -->
+<link rel="stylesheet" href="/static/assets/css/adminlte.min.css">
+{% endblock stylesheets %}
+
+{% block content %}
+<div class="content-wrapper">
+  <!-- Content Header (Page header) -->
+  <section class="content-header">
+    <div class="container-fluid">
+      <div class="row mb-2">
+        <div class="col-sm-6">
+          <h1>Add Customer</h1>
+        </div>
+        <div class="col-sm-6">
+          <ol class="breadcrumb float-sm-right">
+            <li class="breadcrumb-item"><a href="/index">Home</a></li>
+            <li class="breadcrumb-item"><a href="/customers">Customer</a></li>
+            <li class="breadcrumb-item active">Add Customer</li>
+          </ol>
+        </div>
+      </div>
+    </div><!-- /.container-fluid -->
+  </section>
+
+  <!-- Main content -->
+  <section class="content">
+    <div class="container-fluid">
+      <div class="row">
+        <div class="col-12">
+          <!-- Add Customer Form -->
+          <div class="card mb-4">
+            <div class="card-header">
+              <h3 class="card-title">Add Customer</h3>
+              <div class="card-tools">
+                <a href="/customers" class="btn btn-sm btn-outline-success">
+                  <i class="icon-plus"></i> Customers
+                </a>
+              </div>
+            </div><!-- /.card-header -->
+
+            <div class="card-body">
+              <div class="widget-content nopadding">
+                <form action="{{ url_for('customers_blueprint.add_customer') }}" method="POST" class="form-horizontal">
+
+                  <!-- Customer Name -->
+                  <div class="row mb-3">
+                    <label for="customer_name" class="col-sm-2 col-form-label">Customer Name:</label>
+                    <div class="col-sm-10">
+                      <input type="text" id="customer_name" name="customer_name" required class="form-control" placeholder="Enter customer name" />
+                    </div>
+                  </div>
+
+                  <!-- Contact Number -->
+                  <div class="row mb-3">
+                    <label for="contact" class="col-sm-2 col-form-label">Contact:</label>
+                    <div class="col-sm-10">
+                      <input type="tel" id="contact" name="contact" required class="form-control" placeholder="Enter contact number" pattern="\d{10}" title="Please enter a valid 10-digit phone number" />
+                      <small class="form-text text-muted">Only numeric values are allowed, and the phone number should be 10 digits long.</small>
+                    </div>
+                  </div>
+
+                  <!-- Address -->
+                  <div class="row mb-3">
+                    <label for="address" class="col-sm-2 col-form-label">Address:</label>
+                    <div class="col-sm-10">
+                      <input type="text" id="address" name="address" required class="form-control" placeholder="Enter customer address" />
+                    </div>
+                  </div>
+
+                  <!-- Submit Button -->
+                  <div class="form-actions">
+                    <button type="submit" class="btn btn-sm btn-success">Save</button>
+                  </div>
+
+                </form>
+              </div>
+            </div><!-- /.card-body -->
+          </div><!-- /.card -->
+        </div>
+      </div>
+    </div>
+  </section>
+  <!-- /.content -->
+</div>
+{% endblock content %}
+
+<!-- Specific Page JS -->
+{% block javascripts %}
+<!-- jQuery -->
+<script src="/static/assets/plugins/jquery/jquery.min.js"></script>
+<!-- Bootstrap 4 -->
+<script src="/static/assets/plugins/bootstrap/js/bootstrap.bundle.min.js"></script>
+<!-- AdminLTE App -->
+<script src="/static/assets/js/adminlte.min.js"></script>
+<!-- AdminLTE for demo purposes -->
+<script src="/static/assets/js/demo.js"></script>
+{% endblock javascripts %}

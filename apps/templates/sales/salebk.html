@@ -1,0 +1,165 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div class="span12">
+  <div class="widget-box">
+    <div class="widget-title"> 
+      <span class="icon"> <i class="icon-align-justify"></i> </span>
+      <h5>Personal-info</h5>
+      <div class="buttons">
+        <a href="/sales_view" class="btn btn-mini btn-success">
+          <i class="icon-plus"></i> View Sales
+        </a>
+
+        <a href="/discount_percentage" class="btn btn-mini btn-primary">
+          </i> Calculate Percentage ( % ) Dicount
+        </a>
+      </div>
+    </div>
+
+    <div class="widget-content nopadding">
+      <form class="form-horizontal">
+        <div class="control-group">
+          <label for="customer-id" class="control-label">Customer</label>
+          <div class="controls">
+            <select id="customer-id" name="customer-id">
+              <option value="" disabled selected>Select Customer</option>
+              {% for i in customers %}
+              <option value="{{ i.CustomerID }}">{{ i.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+
+        <div class="control-group">
+          <label for="product-id" class="control-label">Product</label>
+          <div class="controls">
+            <select id="product-id" name="product-id">
+              <option value="" disabled selected>Select Product</option>
+              {% for i in products %}
+              <option data-available="{{ i.quantity }}" data-price="{{ i.price }}" value="{{ i.ProductID }}">{{ i.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+
+        <div class="control-group">
+          <label for="product-qty" class="control-label">Quantity</label>
+          <div class="controls">
+            <input id="product-qty" type="number" min="1" name="quantity" placeholder="Enter quantity">
+          </div>
+        </div>
+
+        <div class="controls">
+          <button type="button" id="add_item" class="btn btn-primary">Add to List</button>
+        </div>
+
+        <table class="table table-bordered" id="cart-table">
+          <thead>
+            <tr>
+              <th>Product</th>
+              <th>Quantity AV</th>
+              <th>Quantity</th>
+              <th>Discount</th>
+              <th>Price</th>
+              <th>Amount</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+          <tfoot>
+            <tr>
+              <th colspan="3" class="text-right">Total</th>
+              <th id="total-amount" class="text-right">0.00</th>
+              <th></th>
+              <th></th>
+              <th></th>
+              
+            </tr>
+
+            <tr>
+              <th colspan="3" class="text-right">Amount Tendered</th>
+              <th>
+                <input type="number" name="amount-tendered" id="amount-tendered" min="0" step="0.01" value="0.00" placeholder="Enter amount" class="text-right">
+              </th>
+              <th></th>
+              <th></th>
+              <th></th>
+            </tr>
+            <tr>
+              <th colspan="3" class="text-right">Change</th>
+              <th id="change-amount" class="text-right">0.00</th>
+              <th></th>
+              <th></th>
+              <th></th>
+            </tr>
+          
+            
+          </tfoot>
+        </table>
+
+        <div class="form-actions">
+          <button type="submit" class="btn btn-success" id="pay_button">Pay</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<noscript id="item-clone">
+  <tr>
+    <td class="product_name"></td>
+    <td class="data_available"></td>
+    <td><input type="number" name="qty[]" class="text-right qty-input" min="1" required></td>
+    <td><input type="number" class="item-discount" value="10" min="0" max="100">%</td>
+    <td class="price text-right" name="price"></td>
+    <td class="amount text-right"></td>
+    <td><button type="button" class="btn btn-danger btn-sm remove-item">Remove</button></td>
+  </tr>
+</noscript>
+
+<!-- Receipt Modal -->
+<div class="modal fade" id="receiptModal" tabindex="-1" role="dialog" aria-labelledby="receiptModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="receiptModalLabel">Receipt</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p><strong>Customer:</strong> <span id="modal-receipt-customer"></span></p>
+        <table class="table table-bordered">
+          <thead>
+            <tr>
+              <th>Product</th>
+              <th>Qty</th>
+              <th>Price</th>
+              <th>Total</th>
+            </tr>
+          </thead>
+          <tbody id="modal-receipt-items"></tbody>
+        </table>
+        <p><strong>Total Amount:</strong> <span id="modal-receipt-total-amount"></span>/=</p>
+        <p><strong>Amount Tendered:</strong> <span id="modal-receipt-tendered"></span>/=</p>
+        <p><strong>Change:</strong> <span id="modal-receipt-change"></span>/=</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-primary" id="print-receipt-button">Print Receipt</button>
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+
+<script>
+
+</script>
+
+{% endblock %}

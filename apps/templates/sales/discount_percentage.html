@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div class="container-fluid">
+    <div class="row">
+        <!-- Left Column: Discount Input Form -->
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title">Discount Calculator</h5>
+                    <a href="/sale" class="btn btn-sm btn-primary">
+                        <i class="icon-plus"></i> Sale
+                    </a>
+                </div>
+
+                <div class="card-body">
+                    <form method="POST" class="form-horizontal">
+                        <!-- Original Price -->
+                        <div class="form-group">
+                            <label for="original_price" class="control-label">Original Price</label>
+                            <input type="number" id="original_price" name="original_price" class="form-control" required placeholder="Enter original price" title="Please enter the original price">
+                            <small class="form-text text-muted">Only numeric values are allowed.</small>
+                        </div>
+
+                        <!-- Discounted Price -->
+                        <div class="form-group">
+                            <label for="discounted_price" class="control-label">Discounted Price</label>
+                            <input type="number" id="discounted_price" name="discounted_price" class="form-control" required placeholder="Enter discounted price" title="Please enter the discounted price">
+                            <small class="form-text text-muted">Only numeric values are allowed.</small>
+                        </div>
+
+                        <!-- Submit Button -->
+                        <div class="form-group text-right">
+                            <button type="submit" class="btn btn-primary">Calculate</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column: Results -->
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title">Discount Results</h5>
+                </div>
+
+                <div class="card-body">
+                    {% if discount_amount is not none %}
+                    <div class="result">
+                        <h3>Results:</h3>
+                        <div class="list-group">
+                            <div class="list-group-item d-flex justify-content-between">
+                                <span>Original Price</span>
+                                <span>{{ original_price }}/=</span>
+                            </div>
+                            <div class="list-group-item d-flex justify-content-between">
+                                <span>Discounted Price</span>
+                                <span>{{ discounted_price }}/=</span>
+                            </div>
+                            <div class="list-group-item d-flex justify-content-between">
+                                <span>Discount Amount</span>
+                                <span>{{ discount_amount }}/=</span>
+                            </div>
+                            <div class="list-group-item d-flex justify-content-between">
+                                <span>Discount Percentage</span>
+                                <span class="">{{ discount_percentage }}%</span>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if error %}
+                    <div class="alert alert-danger mt-3">
+                        <p class="error">{{ error }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
