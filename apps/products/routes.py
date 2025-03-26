@@ -1,15 +1,11 @@
-from apps.products import blueprint
-from flask import render_template, request, redirect, url_for, flash, session
-from flask import Flask
-import mysql.connector
-from werkzeug.utils import secure_filename
-from mysql.connector import Error
-from datetime import datetime
 import os
 import random
 import logging
+from flask import render_template, request, redirect, url_for, flash, current_app
+from werkzeug.utils import secure_filename
+from mysql.connector import Error
 from apps import get_db_connection
-
+from apps.products import blueprint
 
 # Helper function to calculate formatted totals
 def calculate_formatted_totals(products):
@@ -26,6 +22,12 @@ def calculate_formatted_totals(products):
     return formatted_total_sum, formatted_total_price
 
 
+# Access the upload folder from the current Flask app configuration
+def allowed_file(filename):
+    """Check if the uploaded file has a valid extension."""
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in current_app.config['ALLOWED_EXTENSIONS']
+
+
 # Route for the 'products' page
 @blueprint.route('/products')
 def products():
@@ -34,7 +36,7 @@ def products():
     cursor = connection.cursor(dictionary=True)
 
     try:
-        cursor.execute('''
+        cursor.execute(''' 
             SELECT *, (quantity * price) AS total_price
             FROM product_list
             ORDER BY name
@@ -54,24 +56,10 @@ def products():
         connection.close()
 
     return render_template('products/products.html',
-                           
                            formatted_total_price=formatted_total_price,
                            products=products,
                            formatted_total_sum=formatted_total_sum,
                            segment='products')
-
-
-# Define upload folder and allowed extensions
-UPLOAD_FOLDER = 'static/uploads'
-ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
-
-# Ensure the upload folder exists
-if not os.path.exists(UPLOAD_FOLDER):
-    os.makedirs(UPLOAD_FOLDER)
-
-def allowed_file(filename):
-    """Check if the uploaded file has a valid extension."""
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
 # Route to add a new product
@@ -118,7 +106,13 @@ def add_product():
             if image_file and allowed_file(image_file.filename):
                 filename = secure_filename(image_file.filename)
                 image_filename = f"{random_num}_{filename}"  # Rename with SKU to avoid conflicts
-                image_path = os.path.join(UPLOAD_FOLDER, image_filename)
+                
+                # Ensure the directory exists before saving the file
+                image_folder = os.path.join(current_app.config['UPLOAD_FOLDER'])
+                if not os.path.exists(image_folder):
+                    os.makedirs(image_folder)  # Create the folder if it doesn't exist
+
+                image_path = os.path.join(image_folder, image_filename)
                 image_file.save(image_path)  # Save image
 
             # Insert new product into the database
@@ -133,7 +127,7 @@ def add_product():
     cursor.close()
     connection.close()
 
-    return render_template('products/add_product.html', random_num=random_num,  categories=categories,segment='add_product')
+    return render_template('products/add_product.html', random_num=random_num, categories=categories, segment='add_product')
 
 
 # Route to edit an existing product
@@ -172,7 +166,13 @@ def edit_product(product_id):
         if image_file and allowed_file(image_file.filename):
             filename = secure_filename(image_file.filename)
             image_filename = f"{product_id}_{filename}"  # Rename with product ID to avoid conflicts
-            image_path = os.path.join(UPLOAD_FOLDER, image_filename)
+            
+            # Ensure the directory exists before saving the file
+            image_folder = os.path.join(current_app.config['UPLOAD_FOLDER'])
+            if not os.path.exists(image_folder):
+                os.makedirs(image_folder)  # Create the folder if it doesn't exist
+
+            image_path = os.path.join(image_folder, image_filename)
             image_file.save(image_path)  # Save new image
 
         # Update the product data in the database
@@ -192,9 +192,7 @@ def edit_product(product_id):
     cursor.close()
     connection.close()
 
-    return render_template('products/edit_product.html',  product=product, categories=categories)
-
-
+    return render_template('products/edit_product.html', product=product, categories=categories)
 
 
 # Route to restock product
@@ -221,9 +219,9 @@ def restock_product():
             connection.commit()
 
             # Log the inventory change (restock)
-            cursor.execute("""
+            cursor.execute(""" 
                 INSERT INTO inventory_logs (product_id, quantity_change, reason, log_date)
-                VALUES (%s, %s, %s, NOW())
+                VALUES (%s, %s, %s, NOW()) 
             """, (product['ProductID'], restock_quantity, 'restock'))
             connection.commit()
 
@@ -236,8 +234,7 @@ def restock_product():
     cursor.close()
     connection.close()
 
-    return render_template('products/restock_product.html',segment='restock_product')
-
+    return render_template('products/restock_product.html', segment='restock_product')
 
 
 # Dynamic route for rendering other templates
