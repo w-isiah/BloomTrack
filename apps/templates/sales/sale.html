@@ -84,7 +84,7 @@
                                             <select id="product-id" name="product-id" class="form-control select2">
                                                 <option value="" disabled selected>Select Product</option>
                                                 {% for product in products %}
-                                                    <option data-available="{{ product.quantity }}" data-price="{{ product.price }}" value="{{ product.ProductID }}">{{ product.name }}</option>
+                                                    <option data-available="{{ product.quantity }}" data-price="{{ product.price }}" value="{{ product.ProductID }}">{{ product.name }}|{{product.category_name}}</option>
                                                 {% endfor %}
                                             </select>
                                         </div>

@@ -12,11 +12,17 @@ def sales():
         connection = get_db_connection()
         cursor = connection.cursor(dictionary=True)
 
-        # Fetch customer and product data
+        # Fetch customer data
         cursor.execute('SELECT * FROM customer_list ORDER BY name')
         customers = cursor.fetchall()
 
-        cursor.execute('SELECT * FROM product_list ORDER BY name')
+        # Fetch product data with category information using a JOIN
+        cursor.execute('''
+            SELECT p.*, c.name AS category_name, c.description AS category_description
+            FROM product_list p
+            INNER JOIN category_list c ON p.category_id = c.CategoryID
+            ORDER BY c.name
+        ''')
         products = cursor.fetchall()
 
     except mysql.connector.Error as e:
@@ -29,6 +35,9 @@ def sales():
             connection.close()
 
     return render_template('sales/sale.html', customers=customers, products=products, segment='sales')
+
+
+
 
 
 @blueprint.route('/save_sale', methods=['POST'])
