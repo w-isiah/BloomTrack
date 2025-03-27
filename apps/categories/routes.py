@@ -7,6 +7,7 @@ from datetime import datetime
 import os
 import random
 import logging
+import re  # <-- Add this line
 from apps import get_db_connection
 
 
@@ -24,7 +25,7 @@ def categories():
     cursor.close()
     connection.close()
 
-    return render_template('categories/categories.html', categories=categories)
+    return render_template('categories/categories.html', categories=categories,segment='categories')
 
 
 @blueprint.route('/add_category', methods=['GET', 'POST'])
@@ -61,7 +62,7 @@ def add_category():
                 cursor.close()
                 connection.close()
 
-    return render_template('categories/add_category.html')
+    return render_template('categories/add_category.html',segment='add_category')
 
 
 @blueprint.route('/edit_category/<int:category_id>', methods=['GET', 'POST'])
@@ -101,7 +102,7 @@ def edit_category(category_id):
         connection.close()
 
         if category:
-            return render_template('categories/edit_category.html', category=category)
+            return render_template('categories/edit_category.html', category=category,segment='categories')
         else:
             flash("Category not found.", "danger")
             return redirect(url_for('categories_blueprint.manage_category'))
@@ -136,7 +137,7 @@ def route_template(template):
 
         segment = get_segment(request)
 
-        return render_template(f"home/{template}", segment=segment)
+        return render_template("home/" + template, segment=segment)
 
     except TemplateNotFound:
         return render_template('home/page-404.html'), 404
@@ -146,9 +147,12 @@ def route_template(template):
 
 
 def get_segment(request):
-    """Extracts the last part of the URL to determine the current page."""
+    """Extracts the last part of the URL path to identify the current page."""
     try:
         segment = request.path.split('/')[-1]
-        return segment if segment else 'categories'
-    except Exception:
+        if segment == '':
+            segment = 'categories'
+        return segment
+
+    except Exception as e:
         return None

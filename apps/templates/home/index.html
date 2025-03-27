@@ -42,7 +42,7 @@
         <div class="col-lg-3 col-6">
           <div class="small-box bg-info">
             <div class="inner">
-              <h3>#</h3>
+              <h5>#</h5>
               <p>Sell</p>
             </div>
             <div class="icon"><i class="ion ion-bag"></i></div>
@@ -53,7 +53,7 @@
         <div class="col-lg-3 col-6">
           <div class="small-box bg-success">
             <div class="inner">
-              <h3>#</h3>
+              <h5>#</h5>
               <p>View Sales</p>
             </div>
             <div class="icon"><i class="ion ion-stats-bars"></i></div>
@@ -64,7 +64,7 @@
         <div class="col-lg-3 col-6">
           <div class="small-box bg-warning">
             <div class="inner">
-              <h5>  {{ total_sales_today }}</h5>
+              <h5>{{ total_sales_today }}</h5>
               <p>Total Sales Today</p>
             </div>
             <div class="icon"><i class="ion ion-person-add"></i></div>
@@ -108,7 +108,13 @@
                 <tr {% if product.quantity < 5 %}class="bg-danger text-dark"{% endif %}>
                   <td>{{ product.name }}</td>
                   <td>{{ product.quantity }}</td>
-                  <td>{{ product.sku}}</td>
+                  <td>
+                    {{ product.sku }}
+                    <!-- Copy Button/Icon -->
+                    <button class="btn btn-sm btn-outline-primary" onclick="copyToClipboard('{{ product.sku }}')">
+                      <i class="fas fa-copy"></i> <!-- Font Awesome copy icon -->
+                    </button>
+                  </td>
                 </tr>
                 {% endfor %}
               </tbody>
@@ -116,7 +122,6 @@
           </div>
         </div>
       </div>
-
     </div>
   </section>
 </div>
@@ -138,5 +143,18 @@
       "responsive": true
     });
   });
+
+  function copyToClipboard(sku) {
+    // Create a temporary textarea element
+    const tempInput = document.createElement('textarea');
+    tempInput.value = sku; // Assign SKU to the textarea
+    document.body.appendChild(tempInput); // Append the textarea to the body
+    tempInput.select(); // Select the text in the textarea
+    document.execCommand('copy'); // Execute the 'copy' command
+    document.body.removeChild(tempInput); // Remove the textarea after copying
+
+    // Optionally, you can display a message to the user
+    alert("SKU copied to clipboard: " + sku);
+  }
 </script>
 {% endblock javascripts %}

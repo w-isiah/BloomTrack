@@ -116,13 +116,13 @@ def route_template(template):
 
         segment = get_segment(request)
 
-        return render_template("customers/" + template, segment=segment)
+        return render_template("home/" + template, segment=segment)
 
     except TemplateNotFound:
-        return render_template('customers/page-404.html'), 404
+        return render_template('home/page-404.html'), 404
 
     except Exception as e:
-        return render_template('customers/page-500.html'), 500
+        return render_template('home/page-500.html'), 500
 
 
 def get_segment(request):
