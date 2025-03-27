@@ -3,8 +3,6 @@ import random
 import string
 import logging
 
-
-
 # Set up logging configuration for production and development
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
@@ -27,7 +25,6 @@ class Config:
     DB_USER = os.getenv('DB_USER', 'root')
     DB_PASSWORD = os.getenv('DB_PASSWORD', '')
     DB_NAME = os.getenv('DB_NAME', 'pos_db')
-    DB_PORT = int(os.getenv('DB_PORT', 3306))  # Default to 3306 if not provided
 
     @staticmethod
     def init_app(app):
@@ -37,7 +34,6 @@ class Config:
         # Ensure the upload folder exists
         if not os.path.exists(app.config['UPLOAD_FOLDER']):
             os.makedirs(app.config['UPLOAD_FOLDER'])
-
 
 class ProductionConfig(Config):
     """Production-specific configuration."""

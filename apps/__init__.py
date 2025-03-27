@@ -16,8 +16,8 @@ def get_db_connection():
             host=os.getenv('DB_HOST', 'localhost'),
             user=os.getenv('DB_USER', 'root'),
             password=os.getenv('DB_PASSWORD', ''),
-            database=os.getenv('DB_NAME', 'pos_db'),
-            port=int(os.getenv('DB_PORT', 3306))  # Default to 3306 if not provided
+            database=os.getenv('DB_NAME', 'pos_db')
+            # Removed DB_PORT configuration
         )
         if connection.is_connected():
             logging.info("Database connection successful.")
