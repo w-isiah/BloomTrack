@@ -12,12 +12,49 @@ def index():
     connection = get_db_connection()
     try:
         with connection.cursor(dictionary=True) as cursor:
+            # Query for total sales today
+            cursor.execute('''
+                SELECT SUM(total_price) AS total_sales_today
+                FROM sales
+                WHERE DATE(date_updated) = CURDATE();
+            ''')
+            total_sales_today = cursor.fetchone()  # Fetch the result for today
+
+            # Query for total sales yesterday
+            cursor.execute('''
+                SELECT SUM(total_price) AS total_sales_yesterday
+                FROM sales
+                WHERE DATE(date_updated) = CURDATE() - INTERVAL 1 DAY;
+            ''')
+            total_sales_yesterday = cursor.fetchone()  # Fetch the result for yesterday
+
+            # Query for products that need to be reordered
             cursor.execute('SELECT * FROM product_list WHERE reorder_level > quantity ORDER BY name')
-            products = cursor.fetchall()
+            products_to_reorder = cursor.fetchall()  # Fetch all results for reorder products
+
     finally:
         connection.close()  # Ensure the connection is closed after use
 
-    return render_template('home/index.html', role=session['role'], products=products, segment='index')
+    # Format the sales values to UGX
+    def format_to_ugx(amount):
+        if amount is None:
+            return "UGX 0"
+        return f"UGX {amount:,.2f}"
+
+    formatted_sales_today = format_to_ugx(total_sales_today['total_sales_today'] if total_sales_today['total_sales_today'] else 0)
+    formatted_sales_yesterday = format_to_ugx(total_sales_yesterday['total_sales_yesterday'] if total_sales_yesterday['total_sales_yesterday'] else 0)
+
+    return render_template('home/index.html', 
+                           role=session['role'], 
+                           total_sales_today=formatted_sales_today,
+                           total_sales_yesterday=formatted_sales_yesterday,
+                           products_to_reorder=products_to_reorder, 
+                           segment='index')
+
+
+
+
+
 
 @blueprint.route('/<template>')
 def route_template(template):
