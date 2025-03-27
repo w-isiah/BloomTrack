@@ -1,21 +1,21 @@
 {% extends "layouts/base.html" %}
 
-{% block title %} Tables Data {% endblock %}
+{% block title %} Dashboard {% endblock %}
 
-<!-- Element injected in the BODY element -->
-{% block body_class %} {% endblock body_class %}
+{% block body_class %} sidebar-mini {% endblock %}
 
-<!-- Specific Page CSS goes HERE -->
 {% block stylesheets %}
 <!-- Google Font: Source Sans Pro -->
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
 <!-- Font Awesome -->
 <link rel="stylesheet" href="/static/assets/plugins/fontawesome-free/css/all.min.css">
-<!-- DataTables -->
-<link rel="stylesheet" href="/static/assets/plugins/datatables-bs4/css/dataTables.bootstrap4.min.css">
-<link rel="stylesheet" href="/static/assets/plugins/datatables-responsive/css/responsive.bootstrap4.min.css">
+<!-- Ionicons -->
+<link rel="stylesheet" href="https://code.ionicframework.com/ionicons/2.0.1/css/ionicons.min.css">
 <!-- Theme style -->
 <link rel="stylesheet" href="/static/assets/css/adminlte.min.css">
+<!-- DataTables CSS -->
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css">
+<link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.3.0/css/responsive.dataTables.min.css">
 {% endblock stylesheets %}
 
 {% block content %}
@@ -26,12 +26,13 @@
     <div class="container-fluid">
       <div class="row mb-2">
         <div class="col-sm-6">
-          <h1>DataTables</h1>
+          <h1>Categories</h1>
         </div>
         <div class="col-sm-6">
           <ol class="breadcrumb float-sm-right">
-            <li class="breadcrumb-item"><a href="#">Home</a></li>
-            <li class="breadcrumb-item active">DataTables</li>
+            <li class="breadcrumb-item"><a href="/index">Home</a></li>
+            <li class="breadcrumb-item"><a href="/categories">Categories</a></li>
+            <li class="breadcrumb-item active">Category List</li>
           </ol>
         </div>
       </div>
@@ -45,96 +46,74 @@
         <div class="col-12">
           <div class="card">
             <div class="card-header">
-              <h3 class="card-title">Product List</h3>
+              <h3 class="card-title">Category List</h3>
             </div>
 
-            
-            <!-- /.card-header -->
+            <!-- Card Body -->
             <div class="card-body">
-              <table id="example2" class="table table-bordered table-hover">
-               <thead>
-                <tr>
-                  <th>Category ID</th>
-                  <th>Name</th>
-                  <th>Description</th>
-                  <th>Products Count</th>
-                  <th>Edit</th>
-                  <th>Delete</th>
-                </tr>
-              </thead>
-              <tbody>
-                {% for category in categories %}
-                <tr class="gradeX">
-                  <td>{{ category.CategoryID }}</td>
-                  <td>{{ category.name }}</td>
-                  <td>{{ category.description }}</td>
-                  <td>{{ category.products_count }}</td>
+              <div class="table-responsive">
+                <table id="categoriesTable" class="display stripe nowrap" style="width:100%">
+                  <thead>
+                    <tr>
+                      <th>Name</th>
+                      <th>Description</th>
+                      <th>Edit</th>
+                      <th>Delete</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for category in categories %}
+                    <tr class="gradeX">
+                      <td>{{ category.name }}</td>
+                      <td>{{ category.description }}</td>
 
-                  <!-- Edit Button -->
-                  <td>
-                    <a href="/edit_category/{{ category.CategoryID }}" style="--bs-btn-padding-y: .25rem; --bs-btn-padding-x: .5rem; --bs-btn-font-size: .75rem;"  class="btn btn-sm btn-warning" data-toggle="modal">
-                      Edit
-                    </a>
-                  </td>
+                      <!-- Edit Button -->
+                      <td>
+                        <a href="/edit_category/{{ category.CategoryID }}" style="--bs-btn-padding-y: .25rem; --bs-btn-padding-x: .5rem; --bs-btn-font-size: .75rem;" class="btn btn-sm btn-warning">
+                          Edit
+                        </a>
+                      </td>
 
-                  <!-- Delete Button -->
-                  <td>
-                    <a href="/delete_category/{{ category.CategoryID }}" style="--bs-btn-padding-y: .25rem; --bs-btn-padding-x: .5rem; --bs-btn-font-size: .75rem;" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure you want to delete {{ category.name }}?')">
-                      Delete
-                    </a>
-                  </td>
-                </tr>
-                {% endfor %}
-              </tbody>
-            </table>
-
-            <!-- Display Total Sum below the Table -->
-
-          </div> <!-- /.card-body -->
-        </div> <!-- /.card -->
-      </div> <!-- /.col -->
-    </div> <!-- /.row -->
-  </div><!-- /.container-fluid -->
-</section><!-- /.content -->
+                      <!-- Delete Button -->
+                      <td>
+                        <a href="/delete_category/{{ category.CategoryID }}" style="--bs-btn-padding-y: .25rem; --bs-btn-padding-x: .5rem; --bs-btn-font-size: .75rem;" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure you want to delete {{ category.name }}?')">
+                          Delete
+                        </a>
+                      </td>
+                    </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </div> <!-- /.card-body -->
+          </div> <!-- /.card -->
+        </div> <!-- /.col -->
+      </div> <!-- /.row -->
+    </div><!-- /.container-fluid -->
+  </section><!-- /.content -->
 </div><!-- /.content-wrapper -->
 {% endblock content %}
 
-<!-- Specific Page JS goes HERE -->
 {% block javascripts %}
-<!-- jQuery -->
 <script src="/static/assets/plugins/jquery/jquery.min.js"></script>
-<!-- jQuery UI 1.11.4 -->
-<script src="/static/assets/plugins/jquery-ui/jquery-ui.min.js"></script>
-<!-- Resolve conflict in jQuery UI tooltip with Bootstrap tooltip -->
-<script>
-  $.widget.bridge('uibutton', $.ui.button)
-</script>
-<!-- Bootstrap 4 -->
 <script src="/static/assets/plugins/bootstrap/js/bootstrap.bundle.min.js"></script>
-<!-- DataTables -->
-<script src="/static/assets/plugins/datatables/jquery.dataTables.min.js"></script>
-<script src="/static/assets/plugins/datatables-bs4/js/dataTables.bootstrap4.min.js"></script>
-<script src="/static/assets/plugins/datatables-responsive/js/dataTables.responsive.min.js"></script>
-<script src="/static/assets/plugins/datatables-responsive/js/responsive.bootstrap4.min.js"></script>
-<!-- AdminLTE App -->
-<script src="/static/assets/js/adminlte.min.js"></script>
-<!-- AdminLTE for demo purposes -->
-<script src="/static/assets/js/demo.js"></script>
-
+<script src="/static/assets/js/adminlte.js"></script>
+<script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/responsive/2.3.0/js/dataTables.responsive.min.js"></script>
 <script>
-  $(function () {
-    $("#example1").DataTable({
-      "responsive": true,
-      "autoWidth": false,
-    });
-    $('#example2').DataTable({
+  $(document).ready(function() {
+    $('#categoriesTable').DataTable({
       "paging": true,
-      "lengthChange": false,
-      "searching": false,
+      "searching": true,
       "ordering": true,
-      "info": true,
-      "autoWidth": false,
       "responsive": true,
+      "stripeClasses": ['odd', 'even'],  // Ensures stripe styling (alternating rows)
+      "language": {
+        "paginate": {
+          "next": 'Next',
+          "previous": 'Previous'
+        }
+      }
     });
   });
 </script>

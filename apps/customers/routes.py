@@ -87,7 +87,7 @@ def edit_customer(customer_id):
             # Close the cursor and connection
             cursor.close()
             connection.close()
-            return redirect(url_for('customers'))
+            return redirect(url_for('customers_blueprint.customers'))
 
     elif request.method == 'GET':
         # Retrieve customer data to pre-fill the form (if needed)

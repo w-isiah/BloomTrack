@@ -22,13 +22,13 @@
     <div class="container-fluid">
       <div class="row mb-2">
         <div class="col-sm-6">
-          <h1>Fixed Footer Layout</h1>
+          <h1>Edit Customer</h1>
         </div>
         <div class="col-sm-6">
           <ol class="breadcrumb float-sm-right">
-            <li class="breadcrumb-item"><a href="#">Home</a></li>
-            <li class="breadcrumb-item"><a href="#">Layout</a></li>
-            <li class="breadcrumb-item active">Fixed Footer Layout</li>
+            <li class="breadcrumb-item"><a href="/index">Home</a></li>
+            <li class="breadcrumb-item"><a href="/customers">Customers</a></li>
+            <li class="breadcrumb-item active">edit_customer</li>
           </ol>
         </div>
       </div>
@@ -59,6 +59,8 @@
               <div class="widget-content nopadding">
                 <!-- Edit Customer Form -->
                 <form action="{{ url_for('customers_blueprint.edit_customer', customer_id=customer.CustomerID) }}" method="POST">
+                   <!-- CSRF Token for security -->
+                 <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
 
                   <!-- Customer Name Input -->
                   <div class="row mb-3">

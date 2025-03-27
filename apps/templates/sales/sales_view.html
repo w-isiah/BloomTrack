@@ -1,20 +1,21 @@
 {% extends "layouts/base.html" %}
 
-{% block title %} Tables Data {% endblock %}
+{% block title %} Dashboard {% endblock %}
 
-{% block body_class %} {% endblock body_class %}
+{% block body_class %} sidebar-mini {% endblock %}
 
-<!-- Specific Page CSS -->
 {% block stylesheets %}
 <!-- Google Font: Source Sans Pro -->
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
 <!-- Font Awesome -->
 <link rel="stylesheet" href="/static/assets/plugins/fontawesome-free/css/all.min.css">
-<!-- DataTables -->
-<link rel="stylesheet" href="/static/assets/plugins/datatables-bs4/css/dataTables.bootstrap4.min.css">
-<link rel="stylesheet" href="/static/assets/plugins/datatables-responsive/css/responsive.bootstrap4.min.css">
+<!-- Ionicons -->
+<link rel="stylesheet" href="https://code.ionicframework.com/ionicons/2.0.1/css/ionicons.min.css">
 <!-- Theme style -->
 <link rel="stylesheet" href="/static/assets/css/adminlte.min.css">
+<!-- DataTables CSS -->
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css">
+<link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.3.0/css/responsive.dataTables.min.css">
 {% endblock stylesheets %}
 
 {% block content %}
@@ -26,12 +27,13 @@
     <div class="container-fluid">
       <div class="row mb-2">
         <div class="col-sm-6">
-          <h1>DataTables</h1>
+          <h1>Sales Review</h1>
         </div>
         <div class="col-sm-6">
           <ol class="breadcrumb float-sm-right">
-            <li class="breadcrumb-item"><a href="#">Home</a></li>
-            <li class="breadcrumb-item active">DataTables</li>
+            <li class="breadcrumb-item"><a href="/index">Home</a></li>
+            <li class="breadcrumb-item"><a href="/sales_view">Sales</a></li>
+            <li class="breadcrumb-item active">sales_view</li>
           </ol>
         </div>
       </div>
@@ -56,8 +58,8 @@
       <!-- Date Filter Form -->
       <div class="widget-content nopadding">
         <form method="POST" action="{{ url_for('sales_blueprint.sales_view') }}" novalidate>
-           <!-- CSRF Token for security -->
-                 <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+          <!-- CSRF Token for security -->
+          <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
           <div class="row">
             <div class="col-md-6 mb-3">
               <label for="start_date" class="control-label">Start Date:</label>
@@ -90,30 +92,34 @@
             <!-- /.card-header -->
             <div class="card-body">
               {% if sales %}
-                <table id="example2" class="table table-bordered table-hover">
-                  <thead>
-                    <tr>
-                      <th>Product Name</th>
-                      <th>Customer Name</th>
-                      <th>Unit Price</th>
-                      <th>Discount</th>
-                      <th>Quantity</th>
-                      <th>Date Updated</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {% for sale in sales %}
-                    <tr class="gradeX">
-                      <td>{{ sale.product_name }}</td>
-                      <td>{{ sale.customer_name }}</td>
-                      <td>{{ sale.price }}</td>
-                      <td>{{ sale.discount }}</td>
-                      <td>{{ sale.qty }}</td>
-                      <td>{{ sale.date_updated.strftime("%m-%d %H:%M") }}</td>
-                    </tr>
-                    {% endfor %}
-                  </tbody>
-                </table>
+
+              <div class="table-responsive">
+            <table id="salesTable" class="display stripe nowrap" style="width:100%">
+              <thead>
+                      <tr>
+                        <th>Product Name</th>
+                        <th>Customer Name</th>
+                        <th>Unit Price</th>
+                        <th>Discount</th>
+                        <th>Quantity</th>
+                        <th>Date Updated</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {% for sale in sales %}
+                      <tr class="gradeX {% if sale.qty < 5 %}bg-danger text-dark{% endif %}">
+                        <td>{{ sale.product_name }}</td>
+                        <td>{{ sale.customer_name }}</td>
+                        <td>{{ sale.price }}</td>
+                        <td>{{ sale.discount }}</td>
+                        <td>{{ sale.qty }}</td>
+                        <td>{{ sale.date_updated.strftime("%m-%d %H:%M") }}</td>
+                      </tr>
+                      {% endfor %}
+                    </tbody>
+                  </table>
+                </div>
+
                 <!-- Display Total Sum below the Table -->
                 <div class="total-sum mt-3">
                   <p><strong>Total Sales:</strong> {{ total_sales }}/=</p>
@@ -133,42 +139,20 @@
 
 {% endblock content %}
 
-<!-- Specific Page JS -->
 {% block javascripts %}
-<!-- jQuery -->
 <script src="/static/assets/plugins/jquery/jquery.min.js"></script>
-<!-- jQuery UI 1.11.4 -->
-<script src="/static/assets/plugins/jquery-ui/jquery-ui.min.js"></script>
-<!-- Resolve conflict in jQuery UI tooltip with Bootstrap tooltip -->
-<script>
-  $.widget.bridge('uibutton', $.ui.button)
-</script>
-<!-- Bootstrap 4 -->
 <script src="/static/assets/plugins/bootstrap/js/bootstrap.bundle.min.js"></script>
-<!-- DataTables -->
-<script src="/static/assets/plugins/datatables/jquery.dataTables.min.js"></script>
-<script src="/static/assets/plugins/datatables-bs4/js/dataTables.bootstrap4.min.js"></script>
-<script src="/static/assets/plugins/datatables-responsive/js/dataTables.responsive.min.js"></script>
-<script src="/static/assets/plugins/datatables-responsive/js/responsive.bootstrap4.min.js"></script>
-<!-- AdminLTE App -->
-<script src="/static/assets/js/adminlte.min.js"></script>
-<!-- AdminLTE for demo purposes -->
-<script src="/static/assets/js/demo.js"></script>
+<script src="/static/assets/js/adminlte.js"></script>
+<script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/responsive/2.3.0/js/dataTables.responsive.min.js"></script>
 
 <script>
-  $(function () {
-    $("#example1").DataTable({
-      "responsive": true,
-      "autoWidth": false,
-    });
-    $('#example2').DataTable({
+  $(document).ready(function() {
+    $('#salesTable').DataTable({
       "paging": true,
-      "lengthChange": false,
-      "searching": false,
+      "searching": true,
       "ordering": true,
-      "info": true,
-      "autoWidth": false,
-      "responsive": true,
+      "responsive": true
     });
   });
 </script>

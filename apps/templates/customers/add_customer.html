@@ -55,6 +55,8 @@
               <div class="widget-content nopadding">
                 <form action="{{ url_for('customers_blueprint.add_customer') }}" method="POST" class="form-horizontal">
 
+ <!-- CSRF Token for security -->
+                 <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
                   <!-- Customer Name -->
                   <div class="row mb-3">
                     <label for="customer_name" class="col-sm-2 col-form-label">Customer Name:</label>

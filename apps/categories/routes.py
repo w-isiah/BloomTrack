@@ -101,7 +101,7 @@ def edit_category(category_id):
         connection.close()
 
         if category:
-            return render_template('category/edit_category.html', category=category)
+            return render_template('categories/edit_category.html', category=category)
         else:
             flash("Category not found.", "danger")
             return redirect(url_for('categories_blueprint.manage_category'))

@@ -1,44 +1,41 @@
 {% extends "layouts/base.html" %}
 
-{% block title %} Tables Data {% endblock %}
+{% block title %} Dashboard {% endblock %}
 
-<!-- Element injected in the BODY element -->
-{% block body_class %} {% endblock body_class %}
+{% block body_class %} sidebar-mini {% endblock %}
 
-<!-- Specific Page CSS goes HERE -->
 {% block stylesheets %}
-  <!-- Google Font: Source Sans Pro -->
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
-  <!-- Font Awesome -->
-  <link rel="stylesheet" href="/static/assets/plugins/fontawesome-free/css/all.min.css">
-  <!-- DataTables -->
-  <link rel="stylesheet" href="/static/assets/plugins/datatables-bs4/css/dataTables.bootstrap4.min.css">
-  <link rel="stylesheet" href="/static/assets/plugins/datatables-responsive/css/responsive.bootstrap4.min.css">
-  <!-- Theme style -->
-  <link rel="stylesheet" href="/static/assets/css/adminlte.min.css">
+<!-- Google Font: Source Sans Pro -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
+<!-- Font Awesome -->
+<link rel="stylesheet" href="/static/assets/plugins/fontawesome-free/css/all.min.css">
+<!-- Ionicons -->
+<link rel="stylesheet" href="https://code.ionicframework.com/ionicons/2.0.1/css/ionicons.min.css">
+<!-- Theme style -->
+<link rel="stylesheet" href="/static/assets/css/adminlte.min.css">
+<!-- DataTables CSS -->
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css">
+<link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.3.0/css/responsive.dataTables.min.css">
 {% endblock stylesheets %}
-
 {% block content %}
-  <!-- Content Wrapper. Contains page content -->
   <div class="content-wrapper">
-    <!-- Content Header (Page header) -->
     <section class="content-header">
       <div class="container-fluid">
         <div class="row mb-2">
           <div class="col-sm-6">
-            <h1>DataTables</h1>
+            <h1>Items</h1>
           </div>
           <div class="col-sm-6">
             <ol class="breadcrumb float-sm-right">
-              <li class="breadcrumb-item"><a href="#">Home</a></li>
-              <li class="breadcrumb-item active">DataTables</li>
+              <li class="breadcrumb-item"><a href="/index">Home</a></li>
+              <li class="breadcrumb-item"><a href="/products">Items</a></li>
+              <li class="breadcrumb-item active">Item List</li>
             </ol>
           </div>
         </div>
-      </div><!-- /.container-fluid -->
+      </div>
     </section>
 
-    <!-- Main content -->
     <section class="content">
       <div class="container-fluid">
         <div class="row">
@@ -48,10 +45,8 @@
                 <h3 class="card-title">Product List</h3>
               </div>
 
-            
-              <!-- /.card-header -->
               <div class="card-body">
-                <table id="example2" class="table table-bordered table-hover">
+                <table id="productTable" class="display stripe nowrap" style="width:100%">
                   <thead>
                     <tr>
                       <th>SKU</th>
@@ -59,42 +54,36 @@
                       <th>Re-Order</th>
                       <th>Quantity</th>
                       <th>Unit Price</th>
-                      <th>Total Value</th> <!-- New Column for Total Value -->
-                      <th>Image</th> <!-- New Column for Image -->
+                      <th>Total Value</th>
+                      <th>Image</th>
                       <th>Edit</th>
                       <th>Delete</th>
                     </tr>
                   </thead>
                   <tbody>
                     {% for i in products %}
-                    <tr class="gradeX">
+                    <tr>
                       <td>{{ i.sku }}</td>
                       <td>{{ i.name }}</td>
                       <td>{{ i.reorder_level }}</td>
                       <td>{{ i.quantity }}</td>
-                      <td>{{ i.formatted_price}}</td> <!-- Formatted Unit Price -->
-                      <td>{{ i.formatted_total_price }}</td> <!-- Formatted Total Value -->
-                      <!-- Image Display -->
+                      <td>{{ i.formatted_price }}</td>
+                      <td>{{ i.formatted_total_price }}</td>
                       <td>
                         {% if i.image %}
-                          <img src="/static/uploads/{{i.image}}" alt="Product Image" style="max-width: 100px; max-height: 100px; object-fit: cover;">
+                          <img src="/static/uploads/{{ i.image }}" alt="Product Image" style="max-width: 100px; max-height: 100px; object-fit: cover;">
                         {% else %}
                           <span>No Image</span>
                         {% endif %}
                       </td>
-                      <!-- Edit Button -->
                       <td>
                         <a href="/edit_product/{{ i.ProductID }}">
-                          <button type="button" class="btn btn-warning" style="--bs-btn-padding-y: .25rem; --bs-btn-padding-x: .5rem; --bs-btn-font-size: .75rem;">
-                            Edit
-                          </button>
+                          <button type="button" class="btn btn-warning btn-sm">Edit</button>
                         </a>
                       </td>
-
-                      <!-- Delete Button -->
                       <td>
                         <a href="/delete_product/{{ i.ProductID }}">
-                          <button type="button" class="btn btn-danger" onclick="return confirm('Are you sure you want to delete {{ i.name }}?')" style="--bs-btn-padding-y: .25rem; --bs-btn-padding-x: .5rem; --bs-btn-font-size: .75rem;">
+                          <button type="button" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure you want to delete {{ i.name }}?')">
                             Delete
                           </button>
                         </a>
@@ -104,7 +93,6 @@
                   </tbody>
                 </table>
 
-                <!-- Display Total Sum below the Table -->
                 <div class="total-sum mt-3">
                   <h4>Total Value of All Products: {{ formatted_total_sum }}</h4>
                 </div>
@@ -117,43 +105,21 @@
   </div><!-- /.content-wrapper -->
 {% endblock content %}
 
-<!-- Specific Page JS goes HERE -->
 {% block javascripts %}
-  <!-- jQuery -->
-  <script src="/static/assets/plugins/jquery/jquery.min.js"></script>
-  <!-- jQuery UI 1.11.4 -->
-  <script src="/static/assets/plugins/jquery-ui/jquery-ui.min.js"></script>
-  <!-- Resolve conflict in jQuery UI tooltip with Bootstrap tooltip -->
-  <script>
-    $.widget.bridge('uibutton', $.ui.button)
-  </script>
-  <!-- Bootstrap 4 -->
-  <script src="/static/assets/plugins/bootstrap/js/bootstrap.bundle.min.js"></script>
-  <!-- DataTables -->
-  <script src="/static/assets/plugins/datatables/jquery.dataTables.min.js"></script>
-  <script src="/static/assets/plugins/datatables-bs4/js/dataTables.bootstrap4.min.js"></script>
-  <script src="/static/assets/plugins/datatables-responsive/js/dataTables.responsive.min.js"></script>
-  <script src="/static/assets/plugins/datatables-responsive/js/responsive.bootstrap4.min.js"></script>
-  <!-- AdminLTE App -->
-  <script src="/static/assets/js/adminlte.min.js"></script>
-  <!-- AdminLTE for demo purposes -->
-  <script src="/static/assets/js/demo.js"></script>
+<script src="/static/assets/plugins/jquery/jquery.min.js"></script>
+<script src="/static/assets/plugins/bootstrap/js/bootstrap.bundle.min.js"></script>
+<script src="/static/assets/js/adminlte.js"></script>
+<script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/responsive/2.3.0/js/dataTables.responsive.min.js"></script>
 
-  <script>
-    $(function () {
-      $("#example1").DataTable({
-        "responsive": true,
-        "autoWidth": false,
-      });
-      $('#example2').DataTable({
-        "paging": true,
-        "lengthChange": false,
-        "searching": false,
-        "ordering": true,
-        "info": true,
-        "autoWidth": false,
-        "responsive": true,
-      });
+<script>
+  $(document).ready(function() {
+    $('#productTable').DataTable({
+      "paging": true,
+      "searching": true,
+      "ordering": true,
+      "responsive": true
     });
-  </script>
+  });
+</script>
 {% endblock javascripts %}
