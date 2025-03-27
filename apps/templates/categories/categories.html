@@ -1,8 +1,8 @@
 {% extends "layouts/base.html" %}
 
-{% block title %} Dashboard {% endblock %}
+{% block title %}Dashboard{% endblock %}
 
-{% block body_class %} sidebar-mini {% endblock %}
+{% block body_class %}sidebar-mini{% endblock %}
 
 {% block stylesheets %}
 <!-- Google Font: Source Sans Pro -->
@@ -11,17 +11,18 @@
 <link rel="stylesheet" href="/static/assets/plugins/fontawesome-free/css/all.min.css">
 <!-- Ionicons -->
 <link rel="stylesheet" href="https://code.ionicframework.com/ionicons/2.0.1/css/ionicons.min.css">
-<!-- Theme style -->
+<!-- AdminLTE Theme -->
 <link rel="stylesheet" href="/static/assets/css/adminlte.min.css">
 <!-- DataTables CSS -->
 <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css">
 <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.3.0/css/responsive.dataTables.min.css">
-{% endblock stylesheets %}
+{% endblock %}
 
 {% block content %}
-<!-- Content Wrapper. Contains page content -->
+<!-- Content Wrapper -->
 <div class="content-wrapper">
-  <!-- Content Header (Page header) -->
+
+  <!-- Content Header -->
   <section class="content-header">
     <div class="container-fluid">
       <div class="row mb-2">
@@ -36,10 +37,10 @@
           </ol>
         </div>
       </div>
-    </div><!-- /.container-fluid -->
+    </div>
   </section>
 
-  <!-- Main content -->
+  <!-- Main Content -->
   <section class="content">
     <div class="container-fluid">
       <div class="row">
@@ -69,52 +70,71 @@
 
                       <!-- Edit Button -->
                       <td>
-                        <a href="/edit_category/{{ category.CategoryID }}" style="--bs-btn-padding-y: .25rem; --bs-btn-padding-x: .5rem; --bs-btn-font-size: .75rem;" class="btn btn-sm btn-warning">
+                        <a href="/edit_category/{{ category.CategoryID }}" 
+                           class="btn btn-sm btn-warning" 
+                           style="--bs-btn-padding-y: .25rem; --bs-btn-padding-x: .5rem; --bs-btn-font-size: .75rem;">
                           Edit
                         </a>
                       </td>
 
-                      <!-- Delete Button -->
+                      <!-- Delete Button (Visible to Admin only) -->
                       <td>
-                        <a href="/delete_category/{{ category.CategoryID }}" style="--bs-btn-padding-y: .25rem; --bs-btn-padding-x: .5rem; --bs-btn-font-size: .75rem;" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure you want to delete {{ category.name }}?')">
+                        {% if session['role'] == 'admin' %}
+                        <a href="/delete_category/{{ category.CategoryID }}" 
+                           class="btn btn-sm btn-danger" 
+                           style="--bs-btn-padding-y: .25rem; --bs-btn-padding-x: .5rem; --bs-btn-font-size: .75rem;"
+                           onclick="return confirm('Are you sure you want to delete {{ category.name }}?')">
                           Delete
                         </a>
+                        {% else %}
+                        <!-- Empty cell for non-admin users -->
+                        <span>—</span>
+                        {% endif %}
                       </td>
                     </tr>
                     {% endfor %}
                   </tbody>
                 </table>
               </div>
-            </div> <!-- /.card-body -->
-          </div> <!-- /.card -->
-        </div> <!-- /.col -->
-      </div> <!-- /.row -->
-    </div><!-- /.container-fluid -->
-  </section><!-- /.content -->
-</div><!-- /.content-wrapper -->
-{% endblock content %}
+            </div>
+            <!-- /.card-body -->
+          </div>
+          <!-- /.card -->
+        </div>
+      </div>
+    </div>
+  </section>
+  <!-- /.content -->
+</div>
+<!-- /.content-wrapper -->
+{% endblock %}
 
 {% block javascripts %}
+<!-- jQuery -->
 <script src="/static/assets/plugins/jquery/jquery.min.js"></script>
+<!-- Bootstrap Bundle -->
 <script src="/static/assets/plugins/bootstrap/js/bootstrap.bundle.min.js"></script>
+<!-- AdminLTE -->
 <script src="/static/assets/js/adminlte.js"></script>
+<!-- DataTables -->
 <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/responsive/2.3.0/js/dataTables.responsive.min.js"></script>
+
 <script>
   $(document).ready(function() {
     $('#categoriesTable').DataTable({
-      "paging": true,
-      "searching": true,
-      "ordering": true,
-      "responsive": true,
-      "stripeClasses": ['odd', 'even'],  // Ensures stripe styling (alternating rows)
-      "language": {
-        "paginate": {
-          "next": 'Next',
-          "previous": 'Previous'
+      paging: true,
+      searching: true,
+      ordering: true,
+      responsive: true,
+      stripeClasses: ['odd', 'even'],
+      language: {
+        paginate: {
+          next: 'Next',
+          previous: 'Previous'
         }
       }
     });
   });
 </script>
-{% endblock javascripts %}
+{% endblock %}

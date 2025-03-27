@@ -57,7 +57,7 @@
                       <th>Total Value</th>
                       <th>Image</th>
                       <th>Edit</th>
-                      <th>Delete</th>
+                      
                     </tr>
                   </thead>
                   <tbody>
@@ -81,13 +81,7 @@
                           <button type="button" class="btn btn-warning btn-sm">Edit</button>
                         </a>
                       </td>
-                      <td>
-                        <a href="/delete_product/{{ i.ProductID }}">
-                          <button type="button" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure you want to delete {{ i.name }}?')">
-                            Delete
-                          </button>
-                        </a>
-                      </td>
+                      
                     </tr>
                     {% endfor %}
                   </tbody>

@@ -18,7 +18,11 @@
 
     {% include 'includes/navigation.html' %}
 
-    {% include 'includes/sidebar.html' %}
+    {% if session['role'] == 'admin' %}
+        {% include 'includes/sidebar.html' %}
+    {% else %}
+        {% include 'includes/user_sidebar.html' %}
+    {% endif %}
 
     {% block content %}{% endblock content %}
 

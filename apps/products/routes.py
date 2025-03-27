@@ -156,7 +156,6 @@ def edit_product(product_id):
         price = request.form.get('price')
         name = request.form.get('name')
         description = request.form.get('description')
-        quantity = request.form.get('quantity')
         reorder_level = request.form.get('reorder_level')
 
         # Handle image upload
@@ -175,19 +174,35 @@ def edit_product(product_id):
             image_path = os.path.join(image_folder, image_filename)
             image_file.save(image_path)  # Save new image
 
+        # Calculate the price change if the price has been updated
+        old_price = product['price']
+        price_change = None
+
+        if price != old_price:
+            price_change = float(price) - float(old_price)  # Calculate the price change
+
         # Update the product data in the database
         cursor.execute(''' 
             UPDATE product_list
             SET category_id = %s, sku = %s, price = %s, name = %s, description = %s,
-                quantity = %s, reorder_level = %s, image = %s, updated_at = CURRENT_TIMESTAMP
+                 reorder_level = %s, image = %s, updated_at = CURRENT_TIMESTAMP
             WHERE ProductID = %s
-        ''', (category_id, sku, price, name, description, quantity, reorder_level, image_filename, product_id))
+        ''', (category_id, sku, price, name, description, reorder_level, image_filename, product_id))
+
+        # If there's a price change, insert it into the inventory_logs table
+        if price_change is not None:
+            cursor.execute('''
+                INSERT INTO inventory_logs (product_id, quantity_change, log_date, reason, price_change, old_price)
+                VALUES (%s, 0, CURRENT_TIMESTAMP, %s, %s, %s)
+            ''', (product_id, 'Price Update', price_change, old_price))
 
         # Commit the transaction
         connection.commit()
 
         flash("Product updated successfully!")
-        return redirect(url_for('products_blueprint.products'))  
+        return redirect(url_for('products_blueprint.products'))
+
+ 
 
     cursor.close()
     connection.close()

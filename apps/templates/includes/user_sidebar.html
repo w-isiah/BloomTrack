@@ -15,7 +15,7 @@
         <img src="/static/assets/img/user2-160x160.jpg" class="img-circle elevation-2" alt="User Image">
       </div>
       <div class="info">
-        <a href="{{ url_for('authentication_blueprint.logout') }}" class="d-block">Logout</a>
+        <a href="{{ url_for('authentication_blueprint.logout') }}" class="d-block">{{session['username']}}..Logout</a>
       </div>
     </div>
 
@@ -94,12 +94,7 @@
                 <p>Add Item</p>
               </a>
             </li>
-            <li class="nav-item">
-              <a href="{{ url_for('products_blueprint.restock_product') }}" class="nav-link {% if 'restock_product' in segment %} active {% endif %}">
-                <i class="fas fa-warehouse nav-icon"></i>
-                <p>Restock Item</p>
-              </a>
-            </li>
+            
           </ul>
         </li>
 
