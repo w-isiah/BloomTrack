@@ -4,9 +4,9 @@
     top: 20px;
     left: 50%;
     transform: translateX(-50%);
-    background-color: #f8d7da;
-    color: #721c24;
-    border: 1px solid #f5c6cb;
+    background-color: #d4edda; /* Light green background for success */
+    color: #155724; /* Dark green text for better readability */
+    border: 1px solid #c3e6cb; /* Lighter green border */
     padding: 15px;
     border-radius: 5px;
     z-index: 9999;
@@ -24,7 +24,7 @@
 .close-btn {
     background: none;
     border: none;
-    color: #721c24;
+    color: #155724; /* Dark green for the close button */
     font-size: 16px;
     cursor: pointer;
 }

@@ -16,6 +16,7 @@
 <!-- DataTables CSS -->
 <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css">
 <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.3.0/css/responsive.dataTables.min.css">
+<link rel="stylesheet" href="/static/assets/css/mine.css">
 {% endblock stylesheets %}
 
 {% block content %}
@@ -24,6 +25,13 @@
     <div class="container-fluid">
       <div class="row mb-2">
         <div class="col-sm-6">
+          <div id="notification" class="notification" style="display: none;">
+            <div class="notification-content">
+                <span id="notification-message"></span>
+                <button id="close-notification" class="close-btn">X</button>
+            </div>
+        </div>
+
           <h1 class="m-0 text-dark">Dashboard</h1>
         </div>
         <div class="col-sm-6">
@@ -105,7 +113,7 @@
               </thead>
               <tbody>
                 {% for product in products_to_reorder %}
-                <tr {% if product.quantity < 5 %}class="bg-danger text-dark"{% endif %}>
+                <tr {% if product.quantity < 5 %}class=""{% endif %}>
                   <td>{{ product.name }}</td>
                   <td>{{ product.quantity }}</td>
                   <td>
@@ -144,6 +152,17 @@
     });
   });
 
+  // Show notification function
+  function showNotification(message) {
+    $('#notification-message').text(message); // Set the message
+    $('#notification').fadeIn(); // Show the notification
+
+    // Automatically hide notification after 7 seconds
+    setTimeout(function() {
+      $('#notification').fadeOut();
+    }, 7000);
+  }
+
   function copyToClipboard(sku) {
     // Create a temporary textarea element
     const tempInput = document.createElement('textarea');
@@ -153,8 +172,8 @@
     document.execCommand('copy'); // Execute the 'copy' command
     document.body.removeChild(tempInput); // Remove the textarea after copying
 
-    // Optionally, you can display a message to the user
-    alert("SKU copied to clipboard: " + sku);
+    // Show the notification instead of using alert
+    showNotification("SKU copied to clipboard: " + sku);
   }
 </script>
 {% endblock javascripts %}
