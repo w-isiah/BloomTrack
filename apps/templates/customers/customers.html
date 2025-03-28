@@ -1,8 +1,8 @@
 {% extends "layouts/base.html" %}
 
-{% block title %} Dashboard {% endblock %}
+{% block title %}Dashboard{% endblock %}
 
-{% block body_class %} sidebar-mini {% endblock %}
+{% block body_class %}sidebar-mini{% endblock %}
 
 {% block stylesheets %}
 <!-- Google Font: Source Sans Pro -->
@@ -11,50 +11,87 @@
 <link rel="stylesheet" href="/static/assets/plugins/fontawesome-free/css/all.min.css">
 <!-- Ionicons -->
 <link rel="stylesheet" href="https://code.ionicframework.com/ionicons/2.0.1/css/ionicons.min.css">
-<!-- Theme style -->
+<!-- AdminLTE Theme -->
 <link rel="stylesheet" href="/static/assets/css/adminlte.min.css">
 <!-- DataTables CSS -->
 <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css">
 <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.3.0/css/responsive.dataTables.min.css">
-{% endblock stylesheets %}
+<!-- Custom CSS for Flash Messages -->
+<style>
+  .alert-container {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 9999;
+    width: 80%;
+    display: none;  /* Initially hidden */
+  }
+
+  .alert {
+    opacity: 1;
+    transition: opacity 1s ease-out;
+    margin-bottom: 10px;
+  }
+
+  .alert.alert-dismissible {
+    padding-right: 30px;
+  }
+</style>
+{% endblock %}
 
 {% block content %}
-<!-- Content Wrapper. Contains page content -->
+<!-- Content Wrapper -->
 <div class="content-wrapper">
 
-  <!-- Content Header (Page header) -->
+  <!-- Content Header -->
   <section class="content-header">
     <div class="container-fluid">
       <div class="row mb-2">
         <div class="col-sm-6">
-          <h1>Customer List</h1>
+          <h1>Categories</h1>
         </div>
         <div class="col-sm-6">
           <ol class="breadcrumb float-sm-right">
             <li class="breadcrumb-item"><a href="/index">Home</a></li>
-            <li class="breadcrumb-item"><a href="/customers">Customers</a></li>
-            <li class="breadcrumb-item active">Customer List</li>
+            <li class="breadcrumb-item"><a href="/categories">Categories</a></li>
+            <li class="breadcrumb-item active">Category List</li>
           </ol>
         </div>
       </div>
-    </div><!-- /.container-fluid -->
+    </div>
   </section>
 
-  <!-- Main content -->
+  <!-- Flash Messages -->
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <div class="alert-container" id="flashMessageContainer">
+      {% for category, message in messages %}
+      <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+        <strong>{{ message }}</strong>
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+  {% endwith %}
+
+  <!-- Main Content -->
   <section class="content">
     <div class="container-fluid">
       <div class="row">
         <div class="col-12">
           <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center">
-              <h3 class="card-title">Customer List</h3>
-             
-            </div> <!-- /.card-header -->
+            <div class="card-header">
+              <h3 class="card-title">Category List</h3>
+            </div>
 
             <!-- Card Body -->
             <div class="card-body">
               <div class="table-responsive">
-                <table id="customers" class="table table-bordered table-striped stripe" style="width:100%">
+                <table id="customers" class="display stripe nowrap" style="width:100%">
                   <thead>
                     <tr>
                       <th>Name</th>
@@ -82,60 +119,65 @@
 
                       <!-- Delete Button -->
                       <td>
-
-                         {% if session['role'] == 'admin' %}
-
+                        {% if session['role'] == 'admin' %}
                         <a href="/delete_customer/{{ i.CustomerID }}">
                           <button type="button" class="btn btn-danger" onclick="return confirm('Are you sure you want to delete {{ i.name }}?')" style="--bs-btn-padding-y: .25rem; --bs-btn-padding-x: .5rem; --bs-btn-font-size: .75rem;">
                             Delete
                           </button>
                         </a>
-
-                       {% else %}
-                        <!-- Empty cell for non-admin users -->
+                        {% else %}
                         <span>—</span>
                         {% endif %}
-
-                        
                       </td>
                     </tr>
                     {% endfor %}
                   </tbody>
                 </table>
               </div>
-            </div> <!-- /.card-body -->
-          </div> <!-- /.card -->
-        </div> <!-- /.col -->
-      </div> <!-- /.row -->
-    </div><!-- /.container-fluid -->
-  </section><!-- /.content -->
-
-</div><!-- /.content-wrapper -->
-
-{% endblock content %}
+            </div>
+            <!-- /.card-body -->
+          </div>
+          <!-- /.card -->
+        </div>
+      </div>
+    </div>
+  </section>
+  <!-- /.content -->
+</div>
+<!-- /.content-wrapper -->
+{% endblock %}
 
 {% block javascripts %}
+<!-- jQuery -->
 <script src="/static/assets/plugins/jquery/jquery.min.js"></script>
+<!-- Bootstrap Bundle -->
 <script src="/static/assets/plugins/bootstrap/js/bootstrap.bundle.min.js"></script>
+<!-- AdminLTE -->
 <script src="/static/assets/js/adminlte.js"></script>
+<!-- DataTables -->
 <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/responsive/2.3.0/js/dataTables.responsive.min.js"></script>
 
 <script>
   $(document).ready(function() {
     $('#customers').DataTable({
-      "paging": true,
-      "searching": true,
-      "ordering": true,
-      "responsive": true,
-      "stripeClasses": ['odd', 'even'],  // Ensures stripe styling (alternating rows)
-      "language": {
-        "paginate": {
-          "next": 'Next',
-          "previous": 'Previous'
+      paging: true,
+      searching: true,
+      ordering: true,
+      responsive: true,
+      stripeClasses: ['odd', 'even'],
+      language: {
+        paginate: {
+          next: 'Next',
+          previous: 'Previous'
         }
       }
     });
+
+    // Flash message fade-in and fade-out effect
+    if ($('#flashMessageContainer').length) {
+      $('#flashMessageContainer').fadeIn(500).delay(3000).fadeOut(1000);
+    }
   });
 </script>
-{% endblock javascripts %}
+{% endblock %}

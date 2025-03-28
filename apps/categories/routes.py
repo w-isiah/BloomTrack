@@ -90,7 +90,7 @@ def edit_category(category_id):
             cursor.close()
             connection.close()
 
-        return redirect(url_for('categories_blueprint.manage_category'))
+        return redirect(url_for('categories_blueprint.categories'))
 
     elif request.method == 'GET':
         # Retrieve the category to pre-fill the form
@@ -105,7 +105,7 @@ def edit_category(category_id):
             return render_template('categories/edit_category.html', category=category,segment='categories')
         else:
             flash("Category not found.", "danger")
-            return redirect(url_for('categories_blueprint.manage_category'))
+            return redirect(url_for('categories_blueprint.categories'))
 
 
 @blueprint.route('/delete_category/<int:category_id>')
@@ -125,7 +125,7 @@ def delete_category(category_id):
         cursor.close()
         connection.close()
 
-    return redirect(url_for('categories_blueprint.manage_category'))
+    return redirect(url_for('categories_blueprint.categories'))
 
 
 @blueprint.route('/<template>')

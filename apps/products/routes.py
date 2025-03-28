@@ -6,6 +6,8 @@ from werkzeug.utils import secure_filename
 from mysql.connector import Error
 from apps import get_db_connection
 from apps.products import blueprint
+import mysql.connector
+
 
 # Helper function to calculate formatted totals
 def calculate_formatted_totals(products):
@@ -89,7 +91,7 @@ def add_product():
         price = request.form.get('price')
         name = request.form.get('name')
         description = request.form.get('description')
-        quantity = request.form.get('quantity')
+        quantity = 0
         reorder_level = request.form.get('reorder_level')
 
         # Check for existing product with the same name in the selected category
@@ -208,6 +210,20 @@ def edit_product(product_id):
     connection.close()
 
     return render_template('products/edit_product.html', product=product, categories=categories)
+
+
+
+
+@blueprint.route('/delete_product/<string:get_id>')
+def delete_product(get_id):
+    connection = get_db_connection()
+    cursor = connection.cursor(dictionary=True)
+    cursor.execute('DELETE FROM product_list WHERE ProductID = %s', (get_id,))
+    connection.commit()
+    cursor.close()
+    connection.close()
+    return redirect(url_for('products_blueprint.products'))
+
 
 
 # Route to restock product

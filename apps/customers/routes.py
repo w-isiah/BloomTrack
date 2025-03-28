@@ -106,6 +106,31 @@ def edit_customer(customer_id):
             return redirect(url_for('customers_blueprint.customers'))
 
 
+
+
+
+@blueprint.route('/delete_customer/<string:get_id>')
+def delete_customer(get_id):
+    connection = get_db_connection()
+    cursor = connection.cursor()
+    
+    # Using a parameterized query to prevent SQL injection
+    cursor.execute('DELETE FROM customer_list WHERE CustomerID = %s', (get_id,))
+    
+    # Commit the transaction to apply the changes
+    connection.commit()
+    
+    # Close the cursor and connection
+    cursor.close()
+    connection.close()
+
+    # Redirect to the 'manage_customer' route
+    return redirect(url_for('customers_blueprint.customers'))
+
+
+
+    
+
 # Dynamic route for rendering other templates
 @blueprint.route('/<template>')
 def route_template(template):

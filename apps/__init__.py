@@ -2,7 +2,7 @@ import os
 from flask import Flask
 from flask_wtf.csrf import CSRFProtect
 from importlib import import_module
-import mysql.connector
+import mysql.connector  # Ensure mysql.connector is imported
 import logging
 from apps.config import load_config
 
@@ -12,12 +12,12 @@ csrf = CSRFProtect()
 def get_db_connection():
     """Create and return a MySQL database connection using mysql.connector."""
     try:
+        # Fetch DB configuration from app.config
         connection = mysql.connector.connect(
             host=os.getenv('DB_HOST', 'localhost'),
             user=os.getenv('DB_USER', 'root'),
             password=os.getenv('DB_PASSWORD', ''),
             database=os.getenv('DB_NAME', 'pos_db')
-            # Removed DB_PORT configuration
         )
         if connection.is_connected():
             logging.info("Database connection successful.")
@@ -31,16 +31,26 @@ def register_extensions(app):
     csrf.init_app(app)
 
 def register_blueprints(app):
-    """Dynamically register blueprints from the apps module."""
-    modules = ['authentication', 'home', 'products', 'sales', 'customers', 'categories']
-    for module_name in modules:
-        module = import_module(f'apps.{module_name}.routes')
-        app.register_blueprint(module.blueprint)
+    """Dynamically register blueprints from all modules in the apps directory."""
+    for module_name in os.listdir('apps'):
+        module_path = os.path.join('apps', module_name)
+
+        # Skip non-Python files and directories like 'static', 'templates', '__pycache__', and 'config.py'
+        if not os.path.isdir(module_path) or module_name in ['static', 'templates', '__pycache__', 'config.py']:
+            continue
+        
+        try:
+            # Try to dynamically import the module
+            module = import_module(f'apps.{module_name}.routes')
+            if hasattr(module, 'blueprint'):
+                app.register_blueprint(module.blueprint)
+        except ImportError as e:
+            logging.warning(f"Could not register blueprint for module {module_name}: {e}")
 
 def create_app(config_class='Debug'):
     """Create and configure the Flask application."""
     app = Flask(__name__)
-    
+
     # Load configuration
     config = load_config(config_class)
     app.config.from_object(config)

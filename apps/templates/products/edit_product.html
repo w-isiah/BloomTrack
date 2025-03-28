@@ -1,34 +1,54 @@
 {% extends "layouts/base.html" %}
 
-{% block title %}Fixed Footer Layout{% endblock %}
+{% block title %}Dashboard{% endblock %}
 
-<!-- Element injected in the BODY element -->
-{% block body_class %}sidebar-mini layout-footer-fixed{% endblock body_class %}
+{% block body_class %}sidebar-mini{% endblock %}
 
-<!-- Specific Page CSS goes HERE -->
 {% block stylesheets %}
 <!-- Google Font: Source Sans Pro -->
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
 <!-- Font Awesome -->
 <link rel="stylesheet" href="/static/assets/plugins/fontawesome-free/css/all.min.css">
-<!-- Theme style -->
+<!-- Ionicons -->
+<link rel="stylesheet" href="https://code.ionicframework.com/ionicons/2.0.1/css/ionicons.min.css">
+<!-- AdminLTE Theme -->
 <link rel="stylesheet" href="/static/assets/css/adminlte.min.css">
-{% endblock stylesheets %}
+<!-- DataTables CSS -->
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css">
+<link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.3.0/css/responsive.dataTables.min.css">
+{% endblock %}
 
 {% block content %}
+<!-- Content Wrapper -->
 <div class="content-wrapper">
-  <!-- Content Header (Page header) -->
+
+  <!-- Flash Messages -->
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <div class="alert-container">
+      {% for category, message in messages %}
+      <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+        <strong>{{ message }}</strong>
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+  {% endwith %}
+  <!-- Content Header -->
   <section class="content-header">
     <div class="container-fluid">
       <div class="row mb-2">
         <div class="col-sm-6">
-          <h1>Fixed Footer Layout</h1>
+          <h1>Edit Item</h1>
         </div>
         <div class="col-sm-6">
           <ol class="breadcrumb float-sm-right">
             <li class="breadcrumb-item"><a href="#">Home</a></li>
             <li class="breadcrumb-item"><a href="#">Layout</a></li>
-            <li class="breadcrumb-item active">Fixed Footer Layout</li>
+            <li class="breadcrumb-item active">Edit Product</li>
           </ol>
         </div>
       </div>
@@ -54,6 +74,7 @@
                 </button>
               </div>
             </div>
+
             <div class="card-body">
               <div class="widget-content nopadding">
                 <form action="{{ url_for('products_blueprint.edit_product', product_id=product.ProductID) }}" method="POST" enctype="multipart/form-data" class="form-horizontal">
@@ -61,7 +82,7 @@
                   <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
 
                   <!-- Category Selection -->
-                  <div class="row mb-3">
+                  <div class="form-group row mb-3">
                     <label for="category_id" class="col-sm-2 col-form-label">Category:</label>
                     <div class="col-sm-10">
                       <select name="category_id" class="form-control">
@@ -75,31 +96,31 @@
                   </div>
 
                   <!-- SKU Input -->
-                  <div class="row mb-3">
+                  <div class="form-group row mb-3">
                     <label for="serial_no" class="col-sm-2 col-form-label">SKU:</label>
                     <div class="col-sm-10">
-                      <input type="text" value="{{ product.sku }}" name="serial_no" class="form-control" />
+                      <input type="text" name="serial_no" class="form-control" value="{{ product.sku }}">
                     </div>
                   </div>
 
                   <!-- Product Name Input -->
-                  <div class="row mb-3">
+                  <div class="form-group row mb-3">
                     <label for="name" class="col-sm-2 col-form-label">Name:</label>
                     <div class="col-sm-10">
-                      <input type="text" required name="name" class="form-control" value="{{ product.name }}" placeholder="Enter Product Name" />
+                      <input type="text" name="name" class="form-control" value="{{ product.name }}" placeholder="Enter Product Name" required>
                     </div>
                   </div>
 
                   <!-- Price Input -->
-                  <div class="row mb-3">
+                  <div class="form-group row mb-3">
                     <label for="price" class="col-sm-2 col-form-label">Price:</label>
                     <div class="col-sm-10">
-                      <input type="text" required name="price" class="form-control" value="{{ product.price }}" placeholder="Enter Product Buying Price" />
+                      <input type="text" name="price" class="form-control" value="{{ product.price }}" placeholder="Enter Product Buying Price" required>
                     </div>
                   </div>
 
                   <!-- Product Description -->
-                  <div class="row mb-3">
+                  <div class="form-group row mb-3">
                     <label for="description" class="col-sm-2 col-form-label">Product Description:</label>
                     <div class="col-sm-10">
                       <textarea name="description" class="form-control" placeholder="Enter Product Description">{{ product.description }}</textarea>
@@ -107,15 +128,15 @@
                   </div>
 
                   <!-- Reorder Level Input -->
-                  <div class="row mb-3">
+                  <div class="form-group row mb-3">
                     <label for="reorder_level" class="col-sm-2 col-form-label">Reorder Level:</label>
                     <div class="col-sm-10">
-                      <input type="number" required name="reorder_level" class="form-control" value="{{ product.reorder_level }}" placeholder="Enter Reorder Level" min="1" />
+                      <input type="number" name="reorder_level" class="form-control" value="{{ product.reorder_level }}" placeholder="Enter Reorder Level" min="1" required>
                     </div>
                   </div>
 
                   <!-- Current Image Display -->
-                  <div class="row mb-3">
+                  <div class="form-group row mb-3">
                     <label for="image" class="col-sm-2 col-form-label">Current Image:</label>
                     <div class="col-sm-10">
                       {% if product.image %}
@@ -127,16 +148,16 @@
                   </div>
 
                   <!-- Image Upload -->
-                  <div class="row mb-3">
+                  <div class="form-group row mb-3">
                     <label for="image" class="col-sm-2 col-form-label">Upload New Image (Optional):</label>
                     <div class="col-sm-10">
-                      <input type="file" name="image" class="form-control" />
+                      <input type="file" name="image" class="form-control">
                     </div>
                   </div>
 
                   <!-- Submit Button -->
                   <div class="form-actions">
-                    <button type="submit" class="btn btn-sm btn-success" style="--bs-btn-padding-y: .25rem; --bs-btn-padding-x: .5rem; --bs-btn-font-size: .75rem;">Save Changes</button>
+                    <button type="submit" class="btn btn-success btn-sm">Save Changes</button>
                   </div>
                 </form>
               </div>
@@ -153,7 +174,6 @@
 </div>
 {% endblock content %}
 
-<!-- Specific Page JS goes HERE -->
 {% block javascripts %}
 <!-- jQuery -->
 <script src="/static/assets/plugins/jquery/jquery.min.js"></script>
@@ -163,4 +183,5 @@
 <script src="/static/assets/js/adminlte.min.js"></script>
 <!-- AdminLTE for demo purposes -->
 <script src="/static/assets/js/demo.js"></script>
+<script src="/static/assets/js/mine.js"></script>
 {% endblock javascripts %}

@@ -1,6 +1,6 @@
 {% extends "layouts/base.html" %}
 
-{% block title %}Fixed Footer Layout{% endblock %}
+{% block title %}Edit Customer{% endblock %}
 
 <!-- Element injected into the BODY element -->
 {% block body_class %}sidebar-mini layout-footer-fixed{% endblock body_class %}
@@ -28,12 +28,28 @@
           <ol class="breadcrumb float-sm-right">
             <li class="breadcrumb-item"><a href="/index">Home</a></li>
             <li class="breadcrumb-item"><a href="/customers">Customers</a></li>
-            <li class="breadcrumb-item active">edit_customer</li>
+            <li class="breadcrumb-item active">Edit Customer</li>
           </ol>
         </div>
       </div>
     </div><!-- /.container-fluid -->
   </section>
+
+  <!-- Flash Messages -->
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <div class="alert-container">
+      {% for category, message in messages %}
+      <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+        <strong>{{ message }}</strong>
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+  {% endwith %}
 
   <!-- Main content -->
   <section class="content">
@@ -43,16 +59,7 @@
           <!-- Default box -->
           <div class="card">
             <div class="card-header">
-              <h3 class="card-title">Title</h3>
-
-              <div class="card-tools">
-                <button type="button" class="btn btn-tool" data-card-widget="collapse" title="Collapse">
-                  <i class="fas fa-minus"></i>
-                </button>
-                <button type="button" class="btn btn-tool" data-card-widget="remove" title="Remove">
-                  <i class="fas fa-times"></i>
-                </button>
-              </div>
+              <h3 class="card-title">Edit Customer Information</h3>
             </div>
             <div class="card-body">
 

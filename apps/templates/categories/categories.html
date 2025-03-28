@@ -16,11 +16,49 @@
 <!-- DataTables CSS -->
 <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css">
 <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.3.0/css/responsive.dataTables.min.css">
+<!-- Custom CSS for Flash Messages -->
+<style>
+  .alert-container {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 9999;
+    width: 80%;
+    display: none;
+  }
+
+  .alert {
+    opacity: 1;
+    transition: opacity 1s ease-out;
+    margin-bottom: 10px;
+  }
+
+  .alert.alert-dismissible {
+    padding-right: 30px;
+  }
+</style>
 {% endblock %}
 
 {% block content %}
 <!-- Content Wrapper -->
 <div class="content-wrapper">
+
+  <!-- Flash Messages -->
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <div class="alert-container" id="flashMessageContainer">
+      {% for category, message in messages %}
+      <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+        <strong>{{ message }}</strong>
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+  {% endwith %}
 
   <!-- Content Header -->
   <section class="content-header">
@@ -120,8 +158,10 @@
 <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/responsive/2.3.0/js/dataTables.responsive.min.js"></script>
 
+<!-- Custom JS to handle Flash Message Fade-in/Fade-out -->
 <script>
   $(document).ready(function() {
+    // Initialize DataTable
     $('#categoriesTable').DataTable({
       paging: true,
       searching: true,
@@ -135,6 +175,11 @@
         }
       }
     });
+
+    // Flash message fade-in and fade-out effect
+    if ($('#flashMessageContainer').length) {
+      $('#flashMessageContainer').fadeIn(500).delay(3000).fadeOut(1000);
+    }
   });
 </script>
 {% endblock %}
