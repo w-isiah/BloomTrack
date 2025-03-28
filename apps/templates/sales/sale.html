@@ -84,7 +84,7 @@
                                             <select id="product-id" name="product-id" class="form-control select2">
                                                 <option value="" disabled selected>Select Product</option>
                                                 {% for product in products %}
-                                                    <option data-available="{{ product.quantity }}" data-price="{{ product.price }}" value="{{ product.ProductID }}">{{ product.name }}|{{product.category_name}}</option>
+                                                    <option data-available="{{ product.quantity }}" data-price="{{ product.price }}" value="{{ product.ProductID }}">{{ product.name }}|{{product.category_name}}|{{product.quantity}}</option>
                                                 {% endfor %}
                                             </select>
                                         </div>
@@ -187,6 +187,17 @@ $(document).ready(function() {
         $('#amount-tendered').trigger('keyup'); // Update change display
     }
 
+    // Show notification function
+    function showNotification(message) {
+        $('#notification-message').text(message); // Set the message
+        $('#notification').fadeIn(); // Show the notification
+
+        // Automatically hide notification after 7 seconds
+        setTimeout(function() {
+            $('#notification').fadeOut();
+        }, 9000);
+    }
+
     // Handle Add to Cart button click
     $('#add_item').on('click', function(event) {
         event.preventDefault(); // Prevent default form submission
@@ -203,17 +214,17 @@ $(document).ready(function() {
         const price = selectedOption.data('price');
 
         if (!productName) {
-            alert("Please select a product.");
+            showNotification("Please select a product.");
             return;
         }
 
         if (isNaN(quantity) || quantity < 1 || quantity > availableQty) {
-            alert(`Invalid quantity. Please enter a valid quantity between 1 and ${availableQty}.`);
+            showNotification(`Invalid quantity. Please enter a valid quantity between 1 and ${availableQty}.`);
             return;
         }
 
         if (price <= 0) {
-            alert("Invalid product price. Please select a valid product.");
+            showNotification("Invalid product price. Please select a valid product.");
             return;
         }
 
@@ -244,7 +255,7 @@ $(document).ready(function() {
         const price = parseFloat($(this).data('price'));
 
         if (newQuantity < 1 || newQuantity > maxQuantity) {
-            alert(`Quantity must be between 1 and ${maxQuantity}.`);
+            showNotification(`Quantity must be between 1 and ${maxQuantity}.`);
             $(this).val(1);
             return;
         }
@@ -282,7 +293,7 @@ $(document).ready(function() {
         if (totalAmount > 0) {
             const amountTendered = parseFloat($('#amount-tendered').val()) || 0;
             if (amountTendered < totalAmount) {
-                alert('Insufficient amount tendered. Please enter a sufficient amount.');
+                showNotification('Insufficient amount tendered. Please enter a sufficient amount.');
             } else {
                 const customerID = $('#customer-id').val();
                 const cartItems = [];
@@ -303,17 +314,6 @@ $(document).ready(function() {
                         discounted_price: discountedPrice
                     });
                 });
-
-                // Show notification function
-                function showNotification(message) {
-                    $('#notification-message').text(message); // Set the message
-                    $('#notification').fadeIn(); // Show the notification
-
-                    // Automatically hide notification after 7 seconds
-                    setTimeout(function() {
-                        $('#notification').fadeOut();
-                    }, 9000);
-                }
 
                 // Handle AJAX request
                 $.ajax({
