@@ -25,17 +25,13 @@
     <div class="container-fluid">
       <div class="row mb-2">
         <div class="col-sm-6">
-          <!-- Flash Messages -->
-          {% with messages = get_flashed_messages() %}
-            {% if messages %}
-              <div id="notification" class="notification">
-                <div class="notification-content">
-                  <span id="notification-message">{{ messages[0] }}</span>
-                  <button id="close-notification" class="close-btn">X</button>
-                </div>
-              </div>
-            {% endif %}
-          {% endwith %}
+          <div id="notification" class="notification" style="display: none;">
+            <div class="notification-content">
+                <span id="notification-message"></span>
+                <button id="close-notification" class="close-btn">X</button>
+            </div>
+        </div>
+
           <h1 class="m-0 text-dark">Dashboard</h1>
         </div>
         <div class="col-sm-6">
@@ -117,7 +113,7 @@
               </thead>
               <tbody>
                 {% for product in products_to_reorder %}
-                <tr {% if product.quantity < 5 %}class="low-stock"{% endif %}>
+                <tr {% if product.quantity < 5 %}class=""{% endif %}>
                   <td>{{ product.name }}</td>
                   <td>{{ product.quantity }}</td>
                   <td>
