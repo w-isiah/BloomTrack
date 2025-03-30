@@ -12,7 +12,7 @@
 
        <li class="nav-item d-none d-sm-inline-block">
        
-        <a href="{{ url_for('authentication_blueprint.edit_user_profile', id=session['id']) }}" class="nav-link"><span class="badge badge-primary">User Profile</span></a>
+        <a href="{{ url_for('authentication_blueprint.edit_user_profile', id=session['id']) }}" class="nav-link"><span class="badge badge-primary">{{ session['role'] }} - User Profile</span></a>
       </li>
       
     </ul>
