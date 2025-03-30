@@ -155,13 +155,13 @@
           </a>
           <ul class="nav nav-treeview">
             <li class="nav-item">
-              <a href="/customers" class="nav-link {% if 'customers' in segment %} active {% endif %}">
+              <a href="/manage_users" class="nav-link {% if 'manage_users' in segment %} active {% endif %}">
                 <i class="far fa-circle nav-icon"></i>
                 <p>View User</p>
               </a>
             </li>
             <li class="nav-item">
-              <a href="{{ url_for('customers_blueprint.add_customer') }}" class="nav-link {% if 'add_customer' in segment %} active {% endif %}">
+              <a href="add_user" class="nav-link {% if 'add_user' in segment %} active {% endif %}">
                 <i class="far fa-plus-square nav-icon"></i>
                 <p>Add User</p>
               </a>

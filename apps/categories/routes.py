@@ -9,6 +9,8 @@ import random
 import logging
 import re  # <-- Add this line
 from apps import get_db_connection
+from jinja2 import TemplateNotFound
+
 
 
 @blueprint.route('/categories')
@@ -128,31 +130,40 @@ def delete_category(category_id):
     return redirect(url_for('categories_blueprint.categories'))
 
 
+
+
 @blueprint.route('/<template>')
 def route_template(template):
-    """Renders a dynamic template page."""
+
     try:
+
         if not template.endswith('.html'):
             template += '.html'
 
+        # Detect the current page
         segment = get_segment(request)
 
+        # Serve the file (if exists) from app/templates/home/FILE.html
         return render_template("home/" + template, segment=segment)
 
     except TemplateNotFound:
         return render_template('home/page-404.html'), 404
 
-    except Exception as e:
+    except:
         return render_template('home/page-500.html'), 500
 
 
+# Helper - Extract current page name from request
 def get_segment(request):
-    """Extracts the last part of the URL path to identify the current page."""
+
     try:
+
         segment = request.path.split('/')[-1]
+
         if segment == '':
             segment = 'categories'
+
         return segment
 
-    except Exception as e:
+    except:
         return None

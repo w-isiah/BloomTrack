@@ -44,7 +44,6 @@
   <div class="card mb-4">
     <div class="card-header d-flex justify-content-between align-items-center">
       <h3 class="card-title">Sales List</h3>
-     
     </div> <!-- /.card-header -->
 
     <div class="card-body">
@@ -85,39 +84,53 @@
             <!-- /.card-header -->
             <div class="card-body">
               {% if sales %}
-
               <div class="table-responsive">
-            <table id="salesTable" class="display stripe nowrap" style="width:100%">
-              <thead>
-                      <tr>
-                        <th>Product Name</th>
-                        <th>Customer Name</th>
-                        <th>Unit Price</th>
-                        <th>Discount</th>
-                        <th>Quantity</th>
-                        <th>Date Updated</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {% for sale in sales %}
-                      <tr class="gradeX {% if sale.qty < 5 %}bg-danger text-dark{% endif %}">
-                        <td>{{ sale.product_name }}</td>
-                        <td>{{ sale.customer_name }}</td>
-                        <td>{{ sale.price }}</td>
-                        <td>{{ sale.discount }}</td>
-                        <td>{{ sale.qty }}</td>
-                        <td>{{ sale.date_updated.strftime("%m-%d %H:%M") }}</td>
-                      </tr>
-                      {% endfor %}
-                    </tbody>
-                  </table>
-                </div>
+                <table id="salesTable" class="display stripe nowrap" style="width:100%">
+                  <thead>
+                    <tr>
+                      <th>Product Name</th>
+                      <th>Customer Name</th>
+                      <th>Unit Price</th>
+                      <th>Discount</th>
+                      <th>Quantity</th>
+                      <th>Date Updated</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for sale in sales %}
+                    <tr class="gradeX {% if sale.qty < 5 %}bg-danger text-dark{% endif %}">
+                      <td>{{ sale.product_name }}</td>
+                      <td>{{ sale.customer_name }}</td>
+                      <td>{{ sale.price }}</td>
+                      <td>{{ sale.discount }}</td>
+                      <td>{{ sale.qty }}</td>
+                      <td>{{ sale.date_updated.strftime("%m-%d %H:%M") }}</td>
+                    </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
 
-                <!-- Display Total Sum below the Table -->
-                <div class="total-sum mt-3">
-                  <p><strong>Total Sales:</strong> {{ total_sales }}/=</p>
-                  <p><strong>Total Quantity Sold:</strong> {{ total_quantity }} Items</p>
+              <!-- Display Total Sum below the Table -->
+              <div class="total-sum mt-3 p-4 bg-light rounded shadow">
+                <div class="row">
+                  <div class="col-md-6">
+                    <h5 class="total-sales-text mb-2">
+                      <strong class="text-success">Total Sales:</strong>
+                      <span class="total-sales-value text-dark">{{ total_sales }}/=</span>
+                    </h5>
+                  </div>
+                  <div class="col-md-6">
+                    <h5 class="total-quantity-text mb-2">
+                      <strong class="text-primary">Total Quantity Sold:</strong>
+                      <span class="total-quantity-value text-dark">{{ total_quantity }} Items</span>
+                    </h5>
+                  </div>
                 </div>
+                <hr>
+                <!-- Export Button -->
+                <button id="exportButton" class="btn btn-outline-info btn-sm">Export Data to Excel</button>
+              </div>
               {% else %}
                 <p>No sales found for the selected date range.</p>
               {% endif %}
@@ -139,6 +152,8 @@
 <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/responsive/2.3.0/js/dataTables.responsive.min.js"></script>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.1/xlsx.full.min.js"></script>
+
 <script>
   $(document).ready(function() {
     $('#salesTable').DataTable({
@@ -146,6 +161,18 @@
       "searching": true,
       "ordering": true,
       "responsive": true
+    });
+
+    // Export data to Excel
+    $('#exportButton').click(function() {
+      var wb = XLSX.utils.book_new();
+      var ws = XLSX.utils.table_to_sheet(document.getElementById('salesTable'));
+
+      // Add the sheet to the workbook
+      XLSX.utils.book_append_sheet(wb, ws, 'Sales Data');
+
+      // Export the workbook to an Excel file
+      XLSX.writeFile(wb, 'sales_data.xlsx');
     });
   });
 </script>

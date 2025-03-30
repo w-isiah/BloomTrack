@@ -17,6 +17,28 @@
 <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css">
 <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.3.0/css/responsive.dataTables.min.css">
 <link rel="stylesheet" href="/static/assets/css/mine.css">
+
+<style>
+  .alert-container {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 9999;
+    width: 80%;
+    display: none;
+  }
+
+  .alert {
+    opacity: 1;
+    transition: opacity 1s ease-out;
+    margin-bottom: 10px;
+  }
+
+  .alert.alert-dismissible {
+    padding-right: 30px;
+  }
+</style>
 {% endblock stylesheets %}
 
 {% block content %}
@@ -27,10 +49,10 @@
         <div class="col-sm-6">
           <div id="notification" class="notification" style="display: none;">
             <div class="notification-content">
-                <span id="notification-message"></span>
-                <button id="close-notification" class="close-btn">X</button>
+              <span id="notification-message"></span>
+              <button id="close-notification" class="close-btn">X</button>
             </div>
-        </div>
+          </div>
 
           <h1 class="m-0 text-dark">Dashboard</h1>
         </div>
@@ -43,6 +65,22 @@
       </div>
     </div>
   </div>
+
+  <!-- Flash Messages -->
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <div class="alert-container" id="flashMessageContainer">
+      {% for category, message in messages %}
+      <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+        <strong>{{ message }}</strong>
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+  {% endwith %}
 
   <section class="content">
     <div class="container-fluid">
@@ -113,14 +151,13 @@
               </thead>
               <tbody>
                 {% for product in products_to_reorder %}
-                <tr {% if product.quantity < 5 %}class=""{% endif %}>
+                <tr {% if product.quantity < 5 %}class="bg-warning"{% endif %}>
                   <td>{{ product.name }}</td>
                   <td>{{ product.quantity }}</td>
                   <td>
                     {{ product.sku }}
-                    <!-- Copy Button/Icon -->
                     <button class="btn btn-sm btn-outline-primary" onclick="copyToClipboard('{{ product.sku }}')">
-                      <i class="fas fa-copy"></i> <!-- Font Awesome copy icon -->
+                      <i class="fas fa-copy"></i>
                     </button>
                   </td>
                 </tr>
@@ -150,29 +187,32 @@
       "ordering": true,
       "responsive": true
     });
+
+    // Flash message fade-in and fade-out effect
+    if ($('#flashMessageContainer').length) {
+      $('#flashMessageContainer').fadeIn(500).delay(3000).fadeOut(1000);
+    }
   });
 
   // Show notification function
   function showNotification(message) {
-    $('#notification-message').text(message); // Set the message
-    $('#notification').fadeIn(); // Show the notification
+    $('#notification-message').text(message);
+    $('#notification').fadeIn();
 
-    // Automatically hide notification after 7 seconds
     setTimeout(function() {
       $('#notification').fadeOut();
     }, 7000);
   }
 
+  // Copy SKU to clipboard
   function copyToClipboard(sku) {
-    // Create a temporary textarea element
     const tempInput = document.createElement('textarea');
-    tempInput.value = sku; // Assign SKU to the textarea
-    document.body.appendChild(tempInput); // Append the textarea to the body
-    tempInput.select(); // Select the text in the textarea
-    document.execCommand('copy'); // Execute the 'copy' command
-    document.body.removeChild(tempInput); // Remove the textarea after copying
+    tempInput.value = sku;
+    document.body.appendChild(tempInput);
+    tempInput.select();
+    document.execCommand('copy');
+    document.body.removeChild(tempInput);
 
-    // Show the notification instead of using alert
     showNotification("SKU copied to clipboard: " + sku);
   }
 </script>

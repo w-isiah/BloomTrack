@@ -7,6 +7,12 @@
       </li>
       <li class="nav-item d-none d-sm-inline-block">
         <a href="/index" class="nav-link">Home</a>
+        
+      </li>
+
+       <li class="nav-item d-none d-sm-inline-block">
+       
+        <a href="{{ url_for('authentication_blueprint.edit_user_profile', id=session['id']) }}" class="nav-link"><span class="badge badge-primary">User Profile</span></a>
       </li>
       
     </ul>

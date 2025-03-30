@@ -25,7 +25,7 @@
     transform: translateX(-50%);
     z-index: 9999;
     width: 80%;
-    display: none;
+    display: none;  /* Initially hidden */
   }
 
   .alert {
@@ -43,22 +43,6 @@
 {% block content %}
 <!-- Content Wrapper -->
 <div class="content-wrapper">
-
-  <!-- Flash Messages -->
-  {% with messages = get_flashed_messages(with_categories=true) %}
-    {% if messages %}
-    <div class="alert-container" id="flashMessageContainer">
-      {% for category, message in messages %}
-      <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-        <strong>{{ message }}</strong>
-        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-          <span aria-hidden="true">&times;</span>
-        </button>
-      </div>
-      {% endfor %}
-    </div>
-    {% endif %}
-  {% endwith %}
 
   <!-- Content Header -->
   <section class="content-header">
@@ -78,6 +62,22 @@
     </div>
   </section>
 
+  <!-- Flash Messages -->
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <div class="alert-container" id="flashMessageContainer">
+      {% for category, message in messages %}
+      <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+        <strong>{{ message }}</strong>
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+  {% endwith %}
+
   <!-- Main Content -->
   <section class="content">
     <div class="container-fluid">
@@ -91,41 +91,41 @@
             <!-- Card Body -->
             <div class="card-body">
               <div class="table-responsive">
-                <table id="categoriesTable" class="display stripe nowrap" style="width:100%">
+                <table id="customers" class="display stripe nowrap" style="width:100%">
                   <thead>
                     <tr>
                       <th>Name</th>
-                      
+                      <th>Contact</th>
+                      <th>Address</th>
                       <th>Edit</th>
                       <th>Delete</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {% for category in categories %}
+                    {% for i in customer %}
                     <tr class="gradeX">
-                      <td>{{ category.name }}</td>
-                  
+                      <td>{{ i.name }}</td>
+                      <td>{{ i.contact }}</td>
+                      <td>{{ i.address }}</td>
 
                       <!-- Edit Button -->
                       <td>
-                        <a href="/edit_category/{{ category.CategoryID }}" 
-                           class="btn btn-sm btn-warning" 
-                           style="--bs-btn-padding-y: .25rem; --bs-btn-padding-x: .5rem; --bs-btn-font-size: .75rem;">
-                          Edit
+                        <a href="/edit_customer/{{ i.CustomerID }}">
+                          <button type="button" class="btn btn-warning" style="--bs-btn-padding-y: .25rem; --bs-btn-padding-x: .5rem; --bs-btn-font-size: .75rem;">
+                            Edit
+                          </button>
                         </a>
                       </td>
 
-                      <!-- Delete Button (Visible to Admin only) -->
+                      <!-- Delete Button -->
                       <td>
                         {% if session['role'] == 'admin' %}
-                        <a href="/delete_category/{{ category.CategoryID }}" 
-                           class="btn btn-sm btn-danger" 
-                           style="--bs-btn-padding-y: .25rem; --bs-btn-padding-x: .5rem; --bs-btn-font-size: .75rem;"
-                           onclick="return confirm('Are you sure you want to delete {{ category.name }}?')">
-                          Delete
+                        <a href="/delete_customer/{{ i.CustomerID }}">
+                          <button type="button" class="btn btn-danger" onclick="return confirm('Are you sure you want to delete {{ i.name }}?')" style="--bs-btn-padding-y: .25rem; --bs-btn-padding-x: .5rem; --bs-btn-font-size: .75rem;">
+                            Delete
+                          </button>
                         </a>
                         {% else %}
-                        <!-- Empty cell for non-admin users -->
                         <span>—</span>
                         {% endif %}
                       </td>
@@ -158,11 +158,9 @@
 <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/responsive/2.3.0/js/dataTables.responsive.min.js"></script>
 
-<!-- Custom JS to handle Flash Message Fade-in/Fade-out -->
 <script>
   $(document).ready(function() {
-    // Initialize DataTable
-    $('#categoriesTable').DataTable({
+    $('#customers').DataTable({
       paging: true,
       searching: true,
       ordering: true,
