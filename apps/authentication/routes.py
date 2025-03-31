@@ -5,6 +5,7 @@ from datetime import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 import os
+import mysql.connector
 
 # Access the upload folder from the current Flask app configuration
 def allowed_file(filename):
@@ -47,6 +48,8 @@ def login():
                             'loggedin': True,
                             'id': user['id'],
                             'username': user['username'],
+                            'profile_image': user['profile_image'],
+                            'first_name': user['first_name'],
                             'role': user['role'],
                             'last_activity': datetime.utcnow()
                         })
@@ -236,9 +239,7 @@ def edit_user(id):
                 role = request.form['role']
                 profile_image = request.files.get('profile_image')
 
-                # New internal and external roles (optional, could be None if not provided)
-                a_internal_role = request.form.get('a_internal_role')  # No default value
-                a_external_role = request.form.get('a_external_role')  # No default value
+                
 
                 # Hash the password only if it was provided (otherwise, keep the existing password)
                 hashed_password = generate_password_hash(password) if password else get_user_password(cursor, id)
@@ -251,11 +252,11 @@ def edit_user(id):
                     cursor.execute('''
                         UPDATE users 
                         SET username = %s, first_name = %s, last_name = %s, other_name = %s, password = %s, role = %s, 
-                            profile_image = %s, a_internal_role = %s, a_external_role = %s 
+                            profile_image = %s
                         WHERE id = %s
                     ''', (
                         username, first_name, last_name, other_name, hashed_password, role, 
-                        profile_image_path, a_internal_role, a_external_role, id
+                        profile_image_path, id
                     ))
                     connection.commit()
                     flash('User updated successfully!', 'success')

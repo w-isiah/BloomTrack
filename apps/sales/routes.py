@@ -1,9 +1,10 @@
-from flask import render_template, request, jsonify, current_app
+from flask import render_template, request, jsonify, current_app,session
 from datetime import datetime
 import mysql.connector
 import traceback
 from apps import get_db_connection
 from apps.sales import blueprint
+import traceback
 
 
 @blueprint.route('/sales', methods=['GET'])
@@ -40,10 +41,21 @@ def sales():
 
 
 
+
+
+
+
+
 @blueprint.route('/save_sale', methods=['POST'])
 def save_sale():
+    connection = None
+    cursor = None
     try:
-        # Parse the JSON data from the request body
+        # Ensure the user is logged in (user_id should be in the session)
+        if 'id' not in session:
+            return jsonify({'message': 'You must be logged in to make a sale.'}), 401
+        
+        user_id = session['id']  # Get the logged-in user_id from the session
         data = request.get_json()
         customer_id = data.get('customer_id')
         items = data.get('cart_items')
@@ -55,8 +67,10 @@ def save_sale():
         # Check for missing required fields
         if not customer_id or not items:
             return jsonify({'message': 'Missing customer ID or cart items.'}), 400
-        if not items:  # Check if cart is empty
+        if len(items) == 0:  # Check if cart is empty
             return jsonify({'message': 'Cart items cannot be empty.'}), 400
+        if not total_price or discounted_price is None:  # Check for missing prices
+            return jsonify({'message': 'Total price or discounted price missing.'}), 400
 
         # Establish DB connection
         connection = get_db_connection()
@@ -104,9 +118,9 @@ def save_sale():
 
             # Log inventory change
             cursor.execute("""
-                INSERT INTO inventory_logs (product_id, quantity_change, reason, log_date)
-                VALUES (%s, %s, %s, NOW())
-            """, (product_id, -quantity, 'sale'))
+                INSERT INTO inventory_logs (product_id, quantity_change, reason, log_date, user_id)
+                VALUES (%s, %s, %s, NOW(), %s)
+            """, (product_id, -quantity, 'sale', user_id))
 
         # Commit the transaction
         connection.commit()

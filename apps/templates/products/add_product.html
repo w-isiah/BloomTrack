@@ -70,7 +70,7 @@
  <div class="widget-content nopadding">
       <form action="{{ url_for('products_blueprint.add_product') }}" method="POST" class="form-horizontal">
          <!-- CSRF Token for security -->
-                 <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
 
         <!-- Category Selection -->
         <div class="row mb-3">
