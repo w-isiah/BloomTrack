@@ -1,4 +1,4 @@
-from apps.restock import blueprint
+from apps.p_restock import blueprint
 from flask import render_template, request, redirect, url_for, flash, session
 import mysql.connector
 from werkzeug.utils import secure_filename
@@ -39,7 +39,7 @@ def p_restock():
         cursor.close()
         connection.close()
 
-    return render_template('restock/p_restock.html',
+    return render_template('p_restock/p_restock.html',
                            
                            products=products,
                            
@@ -101,7 +101,7 @@ def restock_item():
     cursor.close()
     connection.close()
 
-    return render_template('restock/p_restock.html', segment='restock_product', products=products)
+    return render_template('p_restock/p_restock.html', segment='p_restock', products=products)
 
 
 
@@ -120,7 +120,7 @@ def route_template(template):
         segment = get_segment(request)
 
         # Serve the file (if exists) from app/templates/home/FILE.html
-        return render_template("restock/" + template, segment=segment)
+        return render_template("home/" + template, segment=segment)
 
     except TemplateNotFound:
         return render_template('home/page-404.html'), 404
@@ -137,7 +137,7 @@ def get_segment(request):
         segment = request.path.split('/')[-1]
 
         if segment == '':
-            segment = 'restock'
+            segment = 'p_restock'
 
         return segment
 

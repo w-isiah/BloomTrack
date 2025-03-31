@@ -6,7 +6,7 @@ Copyright (c) 2019 - present AppSeed.us
 from flask import Blueprint
 
 blueprint = Blueprint(
-    'restock_blueprint',
+    'p_restock_blueprint',
     __name__,
     url_prefix=''
 )
