@@ -250,7 +250,7 @@ def route_template(template):
 
         segment = get_segment(request)
 
-        return render_template(f"home/{template}", segment=segment)
+        return render_template(f"sales/{template}", segment=segment)
 
     except TemplateNotFound:
         return render_template('home/page-404.html'), 404

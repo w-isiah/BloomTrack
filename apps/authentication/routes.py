@@ -58,6 +58,7 @@ def login():
                         flash('Login successful!', 'success')
                         return redirect(url_for('home_blueprint.index'))  # Redirect to home page after successful login
                     else:
+                        
                         flash('Incorrect username or password.', 'danger')
                         return redirect(url_for('authentication_blueprint.login'))  # Redirect to login if invalid credentials
 
