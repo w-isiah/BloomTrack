@@ -50,8 +50,8 @@
                                         <button type="button" class="btn btn-sm btn-outline-primary">View Sales</button>
                                     </a>
                                    
-                                    <a href="/discount_percentage">
-                                        <button type="button" class="btn btn-sm btn-outline-primary">Calculate Discount (%)</button>
+                                    <a href="/discount_percentage" target="_blank">
+                                        <button type="button" target="_blank" class="btn btn-sm btn-outline-primary">Calculate Discount (%)</button>
                                     </a>
                                 </div>
                                 <button type="button" class="btn btn-tool" data-card-widget="collapse" title="Collapse">
@@ -84,7 +84,7 @@
                                             <select id="product-id" name="product-id" class="form-control select2">
                                                 <option value="" disabled selected>Select Product</option>
                                                 {% for product in products %}
-                                                    <option data-available="{{ product.quantity }}" data-price="{{ product.price }}" value="{{ product.ProductID }}">{{ product.name }}|{{product.category_name}}|{{product.quantity}}</option>
+                                                    <option data-available="{{ product.quantity }}" data-price="{{ product.price }}" value="{{ product.ProductID }}">{{ product.name }}|{{product.category_name}}|{{product.price}}||{{product.quantity}}</option>
                                                 {% endfor %}
                                             </select>
                                         </div>

@@ -13,19 +13,11 @@ def register_extensions(app):
     csrf.init_app(app)
 
 def register_blueprints(app):
-    """Dynamically register blueprints from apps folder."""
-    for module_name in os.listdir('apps'):
-        module_path = os.path.join('apps', module_name)
-        if not os.path.isdir(module_path) or module_name in ['static', 'templates', '__pycache__']:
-            continue
-        try:
-            # Dynamically import the blueprint from each module's routes
-            module = import_module(f'apps.{module_name}.routes')
-            if hasattr(module, 'blueprint'):
-                app.register_blueprint(module.blueprint)
-        except ImportError as e:
-            # Handle ImportError gracefully
-            print(f"Error importing module {module_name}: {e}")
+    """Dynamically register blueprints from the apps module."""
+    modules = ['authentication', 'home', 'products', 'sales', 'customers', 'categories','p_restock']
+    for module_name in modules:
+        module = import_module(f'apps.{module_name}.routes')
+        app.register_blueprint(module.blueprint)
 
 def create_app(config_class=Config):
     """Create and configure the Flask application."""

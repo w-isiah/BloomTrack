@@ -39,7 +39,8 @@ def add_category():
         # Validate input
         if not name:
             flash("Please fill out the form!", "warning")
-        elif not re.match(r'^[A-Za-z0-9]+$', name):
+        elif not re.match(r'^[A-Za-z0-9_ ]+$', name):
+
             flash('Category name must contain only letters and numbers!', "danger")
         else:
             connection = get_db_connection()
