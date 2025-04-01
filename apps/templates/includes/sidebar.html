@@ -94,16 +94,12 @@
                 <p>Add Item</p>
               </a>
             </li>
-           
-
-
             <li class="nav-item">
               <a href="{{url_for('p_restock_blueprint.p_restock')}}" class="nav-link {% if 'p_restock' in segment %} active {% endif %}">
                 <i class="fas fa-warehouse nav-icon"></i>
                 <p>Restock Item</p>
               </a>
             </li>
-
           </ul>
         </li>
 
@@ -151,17 +147,17 @@
           </ul>
         </li>
 
-        <!-- Customers Section -->
-        <li class="nav-item has-treeview {% if 'Customers' in segment %} menu-open {% endif %}">
-          <a href="/customers" class="nav-link {% if 'Customers' in segment %} active {% endif %}">
-            <i class="nav-icon fas fa-users"></i>
+        <!-- User Accounts Section -->
+        <li class="nav-item has-treeview {% if 'User Accounts' in segment %} menu-open {% endif %}">
+          <a href="/manage_users" class="nav-link {% if 'User Accounts' in segment %} active {% endif %}">
+            <i class="nav-icon fas fa-user-cog"></i>
             <p>User Accounts <i class="fas fa-angle-left right"></i><span class="badge badge-info right">6</span></p>
           </a>
           <ul class="nav nav-treeview">
             <li class="nav-item">
               <a href="/manage_users" class="nav-link {% if 'manage_users' in segment %} active {% endif %}">
                 <i class="far fa-circle nav-icon"></i>
-                <p>View User</p>
+                <p>View Users</p>
               </a>
             </li>
             <li class="nav-item">
@@ -170,14 +166,8 @@
                 <p>Add User</p>
               </a>
             </li>
-
-
-
-
           </ul>
         </li>
-
-
 
       </ul>
     </nav>

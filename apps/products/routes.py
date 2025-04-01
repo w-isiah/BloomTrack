@@ -225,50 +225,6 @@ def delete_product(get_id):
     return redirect(url_for('products_blueprint.products'))
 
 
-
-# Route to restock product
-@blueprint.route('/restock_product', methods=['GET', 'POST'])
-def restock_product():
-    connection = get_db_connection()
-    cursor = connection.cursor(dictionary=True)
-
-    if request.method == 'POST':
-        # Retrieve form data
-        sku = request.form.get('sku')
-        restock_quantity = int(request.form.get('restock_quantity'))
-
-        # Check if the product exists
-        cursor.execute('SELECT * FROM product_list WHERE sku = %s', (sku,))
-        product = cursor.fetchone()
-
-        if product:
-            # Calculate new quantity
-            new_quantity = product['quantity'] + restock_quantity
-
-            # Update the product's quantity in the database
-            cursor.execute('UPDATE product_list SET quantity = %s WHERE sku = %s', (new_quantity, sku))
-            connection.commit()
-
-            # Log the inventory change (restock)
-            cursor.execute(""" 
-                INSERT INTO inventory_logs (product_id, quantity_change, reason, log_date)
-                VALUES (%s, %s, %s, NOW()) 
-            """, (product['ProductID'], restock_quantity, 'restock'))
-            connection.commit()
-
-            # Flash a success message to the user
-            flash(f"Product with SKU {sku} has been restocked successfully. New quantity: {new_quantity}.")
-        else:
-            # Flash an error message if the product does not exist
-            flash(f"Product with SKU {sku} does not exist!")
-
-    cursor.close()
-    connection.close()
-
-    return render_template('products/restock_product.html', segment='restock_product')
-
-
-# Dynamic route for rendering other templates
 @blueprint.route('/<template>')
 def route_template(template):
     try:

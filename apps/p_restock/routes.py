@@ -29,7 +29,7 @@ def p_restock():
     except Error as e:
         logging.error(f"Database error: {e}")
         flash("An error occurred while fetching products.", "error")
-        return render_template('products/page-500.html'), 500
+        return render_template('home/page-500.html'), 500
 
     finally:
         cursor.close()
@@ -48,7 +48,7 @@ def restock_item():
         # Ensure the user is logged in
         if 'id' not in session:
             flash("You must be logged in to restock products.", "danger")
-            return redirect(url_for('auth.login'))  # Redirect to login if not logged in
+            return redirect(url_for('authentication_blueprint.login'))  # Redirect to login if not logged in
 
         # Retrieve form data
         sku = request.form.get('sku')

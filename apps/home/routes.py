@@ -45,7 +45,6 @@ def index():
     formatted_sales_yesterday = format_to_ugx(total_sales_yesterday['total_sales_yesterday'] if total_sales_yesterday['total_sales_yesterday'] else 0)
 
     return render_template('home/index.html', 
-                           role=session['role'], 
                            total_sales_today=formatted_sales_today,
                            total_sales_yesterday=formatted_sales_yesterday,
                            products_to_reorder=products_to_reorder, 
