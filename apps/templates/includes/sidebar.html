@@ -94,6 +94,14 @@
                 <p>Add Item</p>
               </a>
             </li>
+
+            <li class="nav-item">
+              <a href="{{url_for('p_restock_blueprint.p_restock')}}" class="nav-link {% if 'p_restock' in segment %} active {% endif %}">
+                <i class="fas fa-warehouse nav-icon"></i>
+                <p>Restock Item</p>
+              </a>
+            </li>
+            
             
           </ul>
         </li>

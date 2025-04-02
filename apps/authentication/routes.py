@@ -109,13 +109,6 @@ def logout():
     return redirect(url_for('authentication_blueprint.login'))
 
 
-
-
-
-
-
-
-
 @blueprint.route('/manage_users')
 def manage_users():
     try:
@@ -138,8 +131,6 @@ def manage_users():
     return render_template('accounts/manage_users.html', num=num, users=users)
 
 
-
-
 # New route for getting user status
 @blueprint.route('/get_user_status/<int:user_id>', methods=['GET'])
 def get_user_status(user_id):
@@ -155,11 +146,6 @@ def get_user_status(user_id):
                     return jsonify({'status': 'offline'})  # Default to offline if user not found
     except Exception as e:
         return jsonify({'status': 'offline'})
-
-
-
-
-
 
 
 @blueprint.route('/activity_logs/<int:id>', methods=['GET', 'POST'])
@@ -184,16 +170,7 @@ def activity_logs(id):
         return redirect(url_for('authentication_blueprint.index'))
 
 
-
-
-
-
-
-
-
-
-# add user
-
+# Add user
 @blueprint.route('/add_user', methods=['GET', 'POST'])
 def add_user():
     if request.method == 'POST':
@@ -211,9 +188,6 @@ def add_user():
             if image_file and allowed_file(image_file.filename):
                 profile_image = handle_image_upload(image_file)
 
-        # Password hashing for security
-        hashed_password = generate_password_hash(password)
-
         with get_db_connection() as connection:
             with connection.cursor() as cursor:
                 # Check if the username already exists
@@ -226,7 +200,7 @@ def add_user():
                     cursor.execute(''' 
                         INSERT INTO users (username, password, role, first_name, last_name, other_name, profile_image)
                         VALUES (%s, %s, %s, %s, %s, %s, %s)
-                    ''', (username, hashed_password, role, first_name, last_name, other_name, profile_image))
+                    ''', (username, password, role, first_name, last_name, other_name, profile_image))
                     connection.commit()
                     flash('User added successfully!', 'success')
                 except mysql.connector.Error as err:
@@ -234,11 +208,7 @@ def add_user():
 
         return redirect(url_for('home_blueprint.index'))  # Redirect to user management page
 
-   
     return render_template("accounts/add_user.html", role=session.get('role'), username=session.get('username'))
-
-
-
 
 
 # Handle the form submission
@@ -256,23 +226,21 @@ def edit_user(id):
                 role = request.form['role']
                 profile_image = request.files.get('profile_image')
 
-                
-
-                # Hash the password only if it was provided (otherwise, keep the existing password)
-                hashed_password = generate_password_hash(password) if password else get_user_password(cursor, id)
+                # Use the existing password if none is provided
+                password = password if password else get_user_password(cursor, id)
 
                 # Handle profile image if uploaded
                 profile_image_path = handle_profile_image(cursor, profile_image, id)
 
                 # Update the user information in the database
                 try:
-                    cursor.execute('''
+                    cursor.execute(''' 
                         UPDATE users 
                         SET username = %s, first_name = %s, last_name = %s, other_name = %s, password = %s, role = %s, 
                             profile_image = %s
                         WHERE id = %s
                     ''', (
-                        username, first_name, last_name, other_name, hashed_password, role, 
+                        username, first_name, last_name, other_name, password, role, 
                         profile_image_path, id
                     ))
                     connection.commit()
@@ -293,17 +261,16 @@ def get_user_password(cursor, user_id):
     cursor.execute('SELECT password FROM users WHERE id = %s', (user_id,))
     return cursor.fetchone()['password']
 
+
 def handle_profile_image(cursor, profile_image, user_id):
     if profile_image and allowed_file(profile_image.filename):
         filename = secure_filename(profile_image.filename)
-        file_path =os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
+        file_path = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
         profile_image.save(file_path)
         return filename
     else:
         cursor.execute('SELECT profile_image FROM users WHERE id = %s', (user_id,))
         return cursor.fetchone()['profile_image']
-
-
 
 
 # Route for deleting a user
@@ -319,13 +286,6 @@ def delete_user(id):
                 flash(f'Error: {err}', 'danger')
 
     return redirect(url_for('home_blueprint.index'))
-
-
-
-
-
-
-
 
 
 # Image upload helper function
@@ -351,9 +311,6 @@ def handle_image_upload(image_file):
     return os.path.join(UPLOAD_FOLDER, filename)
 
 
-
-    # end of  add user 
-
 @blueprint.route('/edit_user_profile/<int:id>', methods=['GET', 'POST'])
 def edit_user_profile(id):
     with get_db_connection() as connection:
@@ -369,19 +326,19 @@ def edit_user_profile(id):
                 password = request.form['password']
                 profile_image = request.files.get('profile_image')
 
-                # Hash new password if provided; otherwise, keep the current password
-                hashed_password = generate_password_hash(password) if password else get_user_password(cursor, id)
+                # Use existing password if none is provided
+                password = password if password else get_user_password(cursor, id)
                 
                 # Process profile image
                 profile_image_path = handle_profile_image(cursor, profile_image, id)
 
                 try:
                     # Update user details in the database
-                    cursor.execute('''
+                    cursor.execute(''' 
                         UPDATE users 
                         SET username = %s, first_name = %s, last_name = %s, other_name = %s, password = %s, profile_image = %s
                         WHERE id = %s
-                    ''', (username, first_name, last_name, other_name, hashed_password, profile_image_path, id))
+                    ''', (username, first_name, last_name, other_name, password, profile_image_path, id))
                     connection.commit()
                     flash('User updated successfully!', 'success')
                 except mysql.connector.Error as err:
@@ -399,9 +356,7 @@ def edit_user_profile(id):
                 flash('User not found!', 'danger')
                 return redirect(url_for('home_blueprint.index'))
 
-    
-    return render_template('accounts/edit_user_profile.html',user=user)
-
+    return render_template('accounts/edit_user_profile.html', user=user)
 
 
 

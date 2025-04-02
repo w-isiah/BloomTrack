@@ -39,9 +39,10 @@ def products():
 
     try:
         cursor.execute(''' 
-            SELECT *, (quantity * price) AS total_price
-            FROM product_list
-            ORDER BY name
+            SELECT p.*, c.name AS category_name, (p.quantity * p.price) AS total_price
+            FROM product_list p
+            JOIN category_list c ON p.category_id = c.CategoryID
+            ORDER BY p.name
         ''')
         products = cursor.fetchall()
 
@@ -62,6 +63,7 @@ def products():
                            products=products,
                            formatted_total_sum=formatted_total_sum,
                            segment='products')
+
 
 
 # Route to add a new product

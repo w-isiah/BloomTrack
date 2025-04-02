@@ -46,18 +46,18 @@
 
   <!-- Flash Messages -->
   {% with messages = get_flashed_messages(with_categories=true) %}
-    {% if messages %}
-    <div class="alert-container" id="flashMessageContainer">
-      {% for category, message in messages %}
-      <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-        <strong>{{ message }}</strong>
-        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-          <span aria-hidden="true">&times;</span>
-        </button>
-      </div>
-      {% endfor %}
+  {% if messages %}
+  <div class="alert-container" id="flashMessageContainer">
+    {% for category, message in messages %}
+    <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+      <strong>{{ message }}</strong>
+      <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+        <span aria-hidden="true">&times;</span>
+      </button>
     </div>
-    {% endif %}
+    {% endfor %}
+  </div>
+  {% endif %}
   {% endwith %}
 
   <!-- Content Header -->
@@ -111,16 +111,23 @@
                       {% for i in products %}
                       <tr>
                         <td>{{ i.sku }}</td>
-                        <td>{{ i.name }}</td>
+                        <td>
+                          {{ i.name }}  
+                          <br>
+                          <small>
+                            <b><i>Category:</i></b> {{ i.category_name }}
+                          </small>
+                        </td>
                         <td>{{ i.reorder_level }}</td>
                         <td>{{ i.quantity }}</td>
                         <td>{{ i.formatted_price }}</td>
                         <td>{{ i.formatted_total_price }}</td>
+
                         <td>
                           {% if i.image %}
-                            <img src="/static/uploads/{{ i.image }}" alt="Product Image" style="width: 100px; height: 100px; object-fit: cover; border-radius: 5px;">
+                          <img src="/static/uploads/{{ i.image }}" alt="Product Image" style="width: 100px; height: 100px; object-fit: cover; border-radius: 5px;">
                           {% else %}
-                            <span>No Image</span>
+                          <span>No Image</span>
                           {% endif %}
                         </td>
                         <td>
