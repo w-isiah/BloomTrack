@@ -108,27 +108,43 @@
                       <td>{{ i.contact }}</td>
                       <td>{{ i.address }}</td>
 
-                      <!-- Edit Button -->
+                     
+
+
+                       <!-- Edit Button -->
                       <td>
-                        <a href="/edit_customer/{{ i.CustomerID }}">
-                          <button type="button" class="btn btn-warning" style="--bs-btn-padding-y: .25rem; --bs-btn-padding-x: .5rem; --bs-btn-font-size: .75rem;">
-                            Edit
-                          </button>
+                          <a href="/edit_customer/{{ i.CustomerID }}"  
+                           class="btn btn-sm btn-warning" 
+                           style="--bs-btn-padding-y: .25rem; --bs-btn-padding-x: .5rem; --bs-btn-font-size: .75rem;">
+                          Edit
                         </a>
                       </td>
 
-                      <!-- Delete Button -->
+
+
+
+
+              
+
+
+
+                       <!-- Delete Button (Visible to Admin only) -->
                       <td>
                         {% if session['role'] == 'admin' %}
-                        <a href="/delete_customer/{{ i.CustomerID }}">
-                          <button type="button" class="btn btn-danger" onclick="return confirm('Are you sure you want to delete {{ i.name }}?')" style="--bs-btn-padding-y: .25rem; --bs-btn-padding-x: .5rem; --bs-btn-font-size: .75rem;">
-                            Delete
-                          </button>
+                       <a href="/delete_customer/{{ i.CustomerID }}"
+                           class="btn btn-sm btn-danger" 
+                           style="--bs-btn-padding-y: .25rem; --bs-btn-padding-x: .5rem; --bs-btn-font-size: .75rem;"
+                           onclick="return confirm('Are you sure you want to delete {{ i.name }}?')">
+                          Delete
                         </a>
                         {% else %}
-                        <span>—</span>
+                        <!-- Empty cell for non-admin users -->
+                        <span>Admin</span>
                         {% endif %}
                       </td>
+
+
+
                     </tr>
                     {% endfor %}
                   </tbody>
