@@ -2,6 +2,8 @@ import random
 import string
 import os
 
+from datetime import timedelta
+
 class Config:
     """Base configuration class."""
     # Absolute path to the current directory
@@ -19,6 +21,9 @@ class Config:
     MYSQL_USER = os.getenv('MYSQL_USER', 'root')
     MYSQL_PASSWORD = os.getenv('MYSQL_PASSWORD', '')
     MYSQL_DATABASE = os.getenv('MYSQL_DATABASE', 'pos_db')
+
+    # Session timeout after 30 minutes of inactivity
+    PERMANENT_SESSION_LIFETIME = timedelta(minutes=30)
 
     @staticmethod
     def init_app(app):

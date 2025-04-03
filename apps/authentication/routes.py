@@ -6,6 +6,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 import os
 import mysql.connector
+from datetime import datetime, timedelta
 
 # Access the upload folder from the current Flask app configuration
 def allowed_file(filename):
@@ -84,29 +85,99 @@ def login():
 
 
 
+
+
+@blueprint.before_app_request
+def check_inactivity():
+    """Check for session timeout due to inactivity."""
+    if 'loggedin' in session:
+        last_activity = session.get('last_activity')
+
+        if last_activity:
+            # Ensure last_activity is a naive datetime object
+            if last_activity.tzinfo is not None:
+                last_activity = last_activity.replace(tzinfo=None)
+
+            # Get the current time as a naive datetime object
+            current_time = datetime.utcnow()
+
+            # Check if the session has been inactive for more than 30 minutes
+            time_diff = current_time - last_activity
+            if time_diff > timedelta(minutes=30):  # Timeout after 30 minutes
+                try:
+                    # Log the user out and update the logout time in user_activity
+                    with get_db_connection() as connection:
+                        with connection.cursor(dictionary=True) as cursor:
+                            # Update the logout time for the current active session
+                            cursor.execute("""
+                                UPDATE user_activity 
+                                SET logout_time = %s 
+                                WHERE user_id = %s AND logout_time IS NULL
+                            """, (current_time, session['id']))
+
+                            # Set user as offline (update `is_online` field to 0)
+                            cursor.execute("UPDATE users SET is_online = 0 WHERE id = %s", (session['id'],))
+                            connection.commit()
+
+                    # Clear the session (log the user out)
+                    session.clear()  # Remove session data
+                    flash('Session expired due to inactivity.', 'warning')
+                    return redirect(url_for('authentication_blueprint.login'))
+                except Exception as e:
+                    # If any exception occurs while updating the database, log the error
+                    flash(f"An error occurred while updating the logout status: {str(e)}", 'danger')
+                    session.clear()  # Ensure the session is cleared
+                    return redirect(url_for('authentication_blueprint.login'))
+
+        # Update last_activity to the current time for future checks
+        session['last_activity'] = datetime.utcnow()
+
+
+
+
+
+
+
+
 @blueprint.route('/logout')
 def logout():
-    # Before logging out, set the logout time in the user_activity table
+    """Logs the user out and updates the logout time in the database."""
     if 'username' in session:
         username = session['username']
-
+        
         try:
+            # Get DB connection using context manager
             with get_db_connection() as connection:
                 with connection.cursor(dictionary=True) as cursor:
                     # Update the logout time for the current active session
-                    cursor.execute("UPDATE user_activity SET logout_time = %s WHERE user_id = %s AND logout_time IS NULL", 
-                                   (datetime.utcnow(), session['id']))
+                    cursor.execute("""
+                        UPDATE user_activity 
+                        SET logout_time = %s 
+                        WHERE user_id = %s AND logout_time IS NULL
+                    """, (datetime.utcnow(), session['id']))
                     
                     # Set user as offline (update `is_online` field to 0)
                     cursor.execute("UPDATE users SET is_online = 0 WHERE id = %s", (session['id'],))
-                    connection.commit()  # Commit the changes to the database
+                    
+                    # Commit the changes to the database
+                    connection.commit()
+
+                    # Optional: You can log the user activity (e.g., logging this action)
+                    print(f"User '{username}' logged out successfully.")
+        
         except Exception as e:
+            # Log any exceptions that occur during the database update
             flash(f"An error occurred while updating the logout status: {str(e)}", 'danger')
 
-    # Log out the user by clearing the session
+    # Clear the session to log out the user
     session.clear()  # Remove session data
-    flash('You have been logged out.', 'success')
+    
+    # Flash a success message to the user
+    flash('You have been logged out successfully.', 'success')
+    
+    # Redirect the user to the login page
     return redirect(url_for('authentication_blueprint.login'))
+
 
 
 @blueprint.route('/manage_users')

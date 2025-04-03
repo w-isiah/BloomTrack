@@ -38,7 +38,17 @@
 <!-- ./wrapper -->
 
 <!-- Specific Page JS goes HERE  -->
-{% block javascripts %}{% endblock javascripts %}
+{% block javascripts %}
+
+<script>
+    window.onbeforeunload = function() {
+        // Send a request to the server to log out
+        fetch("{{ url_for('authentication_blueprint.logout') }}", { method: "POST" });
+    };
+</script>
+
+
+{% endblock javascripts %}
 
 </body>
 </html>
