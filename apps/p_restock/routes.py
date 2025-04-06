@@ -11,23 +11,28 @@ import re
 from jinja2 import TemplateNotFound
 
 
-# Route for the 'products' page
+# Route for the 'products' restock page
 @blueprint.route('/p_restock')
 def p_restock():
-    """Renders the 'products' page."""
+    """Renders the 'products' restock page."""
     connection = get_db_connection()
     cursor = connection.cursor(dictionary=True)
 
     try:
-        cursor.execute(''' 
-            SELECT *
-            FROM product_list
-            ORDER BY name
+        cursor.execute('''
+            SELECT 
+                p.*, 
+                p.name AS product_name,
+                c.name AS category_name, 
+                (p.quantity * p.price) AS total_price
+            FROM product_list p
+            JOIN category_list c ON p.category_id = c.CategoryID
+            ORDER BY p.name
         ''')
         products = cursor.fetchall()
 
     except Error as e:
-        logging.error(f"Database error: {e}")
+        logging.exception("Database error while fetching products for restock.")
         flash("An error occurred while fetching products.", "error")
         return render_template('home/page-500.html'), 500
 
@@ -35,7 +40,12 @@ def p_restock():
         cursor.close()
         connection.close()
 
-    return render_template('p_restock/p_restock.html', products=products, segment='p_restock')
+    return render_template(
+        'p_restock/p_restock.html',
+        products=products,
+        segment='p_restock'
+    )
+
 
 
 # Route to restock product

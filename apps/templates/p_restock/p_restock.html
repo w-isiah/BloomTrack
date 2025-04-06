@@ -114,7 +114,10 @@
                       <tr class="gradeX">
                         <!-- SKU and Name -->
                         <td>{{ i.sku }}</td>
-                        <td>{{ i.name }}</td>
+                        <td>{{ i.name }} <br>
+                          <small>
+                            <b><i>Category:</i></b> {{ i.category_name }}
+                          </small>   </td>
                         <td>{{ i.reorder_level }}</td>
                         <td>{{ i.quantity }}</td>
 
