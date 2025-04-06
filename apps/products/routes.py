@@ -73,8 +73,9 @@ def add_product():
     cursor = connection.cursor(dictionary=True)
 
     # Fetch categories from the database
-    cursor.execute('SELECT * FROM category_list')
+    cursor.execute('SELECT * FROM category_list ORDER BY name')
     categories = cursor.fetchall()
+
 
     # Generate a random SKU
     random_num = random.randint(1005540, 9978799)

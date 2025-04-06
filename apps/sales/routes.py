@@ -22,7 +22,7 @@ def sales():
             SELECT p.*, c.name AS category_name, c.description AS category_description
             FROM product_list p
             INNER JOIN category_list c ON p.category_id = c.CategoryID
-            ORDER BY c.name
+            ORDER BY name
         ''')
         products = cursor.fetchall()
 
