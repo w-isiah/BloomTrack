@@ -1,179 +1,161 @@
 {% extends "layouts/base.html" %}
 
-{% block title %} Dashboard {% endblock %}
+{% block title %}Sales & Expenses Report{% endblock %}
 
-{% block body_class %} sidebar-mini {% endblock %}
+{% block body_class %}sidebar-mini layout-fixed{% endblock %}
 
 {% block stylesheets %}
-<!-- Google Font: Source Sans Pro -->
-<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
-<!-- Font Awesome -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700">
 <link rel="stylesheet" href="/static/assets/plugins/fontawesome-free/css/all.min.css">
-<!-- Ionicons -->
-<link rel="stylesheet" href="https://code.ionicframework.com/ionicons/2.0.1/css/ionicons.min.css">
-<!-- Theme style -->
 <link rel="stylesheet" href="/static/assets/css/adminlte.min.css">
-<!-- DataTables CSS -->
 <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css">
 <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.3.0/css/responsive.dataTables.min.css">
-{% endblock stylesheets %}
+{% endblock %}
 
 {% block content %}
-<!-- Content Wrapper. Contains page content -->
 <div class="content-wrapper">
 
-  <!-- Content Header (Page header) -->
+  <!-- Page Header -->
   <section class="content-header">
     <div class="container-fluid">
       <div class="row mb-2">
-        <div class="col-sm-6">
-          <h1>Sales Review</h1>
-        </div>
+        <div class="col-sm-6"><h1>Sales & Expenses Report</h1></div>
         <div class="col-sm-6">
           <ol class="breadcrumb float-sm-right">
             <li class="breadcrumb-item"><a href="/index">Home</a></li>
-            <li class="breadcrumb-item"><a href="/sales_view">Sales</a></li>
-            <li class="breadcrumb-item active">sales_view</li>
+            <li class="breadcrumb-item active">Sales View</li>
           </ol>
         </div>
       </div>
-    </div><!-- /.container-fluid -->
+    </div>
   </section>
 
-  <!-- Customer Table Section -->
-  <div class="card mb-4">
-    <div class="card-header d-flex justify-content-between align-items-center">
-      <h3 class="card-title">Sales List</h3>
-    </div> <!-- /.card-header -->
-
-    <div class="card-body">
-      <!-- Date Filter Form -->
-      <div class="widget-content nopadding">
-        <form method="POST" action="{{ url_for('sales_blueprint.sales_view') }}" novalidate>
-          <!-- CSRF Token for security -->
-          <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
-          <div class="row">
-            <div class="col-md-6 mb-3">
-              <label for="start_date" class="control-label">Start Date:</label>
-              <input type="date" id="start_date" name="start_date" class="form-control" value="{{ start_date }}">
-            </div>
-
-            <div class="col-md-6 mb-3">
-              <label for="end_date" class="control-label">End Date:</label>
-              <input type="date" id="end_date" name="end_date" class="form-control" value="{{ end_date }}">
-            </div>
-          </div>
-
-          <div class="form-group text-right">
-            <button type="submit" class="btn btn-sm btn-primary">Search</button>
-          </div>
-        </form>
-      </div>
-    </div>
-  </div>
-
-  <!-- Main content -->
+  <!-- Date Filter Form -->
   <section class="content">
     <div class="container-fluid">
-      <div class="row">
-        <div class="col-12">
-          <div class="card">
-            <div class="card-header">
-              <h3 class="card-title">Product List</h3>
-            </div>
-            <!-- /.card-header -->
-            <div class="card-body">
-              {% if sales %}
-              <div class="table-responsive">
-                <table id="salesTable" class="display stripe nowrap" style="width:100%">
-                  <thead>
-                    <tr>
-                      <th>Product Name</th>
-                      <th>Customer Name</th>
-                      <th>Unit Price</th>
-                      <th>Discount</th>
-                      <th>Quantity</th>
-                      <th>Date Updated</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {% for sale in sales %}
-                    <tr class="gradeX {% if sale.qty < 5 %}bg-danger text-dark{% endif %}">
-                      <td>{{ sale.product_name }}</td>
-                      <td>{{ sale.customer_name }}</td>
-                      <td>{{ sale.price }}</td>
-                      <td>{{ sale.discount }}</td>
-                      <td>{{ sale.qty }}</td>
-                      <td>{{ sale.date_updated.strftime("%m-%d %H:%M") }}</td>
-                    </tr>
-                    {% endfor %}
-                  </tbody>
-                </table>
-              </div>
+      <form method="POST" class="card card-primary card-outline p-3 mb-4">
+        <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+        <div class="row">
+          <div class="col-md-5">
+            <label>Start Date:</label>
+            <input type="date" name="start_date" class="form-control" value="{{ start_date }}">
+          </div>
+          <div class="col-md-5">
+            <label>End Date:</label>
+            <input type="date" name="end_date" class="form-control" value="{{ end_date }}">
+          </div>
+          <div class="col-md-2 d-flex align-items-end">
+            <button type="submit" class="btn btn-primary btn-block">Search</button>
+          </div>
+        </div>
+      </form>
 
-              <!-- Display Total Sum below the Table -->
-              <div class="total-sum mt-3 p-4 bg-light rounded shadow">
-                <div class="row">
-                  <div class="col-md-6">
-                    <h5 class="total-sales-text mb-2">
-                      <strong class="text-success">Total Sales:</strong>
-                      <span class="total-sales-value text-dark">{{ total_sales }}/=</span>
-                    </h5>
-                  </div>
-                  <div class="col-md-6">
-                    <h5 class="total-quantity-text mb-2">
-                      <strong class="text-primary">Total Quantity Sold:</strong>
-                      <span class="total-quantity-value text-dark">{{ total_quantity }} Items</span>
-                    </h5>
-                  </div>
-                </div>
-                <hr>
-                <!-- Export Button -->
-                <button id="exportButton" class="btn btn-outline-info btn-sm">Export Data to Excel</button>
-              </div>
-              {% else %}
-                <p>No sales found for the selected date range.</p>
-              {% endif %}
-            </div> <!-- /.card-body -->
-          </div> <!-- /.card -->
-        </div> <!-- /.col -->
-      </div> <!-- /.row -->
-    </div><!-- /.container-fluid -->
-  </section><!-- /.content -->
+      {% if searched %}
+      <!-- Sales Table -->
+      <div class="card card-success">
+        <div class="card-header"><h3 class="card-title">Sales List</h3></div>
+        <div class="card-body">
+          {% if sales %}
+          <table id="salesTable" class="table table-bordered table-striped nowrap" width="100%">
+            <thead>
+              <tr>
+                <th>Product</th>
+                <th>Customer</th>
+                <th>Price</th>
+                <th>Discount</th>
+                <th>Discounted</th>
+                <th>Qty</th>
+                <th>Date</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for s in sales %}
+              <tr>
+                <td>{{ s.product_name }}</td>
+                <td>{{ s.customer_name }}</td>
+                <td>{{ s.price }}</td>
+                <td>{{ s.discount }}%</td>
+                <td>{{ s.discounted_price }}</td>
+                <td>{{ s.qty }}</td>
+                <td>{{ s.date_updated.strftime("%Y-%m-%d %H:%M") }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+          {% else %}
+          <p>No sales data for selected date range.</p>
+          {% endif %}
+        </div>
+      </div>
 
-</div><!-- /.content-wrapper -->
+      <!-- Expenses Table -->
+      <div class="card card-danger mt-4">
+        <div class="card-header"><h3 class="card-title">Expenses List</h3></div>
+        <div class="card-body">
+          {% if expenses %}
+          <table id="expensesTable" class="table table-bordered table-striped nowrap" width="100%">
+            <thead>
+              <tr>
+                
+                <th>Person</th>
+                <th>Description</th>
+                <th>Amount</th>
+                
+                <th>Date</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for e in expenses %}
+              <tr>
+                
+                <td>{{ e.customer_name }}</td>
+                <td>{{ e.description }}</td>
+                <td>{{ e.amount }}</td>
+                <td>{{ e.date_updated.strftime("%Y-%m-%d %H:%M") }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+          {% else %}
+          <p>No expense data for selected date range.</p>
+          {% endif %}
+        </div>
+      </div>
 
-{% endblock content %}
+      <!-- Totals -->
+      <div class="card card-outline card-info mt-4">
+        <div class="card-body row text-center">
+          <div class="col-md-4">
+            <h5>Total Sales</h5>
+            <p class="text-success font-weight-bold">{{ total_sales }}/=</p>
+          </div>
+          <div class="col-md-4">
+            <h5>Total Expenses</h5>
+            <p class="text-danger font-weight-bold">{{ total_expenses }}/=</p>
+          </div>
+          <div class="col-md-4">
+            <h5>Total Quantity Sold</h5>
+            <p class="text-primary font-weight-bold">{{ total_quantity }} Items</p>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </section>
+</div>
+{% endblock %}
 
 {% block javascripts %}
 <script src="/static/assets/plugins/jquery/jquery.min.js"></script>
 <script src="/static/assets/plugins/bootstrap/js/bootstrap.bundle.min.js"></script>
-<script src="/static/assets/js/adminlte.js"></script>
+<script src="/static/assets/js/adminlte.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/responsive/2.3.0/js/dataTables.responsive.min.js"></script>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.1/xlsx.full.min.js"></script>
-
 <script>
-  $(document).ready(function() {
-    $('#salesTable').DataTable({
-      "paging": true,
-      "searching": true,
-      "ordering": true,
-      "responsive": true
-    });
-
-    // Export data to Excel
-    $('#exportButton').click(function() {
-      var wb = XLSX.utils.book_new();
-      var ws = XLSX.utils.table_to_sheet(document.getElementById('salesTable'));
-
-      // Add the sheet to the workbook
-      XLSX.utils.book_append_sheet(wb, ws, 'Sales Data');
-
-      // Export the workbook to an Excel file
-      XLSX.writeFile(wb, 'sales_data.xlsx');
-    });
+  $(function () {
+    $('#salesTable').DataTable({ responsive: true });
+    $('#expensesTable').DataTable({ responsive: true });
   });
 </script>
-{% endblock javascripts %}
+{% endblock %}

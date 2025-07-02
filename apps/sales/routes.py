@@ -142,78 +142,120 @@ def save_sale():
             connection.close()
 
 
+
+
+
+
+
+
+from datetime import datetime
+
+
+
+
+
+
+
+
 @blueprint.route('/sales_view', methods=['GET', 'POST'])
 def sales_view():
-    start_date = datetime.now().strftime('%Y-%m-%d')
-    end_date = datetime.now().strftime('%Y-%m-%d')
-
-    if request.method == 'POST':
-        start_date = request.form.get('start_date')
-        end_date = request.form.get('end_date')
-
     connection = get_db_connection()
     cursor = connection.cursor(dictionary=True)
 
-    # Queries for sales data
-    query_sales_details = """
+    today = datetime.today().strftime('%Y-%m-%d')
+    start_date = today
+    end_date = today
+    searched = False
+
+    if request.method == 'POST':
+        start_date = request.form.get('start_date') or today
+        end_date = request.form.get('end_date') or today
+        searched = True
+
+    # ---- Sales Data ----
+    cursor.execute("""
         SELECT 
-            s.salesID, 
-            p.name AS product_name, 
-            c.name AS customer_name,  
+            s.salesID,
+            p.name AS product_name,
+            c.name AS customer_name,
             s.price,
-            s.discount, 
-            s.qty, 
+            s.discount,
+            s.discounted_price,
+            s.qty,
             s.date_updated
-        FROM 
-            sales s
-        INNER JOIN 
-            product_list p ON s.ProductID = p.ProductID
-        INNER JOIN 
-            customer_list c ON s.customer_id = c.CustomerID 
-        WHERE 
-            DATE(s.date_updated) BETWEEN %s AND %s
-    """
-
-    query_sales_sum = """
-        SELECT 
-            SUM(s.price * s.qty) AS total_sales
-        FROM 
-            sales s
-        INNER JOIN 
-            product_list p ON s.ProductID = p.ProductID
-        WHERE 
-            DATE(s.date_updated) BETWEEN %s AND %s
-    """
-
-    query_sales_quantity = """
-        SELECT 
-            SUM(s.qty) AS total_quantity
-        FROM 
-            sales s
-        INNER JOIN 
-            product_list p ON s.ProductID = p.ProductID
-        WHERE 
-            DATE(s.date_updated) BETWEEN %s AND %s
-    """
-
-    cursor.execute(query_sales_details, (start_date, end_date))
+        FROM sales s
+        JOIN product_list p ON s.ProductID = p.ProductID
+        JOIN customer_list c ON s.customer_id = c.CustomerID
+        WHERE s.type = 'sales' AND DATE(s.date_updated) BETWEEN %s AND %s
+    """, (start_date, end_date))
     sales = cursor.fetchall()
 
-    cursor.execute(query_sales_sum, (start_date, end_date))
-    total_sales = cursor.fetchone()['total_sales']
+    # ---- Sales Totals ----
+    cursor.execute("""
+        SELECT 
+            SUM(s.qty) AS total_quantity,
+            SUM(s.total_price) AS total_sales
+        FROM sales s
+        WHERE s.type = 'sales' AND DATE(s.date_updated) BETWEEN %s AND %s
+    """, (start_date, end_date))
+    totals = cursor.fetchone()
+    total_sales = totals['total_sales'] or 0
+    total_quantity = totals['total_quantity'] or 0
 
-    cursor.execute(query_sales_quantity, (start_date, end_date))
-    total_quantity = cursor.fetchone()['total_quantity']
+    # ---- Expense Data ----
+    cursor.execute("""
+        SELECT 
+            s.salesID,
+            s.ProductID AS expense_code,
+            c.name AS customer_name,
+            s.price AS amount,
+            s.description,
+            s.date_updated
+        FROM sales s
+        JOIN customer_list c ON s.customer_id = c.CustomerID
+        WHERE s.type = 'expense' AND DATE(s.date_updated) BETWEEN %s AND %s
+    """, (start_date, end_date))
+    expenses = cursor.fetchall()
 
-    formatted_total_sales = "{:,.2f}".format(total_sales) if total_sales else '0.00'
-    formatted_total_quantity = "{:,}".format(total_quantity) if total_quantity else '0'
+    # ---- Expense Total ----
+    cursor.execute("""
+        SELECT 
+            SUM(s.total_price) AS total_expenses
+        FROM sales s
+        WHERE s.type = 'expense' AND DATE(s.date_updated) BETWEEN %s AND %s
+    """, (start_date, end_date))
+    expense_total = cursor.fetchone()
+    total_expenses = expense_total['total_expenses'] or 0
 
     cursor.close()
     connection.close()
 
-    return render_template('sales/sales_view.html',
-                           sales=sales, total_quantity=formatted_total_quantity,
-                           total_sales=formatted_total_sales, start_date=start_date, end_date=end_date,segment='sales_view')
+    # Format numbers
+    formatted_total_sales = f"{total_sales:,.2f}"
+    formatted_total_expenses = f"{total_expenses:,.2f}"
+    formatted_total_quantity = f"{total_quantity:,}"
+
+    return render_template(
+        'sales/sales_view.html',
+        sales=sales,
+        expenses=expenses,
+        total_sales=formatted_total_sales,
+        total_expenses=formatted_total_expenses,
+        total_quantity=formatted_total_quantity,
+        start_date=start_date,
+        end_date=end_date,
+        searched=searched,
+        segment='sales_view'
+    )
+
+
+
+
+
+
+
+
+
 
 
 @blueprint.route('/discount_percentage', methods=['GET', 'POST'])
