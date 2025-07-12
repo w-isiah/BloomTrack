@@ -9,59 +9,76 @@ from apps.expenses import blueprint
 import mysql.connector
 
 
+# Adjust if your DB connection function is named differently
 
-# Route to add a new expense
 
+
+
+
+from datetime import datetime
+import pytz
+
+# Function to get current time in Kampala timezone
+def get_kampala_time():
+    kampala = pytz.timezone("Africa/Kampala")
+    return datetime.now(kampala)
 
 @blueprint.route('/add_expense', methods=['GET', 'POST'])
 def add_expense():
     connection = get_db_connection()
     cursor = connection.cursor(dictionary=True)
 
-    # Get customers for dropdown
+    # Fetch customers for dropdown list
     cursor.execute('SELECT CustomerID, name FROM customer_list ORDER BY name')
     customers = cursor.fetchall()
 
     if request.method == 'POST':
-        name = request.form.get('name', '').strip()
+        # Get form data
+        expense_name = request.form.get('expense_name', '').strip()
         price = request.form.get('price', '').strip()
         customer_id = request.form.get('customer_id')
-        description = request.form.get('description', '').strip()  # New description field
+        description = request.form.get('description', '').strip()
 
         # Basic validation
-        if not name or not price or not customer_id:
+        if not expense_name or not price or not customer_id:
             flash("Please fill in all required fields", "danger")
             return redirect(request.url)
 
         try:
             price = float(price)
             if price <= 0:
-                raise ValueError
+                raise ValueError("Price must be positive")
         except ValueError:
-            flash("Price must be a positive number.", "danger")
+            flash("Price must be a valid positive number.", "danger")
             return redirect(request.url)
 
-        # Static or derived fields
-        product_id = f'EXP-{int(float(price) * 100)}'  # Optional logic to make it unique
+        # Auto-generated and static fields
+        product_id = f'EXP-{int(price * 100)}'  # Example logic to generate unique product ID
         expense_type = 'expense'
         qty = 1
-        discount = 0
+        discount = 0.0
         discounted_price = price
         total_price = price
 
+        # Get the current time in Kampala timezone
+        date_added = get_kampala_time()
+
+        # Insert into sales table, including the expense_name and date_added
         try:
             cursor.execute('''
                 INSERT INTO sales 
-                    (ProductID, customer_id, type, price, discount, qty, discounted_price, total_price, description)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    (ProductID, customer_id, type, price, discount, qty, discounted_price, total_price, description, expense_name, date_updated)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             ''', (
                 product_id, customer_id, expense_type, price,
-                discount, qty, discounted_price, total_price, description
+                discount, qty, discounted_price, total_price,
+                description, expense_name, date_added  # Adding date_added here
             ))
 
             connection.commit()
-            flash("Expense saved successfully in sales table!", "success")
+            flash("Expense saved successfully!", "success")
             return redirect(url_for('expenses_blueprint.add_expense'))
+
         except Exception as e:
             connection.rollback()
             flash(f"Error saving expense: {e}", "danger")
@@ -81,84 +98,84 @@ def add_expense():
 
 
 
-# Route to edit an existing expense
+
+
+
+
+
+
+from datetime import datetime
+import pytz
+
+# Function to get current time in Kampala timezone
+def get_kampala_time(as_string: bool = False, fmt: str = "%Y-%m-%d %H:%M:%S") -> datetime | str:
+    kampala_tz = pytz.timezone("Africa/Kampala")
+    kampala_time = datetime.now(kampala_tz)
+    return kampala_time.strftime(fmt) if as_string else kampala_time
+
 @blueprint.route('/edit_expense/<int:expense_id>', methods=['GET', 'POST'])
 def edit_expense(expense_id):
-    # Connect to the database
     connection = get_db_connection()
     cursor = connection.cursor(dictionary=True)
 
-    # Fetch the expense data from the database
-    cursor.execute('SELECT * FROM expense_list WHERE expenseID = %s', (expense_id,))
-    expense = cursor.fetchone()
+    try:
+        # Fetch the expense record
+        cursor.execute('SELECT * FROM sales WHERE salesID = %s', (expense_id,))
+        expense = cursor.fetchone()
 
-    if not expense:
-        flash("expense not found!")
-        return redirect(url_for('expenses_blueprint.expenses'))  # Redirect to a expenses list page or home
+        if not expense:
+            flash("Expense not found!", "warning")
+            return redirect(url_for('expenses_blueprint.list_expenses'))
 
-    # Fetch categories from the database for the dropdown
-    cursor.execute('SELECT * FROM category_list')
-    categories = cursor.fetchall()
+        # Get customer list
+        cursor.execute('SELECT CustomerID, name FROM customer_list')
+        customers = cursor.fetchall()
 
-    if request.method == 'POST':
-        # Get the form data
-        category_id = request.form.get('category_id')
-        sku = request.form.get('serial_no')
-        price = request.form.get('price')
-        name = request.form.get('name')
-        description = request.form.get('description')
-        reorder_level = request.form.get('reorder_level')
+        if request.method == 'POST':
+            # Get form data
+            customer_id = request.form.get('customer_id')
+            expense_name = request.form.get('expense_name')
+            description = request.form.get('description')
+            amount = request.form.get('amount')
 
-        # Handle image upload
-        image_filename = expense['image']  # Default to existing image if no new one is uploaded
-        image_file = request.files.get('image')
+            # Automatically set current Kampala time
+            date_updated = get_kampala_time(as_string=True)
 
-        if image_file and allowed_file(image_file.filename):
-            filename = secure_filename(image_file.filename)
-            image_filename = f"{expense_id}_{filename}"  # Rename with expense ID to avoid conflicts
-            
-            # Ensure the directory exists before saving the file
-            image_folder = os.path.join(current_app.config['UPLOAD_FOLDER'])
-            if not os.path.exists(image_folder):
-                os.makedirs(image_folder)  # Create the folder if it doesn't exist
+            # Update the expense
+            update_query = '''
+                UPDATE sales 
+                SET Customer_id = %s,
+                    expense_name = %s,
+                    description = %s,
+                    price = %s,
+                    date_updated = %s
+                WHERE salesID = %s
+            '''
+            cursor.execute(update_query, (
+                customer_id,
+                expense_name,
+                description,
+                amount,
+                date_updated,
+                expense_id
+            ))
 
-            image_path = os.path.join(image_folder, image_filename)
-            image_file.save(image_path)  # Save new image
+            connection.commit()
+            flash("Expense updated successfully!", "success")
+            return redirect(url_for('sales_blueprint.sales_view'))
 
-        # Calculate the price change if the price has been updated
-        old_price = expense['price']
-        price_change = None
+        return render_template('expenses/edit_expenses.html', expense=expense, customers=customers)
 
-        if price != old_price:
-            price_change = float(price) - float(old_price)  # Calculate the price change
+    finally:
+        cursor.close()
+        connection.close()
 
-        # Update the expense data in the database
-        cursor.execute(''' 
-            UPDATE expense_list
-            SET category_id = %s, sku = %s, price = %s, name = %s, description = %s,
-                 reorder_level = %s, image = %s, updated_at = CURRENT_TIMESTAMP
-            WHERE expenseID = %s
-        ''', (category_id, sku, price, name, description, reorder_level, image_filename, expense_id))
 
-        # If there's a price change, insert it into the inventory_logs table
-        if price_change is not None:
-            cursor.execute('''
-                INSERT INTO inventory_logs (expense_id, quantity_change, log_date, reason, price_change, old_price)
-                VALUES (%s, 0, CURRENT_TIMESTAMP, %s, %s, %s)
-            ''', (expense_id, 'Price Update', price_change, old_price))
 
-        # Commit the transaction
-        connection.commit()
 
-        flash("expense updated successfully!")
-        return redirect(url_for('expenses_blueprint.expenses'))
 
- 
 
-    cursor.close()
-    connection.close()
 
-    return render_template('expenses/edit_expense.html', expense=expense, categories=categories)
 
 
 
@@ -167,11 +184,11 @@ def edit_expense(expense_id):
 def delete_expense(get_id):
     connection = get_db_connection()
     cursor = connection.cursor(dictionary=True)
-    cursor.execute('DELETE FROM expense_list WHERE expenseID = %s', (get_id,))
+    cursor.execute('DELETE FROM sales WHERE expenseID = %s', (get_id,))
     connection.commit()
     cursor.close()
     connection.close()
-    return redirect(url_for('expenses_blueprint.expenses'))
+    return redirect(url_for('sales_blueprint.sales_view'))
 
 
 @blueprint.route('/<template>')

@@ -2,7 +2,7 @@
 
 {% block title %} Add Expense {% endblock %}
 
-{% block body_class %} sidebar-mini layout-footer-fixed {% endblock body_class %}
+{% block body_class %} sidebar-mini layout-footer-fixed {% endblock %}
 
 {% block stylesheets %}
 <!-- Google Font: Source Sans Pro -->
@@ -73,68 +73,67 @@
 
   <section class="content">
     <div class="container-fluid">
-      <div class="row">
-        <div class="col-12">
-          <div class="card">
+      <div class="row justify-content-center">
+        <div class="col-md-8">
+          <div class="card card-primary">
             <div class="card-header">
               <h3 class="card-title">New Expense Details</h3>
             </div>
-            <div class="card-body">
-              <form action="{{ url_for('expenses_blueprint.add_expense') }}" method="POST" class="form-horizontal">
-                <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+            <form action="{{ url_for('expenses_blueprint.add_expense') }}" method="POST" class="form-horizontal">
+              <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+
+              <div class="card-body">
 
                 <!-- Expense Name -->
-                <div class="row mb-3">
-                  <label for="name" class="col-sm-2 col-form-label">Expense Name:</label>
-                  <div class="col-sm-10">
-                    <input type="text" name="name" class="form-control" placeholder="Enter Expense Name" required />
+                <div class="form-group row">
+                  <label for="expense_name" class="col-sm-3 col-form-label">Expense Name<span class="text-danger">*</span>:</label>
+                  <div class="col-sm-9">
+                    <input type="text" id="expense_name" name="expense_name" class="form-control" placeholder="Enter Expense Name" required>
                   </div>
                 </div>
 
-                <!-- Price -->
-                <div class="row mb-3">
-                  <label for="price" class="col-sm-2 col-form-label">Amount:</label>
-                  <div class="col-sm-10">
-                    <input type="number" name="price" min="1" step="0.01" class="form-control" placeholder="Enter Expense Amount" required />
+                <!-- Amount (Price) -->
+                <div class="form-group row">
+                  <label for="price" class="col-sm-3 col-form-label">Amount<span class="text-danger">*</span>:</label>
+                  <div class="col-sm-9">
+                    <input type="number" id="price" name="price" min="0.01" step="0.01" class="form-control" placeholder="Enter Expense Amount" required>
                   </div>
                 </div>
 
                 <!-- Description -->
-                <div class="row mb-3">
-                  <label for="description" class="col-sm-2 col-form-label">Description:</label>
-                  <div class="col-sm-10">
-                    <textarea name="description" class="form-control" placeholder="Enter Description (optional)" rows="3"></textarea>
+                <div class="form-group row">
+                  <label for="description" class="col-sm-3 col-form-label">Description:</label>
+                  <div class="col-sm-9">
+                    <textarea id="description" name="description" class="form-control" rows="3" placeholder="Enter Description (optional)"></textarea>
                   </div>
                 </div>
 
-
-
-
-
-                <select name="customer_id" class="form-control select2" required>
-                  <option value="" disabled selected>Select a customer</option>
-                  {% for customer in customers %}
-                  <option value="{{ customer.CustomerID }}">{{ customer.name }}</option>
-                  {% endfor %}
-                </select>
-
-
-                <!-- Submit -->
-                <div class="form-actions text-end">
-                  <button type="submit" class="btn btn-success btn-sm">Save Expense</button>
+                <!-- Customer Dropdown -->
+                <div class="form-group row">
+                  <label for="customer_id" class="col-sm-3 col-form-label">Customer<span class="text-danger">*</span>:</label>
+                  <div class="col-sm-9">
+                    <select id="customer_id" name="customer_id" class="form-control select2" required>
+                      <option value="" disabled selected>Select a customer</option>
+                      {% for customer in customers %}
+                      <option value="{{ customer.CustomerID }}">{{ customer.name }}</option>
+                      {% endfor %}
+                    </select>
+                  </div>
                 </div>
-              </form>
-            </div>
-            <div class="card-footer">
-              Footer
-            </div>
+
+              </div>
+
+              <div class="card-footer text-right">
+                <button type="submit" class="btn btn-success btn-sm">Save Expense</button>
+              </div>
+            </form>
           </div>
         </div>
       </div>
     </div>
   </section>
 </div>
-{% endblock content %}
+{% endblock %}
 
 {% block javascripts %}
 <!-- jQuery -->
@@ -143,8 +142,6 @@
 <script src="/static/assets/plugins/bootstrap/js/bootstrap.bundle.min.js"></script>
 <!-- AdminLTE -->
 <script src="/static/assets/js/adminlte.min.js"></script>
-<!-- Demo -->
-<script src="/static/assets/js/demo.js"></script>
 <!-- Select2 JS -->
 <script src="/static/assets/js/select2.min.js"></script>
 <script>
@@ -156,4 +153,4 @@
     }
   });
 </script>
-{% endblock javascripts %}
+{% endblock %}
