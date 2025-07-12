@@ -10,7 +10,7 @@
 <link rel="stylesheet" href="/static/assets/css/adminlte.min.css">
 <link rel="stylesheet" href="/static/assets/css/mine.css">
 <link href="/static/assets/css//select2.min.css" rel="stylesheet" />
-  <link href="/static/assets/css/select2.min.css" rel="stylesheet" /> 
+<link href="/static/assets/css/select2.min.css" rel="stylesheet" /> 
 {% endblock stylesheets %}
 
 {% block content %}
@@ -50,7 +50,7 @@
                                     <a href="/sales_view">
                                         <button type="button" class="btn btn-sm btn-outline-primary">View Sales</button>
                                     </a>
-                                   
+                                    
                                     <a href="/discount_percentage" target="_blank">
                                         <button type="button" target="_blank" class="btn btn-sm btn-outline-primary">Calculate Discount (%)</button>
                                     </a>
@@ -75,7 +75,7 @@
                                             <select id="customer-id" name="customer-id" class="form-control select2">
                                                 <option value="" disabled selected>Select Customer</option>
                                                 {% for customer in customers %}
-                                                    <option value="{{ customer.CustomerID }}">{{ customer.name }}</option>
+                                                <option value="{{ customer.CustomerID }}">{{ customer.name }}</option>
                                                 {% endfor %}
                                             </select>
                                         </div>
@@ -85,7 +85,7 @@
                                             <select id="product-id" name="product-id" class="form-control select2">
                                                 <option value="" disabled selected>Select Product</option>
                                                 {% for product in products %}
-                                                    <option data-available="{{ product.quantity }}" data-price="{{ product.price }}" value="{{ product.ProductID }}">{{ product.name }}|{{product.category_name}}|{{product.price}}||{{product.quantity}}</option>
+                                                <option data-available="{{ product.quantity }}" data-price="{{ product.price }}" value="{{ product.ProductID }}">{{ product.name }}|{{product.category_name}}|{{product.price}}||{{product.quantity}}</option>
                                                 {% endfor %}
                                             </select>
                                         </div>
@@ -161,7 +161,7 @@
 <script src="/static/assets/js/select2.min.js"></script>
 
 <script>
-$(document).ready(function() {
+    $(document).ready(function() {
     // Initialize Select2 for dropdowns
     $('select').select2({
         placeholder: "Search...",
@@ -236,13 +236,13 @@ $(document).ready(function() {
         const discountedPrice = totalPrice - discountAmount;
 
         const row = $('<tr></tr>')
-            .data('product-id', selectedOption.val())
-            .append(`<td>${productName}</td>`)
-            .append(`<td><input type="number" class="form-control cart-qty" value="${quantity}" min="1" max="${availableQty}" data-price="${price}" data-product-id="${selectedOption.val()}"></td>`)
-            .append(`<td class="price">${totalPrice.toFixed(2)} Ugx</td>`)
-            .append(`<td class="item-discount">${discount.toFixed(2)}%</td>`)
-            .append(`<td class="discounted-price">${discountedPrice.toFixed(2)} Ugx</td>`)
-            .append(`<td><button class="btn btn-sm btn-danger remove-item">Remove</button></td>`);
+        .data('product-id', selectedOption.val())
+        .append(`<td>${productName}</td>`)
+        .append(`<td><input type="number" class="form-control cart-qty" value="${quantity}" min="1" max="${availableQty}" data-price="${price}" data-product-id="${selectedOption.val()}"></td>`)
+        .append(`<td class="price">${totalPrice.toFixed(2)} Ugx</td>`)
+        .append(`<td class="item-discount">${discount.toFixed(2)}%</td>`)
+        .append(`<td class="discounted-price">${discountedPrice.toFixed(2)} Ugx</td>`)
+        .append(`<td><button class="btn btn-sm btn-danger remove-item">Remove</button></td>`);
 
         $('#item-list').append(row);
         updateTotalAmount();
@@ -294,67 +294,63 @@ $(document).ready(function() {
         event.preventDefault(); // Prevent default button action
 
         if (totalAmount > 0) {
-            const amountTendered = parseFloat($('#amount-tendered').val()) || 0;
-            if (amountTendered < totalAmount) {
-                showNotification('Insufficient amount tendered. Please enter a sufficient amount.');
-            } else {
-                const customerID = $('#customer-id').val();
-                const cartItems = [];
+            const customerID = $('#customer-id').val();
+            const cartItems = [];
 
-                $('#item-list tr').each(function () {
-                    const productID = $(this).data('product-id');
-                    const quantity = parseInt($(this).find('.cart-qty').val());
-                    const price = parseFloat($(this).find('.price').text().replace(' Ugx', ''));
-                    const discount = parseFloat($(this).find('.item-discount').text().replace('%', ''));
-                    const discountedPrice = parseFloat($(this).find('.discounted-price').text().replace(' Ugx', ''));
+            $('#item-list tr').each(function () {
+                const productID = $(this).data('product-id');
+                const quantity = parseInt($(this).find('.cart-qty').val());
+                const price = parseFloat($(this).find('.price').text().replace(' Ugx', ''));
+                const discount = parseFloat($(this).find('.item-discount').text().replace('%', ''));
+                const discountedPrice = parseFloat($(this).find('.discounted-price').text().replace(' Ugx', ''));
 
-                    cartItems.push({
-                        product_id: productID,
-                        quantity: quantity,
-                        price: price,
-                        discount: discount,
-                        total_price: price * quantity,
-                        discounted_price: discountedPrice
-                    });
+                cartItems.push({
+                    product_id: productID,
+                    quantity: quantity,
+                    price: price,
+                    discount: discount,
+                    total_price: price * quantity,
+                    discounted_price: discountedPrice
                 });
+            });
 
-                // Handle AJAX request
-                $.ajax({
-                    url: '/save_sale',
-                    method: 'POST',
-                    contentType: 'application/json',
-                    headers: {
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                    },
-                    data: JSON.stringify({
-                        customer_id: customerID,
-                        cart_items: cartItems,
-                        total_price: totalAmount,
-                        discounted_price: totalAmount // Assuming totalAmount reflects the final discounted price
-                    }),
-                    success: function(response) {
-                        showNotification('Success: ' + response.message);
-                        $('#pos-form')[0].reset();
-                        $('#item-list').empty();
-                        $('#total-price').text('0.00 Ugx');
-                        $('#change').text('0.00 Ugx');
-                        setTimeout(() => location.reload(), 1000);
-                    },
-                    error: function(xhr) {
-                        let errorMessage = 'An error occurred';
-                        try {
-                            if (xhr.responseJSON && xhr.responseJSON.message) {
-                                errorMessage = xhr.responseJSON.message;
-                            }
-                        } catch (e) {
-                            console.error("Error parsing response:", e);
-                        }
-                        showNotification('Error: ' + errorMessage);
-                    }
-                });
+    // Handle AJAX request
+    $.ajax({
+        url: '/save_sale',
+        method: 'POST',
+        contentType: 'application/json',
+        headers: {
+            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+        },
+        data: JSON.stringify({
+            customer_id: customerID,
+            cart_items: cartItems,
+            total_price: totalAmount,
+            discounted_price: totalAmount // Assuming totalAmount reflects the final discounted price
+        }),
+        success: function(response) {
+            showNotification('Success: ' + response.message);
+            $('#pos-form')[0].reset();
+            $('#item-list').empty();
+            $('#total-price').text('0.00 Ugx');
+            $('#change').text('0.00 Ugx');
+            setTimeout(() => location.reload(), 1000);
+        },
+        error: function(xhr) {
+            let errorMessage = 'An error occurred';
+            try {
+                if (xhr.responseJSON && xhr.responseJSON.message) {
+                    errorMessage = xhr.responseJSON.message;
+                }
+            } catch (e) {
+                console.error("Error parsing response:", e);
             }
+            showNotification('Error: ' + errorMessage);
         }
     });
+}
+
+});
 
     // Close notification on button click
     $('#close-notification').on('click', function() {

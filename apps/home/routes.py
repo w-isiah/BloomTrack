@@ -4,6 +4,9 @@ from jinja2 import TemplateNotFound
 from apps import get_db_connection
 import logging
 
+from flask import redirect, url_for
+
+
 
 
 
@@ -28,28 +31,43 @@ def index():
                     flash('User not found. Please log in again.', 'error')
                     return redirect(url_for('authentication_blueprint.login'))
 
-                # Check role before proceeding
-                if user['role'] not in ['admin', 'user','super_admin']:
+                if user['role'] not in ['admin', 'user', 'super_admin']:
                     flash('You do not have permission to access this page.', 'warning')
-                    return redirect(url_for('some_other_blueprint.some_view'))  # Change as needed
+                    return redirect(url_for('some_other_blueprint.some_view'))  # Adjust as needed
 
-                # Query for total sales today
+                # Total sales today
                 cursor.execute('''
                     SELECT SUM(total_price) AS total_sales_today
                     FROM sales
-                    WHERE DATE(date_updated) = CURDATE();
+                    WHERE DATE(date_updated) = CURDATE() AND type = 'sales';
                 ''')
                 total_sales_today = cursor.fetchone()
 
-                # Query for total sales yesterday
+                # Total quantity sold today
+                cursor.execute('''
+                    SELECT SUM(qty) AS total_items_sold_today
+                    FROM sales
+                    WHERE DATE(date_updated) = CURDATE() AND type = 'sales';
+                ''')
+                total_items_sold_today = cursor.fetchone()
+
+                # Total sales yesterday
                 cursor.execute('''
                     SELECT SUM(total_price) AS total_sales_yesterday
                     FROM sales
-                    WHERE DATE(date_updated) = CURDATE() - INTERVAL 1 DAY;
+                    WHERE DATE(date_updated) = CURDATE() - INTERVAL 1 DAY AND type = 'sales';
                 ''')
                 total_sales_yesterday = cursor.fetchone()
 
-                # Query for products that need to be reordered
+                # Total expenses today
+                cursor.execute('''
+                    SELECT SUM(total_price) AS total_expenses_today
+                    FROM sales
+                    WHERE DATE(date_updated) = CURDATE() AND type = 'expense';
+                ''')
+                total_expenses_today = cursor.fetchone()
+
+                # Products to reorder
                 cursor.execute('''
                     SELECT * FROM product_list
                     WHERE reorder_level > quantity
@@ -61,6 +79,7 @@ def index():
         flash(f"An error occurred while fetching data: {str(e)}", "danger")
         return redirect(url_for('authentication_blueprint.login'))
 
+    # Formatting helpers
     def format_to_ugx(amount):
         if not amount:
             return "UGX 0"
@@ -68,14 +87,19 @@ def index():
 
     formatted_sales_today = format_to_ugx(total_sales_today.get('total_sales_today'))
     formatted_sales_yesterday = format_to_ugx(total_sales_yesterday.get('total_sales_yesterday'))
+    formatted_expenses_today = format_to_ugx(total_expenses_today.get('total_expenses_today'))
+    total_items_sold_today_value = total_items_sold_today.get('total_items_sold_today') or 0
 
     return render_template(
         'home/index.html',
         total_sales_today=formatted_sales_today,
         total_sales_yesterday=formatted_sales_yesterday,
+        total_expenses_today=formatted_expenses_today,
+        total_items_sold_today=total_items_sold_today_value,
         products_to_reorder=products_to_reorder,
         segment='index'
     )
+
 
 
 

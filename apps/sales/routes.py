@@ -6,6 +6,10 @@ from apps import get_db_connection
 from apps.sales import blueprint
 import traceback
 from flask import flash
+from flask import Blueprint, request, jsonify, session, current_app
+from datetime import datetime
+import pytz
+import traceback
 
 
 
@@ -48,16 +52,24 @@ def sales():
 
 
 
+
+# Kampala timezone function
+def get_kampala_time():
+    kampala = pytz.timezone("Africa/Kampala")
+    return datetime.now(kampala)
+
+
+
+
 @blueprint.route('/save_sale', methods=['POST'])
 def save_sale():
     connection = None
     cursor = None
     try:
-        # Ensure the user is logged in (user_id should be in the session)
         if 'id' not in session:
             return jsonify({'message': 'You must be logged in to make a sale.'}), 401
-        
-        user_id = session['id']  # Get the logged-in user_id from the session
+
+        user_id = session['id']
         data = request.get_json()
         customer_id = data.get('customer_id')
         items = data.get('cart_items')
@@ -66,75 +78,72 @@ def save_sale():
 
         current_app.logger.debug(f"Received data: {data}")
 
-        # Check for missing required fields
+        # Validate required fields
         if not customer_id or not items:
             return jsonify({'message': 'Missing customer ID or cart items.'}), 400
-        if len(items) == 0:  # Check if cart is empty
+        if len(items) == 0:
             return jsonify({'message': 'Cart items cannot be empty.'}), 400
-        if not total_price or discounted_price is None:  # Check for missing prices
+        if not total_price or discounted_price is None:
             return jsonify({'message': 'Total price or discounted price missing.'}), 400
 
-        # Establish DB connection
         connection = get_db_connection()
         cursor = connection.cursor(dictionary=True)
-
-        # Start a transaction
         connection.start_transaction()
 
         # Insert into sales_summary
-        cursor.execute(
-            'INSERT INTO sales_summary (customer_id, total_price, discounted_price) VALUES (%s, %s, %s)',
-            (customer_id, total_price, discounted_price)
-        )
-        sale_id = cursor.lastrowid  # Get the last inserted sale ID
+        cursor.execute("""
+            INSERT INTO sales_summary (customer_id, total_price, discounted_price)
+            VALUES (%s, %s, %s)
+        """, (customer_id, total_price, discounted_price))
+        sale_id = cursor.lastrowid
 
-        # Insert each item into the sales table and update inventory
         for item in items:
             product_id = item.get('product_id')
             price = item.get('price')
             quantity = item.get('quantity')
-            discount = item.get('discount', 0.00)  # Set discount to 0 if not provided
+            discount = item.get('discount', 0.00)
             total_item_price = item.get('total_price')
             discounted_item_price = item.get('discounted_price')
 
             current_app.logger.debug(f"Processing item: {item}")
 
-            # Validate item data
             if not price or not quantity or quantity <= 0:
-                return jsonify({'message': f'Invalid data for product ID {product_id}. Price or quantity is missing or invalid.'}), 400
+                return jsonify({'message': f'Invalid data for product ID {product_id}.'}), 400
             if total_item_price is None or discounted_item_price is None:
-                return jsonify({'message': f'Missing total price or discounted price for product ID {product_id}.'}), 400
+                return jsonify({'message': f'Missing price data for product ID {product_id}.'}), 400
 
-            # Insert item into the sales table
-            cursor.execute(
-                'INSERT INTO sales (ProductID, customer_id, price, discount, qty, total_price, discounted_price) '
-                'VALUES (%s, %s, %s, %s, %s, %s, %s)',
-                (product_id, customer_id, price, discount, quantity, total_item_price, discounted_item_price)
-            )
+            # Insert sale item with date_updated and type='sales'
+            log_time = get_kampala_time()
+            cursor.execute("""
+                INSERT INTO sales (
+                    ProductID, customer_id, price, discount, qty, total_price,
+                    discounted_price, date_updated, type
+                )
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+            """, (
+                product_id, customer_id, price, discount, quantity,
+                total_item_price, discounted_item_price, log_time, 'sales'
+            ))
 
-            # Update product stock in inventory
-            cursor.execute(
-                'UPDATE product_list SET quantity = quantity - %s WHERE ProductID = %s',
-                (quantity, product_id)
-            )
+            # Update inventory
+            cursor.execute("""
+                UPDATE product_list SET quantity = quantity - %s WHERE ProductID = %s
+            """, (quantity, product_id))
 
-            # Log inventory change
+            # Log inventory change with Kampala time
             cursor.execute("""
                 INSERT INTO inventory_logs (product_id, quantity_change, reason, log_date, user_id)
-                VALUES (%s, %s, %s, NOW(), %s)
-            """, (product_id, -quantity, 'sale', user_id))
+                VALUES (%s, %s, %s, %s, %s)
+            """, (product_id, -quantity, 'sale', log_time, user_id))
 
-        # Commit the transaction
         connection.commit()
-
         return jsonify({'message': 'Sale data added and inventory updated successfully!'}), 201
 
     except Exception as e:
         if connection:
             connection.rollback()
-
         current_app.logger.error(f"Error: {e}")
-        current_app.logger.error(f"Stack Trace: {traceback.format_exc()}")
+        current_app.logger.error(traceback.format_exc())
         return jsonify({'message': 'Error occurred: ' + str(e)}), 500
 
     finally:
@@ -150,7 +159,7 @@ def save_sale():
 
 
 
-from datetime import datetime
+
 
 
 

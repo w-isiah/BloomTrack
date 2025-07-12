@@ -1,46 +1,37 @@
 {% extends "layouts/base.html" %}
 
 {% block title %}Edit Expense{% endblock %}
-
 {% block body_class %}sidebar-mini{% endblock %}
 
 {% block stylesheets %}
-<!-- Google Font: Source Sans Pro -->
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
-<!-- Font Awesome -->
 <link rel="stylesheet" href="/static/assets/plugins/fontawesome-free/css/all.min.css">
-<!-- Ionicons -->
 <link rel="stylesheet" href="https://code.ionicframework.com/ionicons/2.0.1/css/ionicons.min.css">
-<!-- AdminLTE Theme -->
 <link rel="stylesheet" href="/static/assets/css/adminlte.min.css">
 {% endblock %}
 
 {% block content %}
 <div class="content-wrapper">
 
-  <!-- Flash Messages -->
   {% with messages = get_flashed_messages(with_categories=true) %}
-  {% if messages %}
-  <div class="container mt-2">
-    {% for category, message in messages %}
-    <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-      <strong>{{ message }}</strong>
-      <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-        <span aria-hidden="true">&times;</span>
-      </button>
-    </div>
-    {% endfor %}
-  </div>
-  {% endif %}
+    {% if messages %}
+      <div class="container mt-2">
+        {% for category, message in messages %}
+        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+          <strong>{{ message }}</strong>
+          <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        {% endfor %}
+      </div>
+    {% endif %}
   {% endwith %}
 
-  <!-- Content Header -->
   <section class="content-header">
     <div class="container-fluid">
       <div class="row mb-2">
-        <div class="col-sm-6">
-          <h1>Edit Expense</h1>
-        </div>
+        <div class="col-sm-6"><h1>Edit Expense</h1></div>
         <div class="col-sm-6">
           <ol class="breadcrumb float-sm-right">
             <li class="breadcrumb-item"><a href="/index">Home</a></li>
@@ -52,12 +43,10 @@
     </div>
   </section>
 
-  <!-- Main Content -->
   <section class="content">
     <div class="container-fluid">
       <div class="row justify-content-center">
         <div class="col-md-8">
-
           <div class="card card-primary">
             <div class="card-header">
               <h3 class="card-title">Edit Expense</h3>
@@ -67,44 +56,44 @@
               <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
 
               <div class="card-body">
-                <!-- Customer Select (editable now) -->
+
+                <!-- Person (Disabled) -->
                 <div class="form-group row">
                   <label for="customer_id" class="col-sm-3 col-form-label">Person</label>
                   <div class="col-sm-9">
-                    <select name="customer_id" class="form-control" required>
-                      <option disabled value="">-- Select Person --</option>
+                    <select class="form-control" disabled>
                       {% for c in customers %}
-                      <option value="{{ c.CustomerID }}" {% if c.CustomerID == expense.customer_id %}selected{% endif %}>{{ c.name }}</option>
+                        <option value="{{ c.CustomerID }}" {% if c.CustomerID == expense.customer_id %}selected{% endif %}>{{ c.name }}</option>
                       {% endfor %}
                     </select>
                   </div>
                 </div>
 
-                <!-- Expense Name (editable) -->
+                <!-- Expense Name (Disabled) -->
                 <div class="form-group row">
                   <label for="expense_name" class="col-sm-3 col-form-label">Expense Name</label>
                   <div class="col-sm-9">
-                    <input type="text" name="expense_name" class="form-control" value="{{ expense.expense_name }}" placeholder="Enter Expense Name" required>
+                    <input type="text" class="form-control" value="{{ expense.expense_name }}" disabled>
                   </div>
                 </div>
 
-                <!-- Description (editable) -->
+                <!-- Description (Disabled) -->
                 <div class="form-group row">
                   <label for="description" class="col-sm-3 col-form-label">Description</label>
                   <div class="col-sm-9">
-                    <textarea name="description" class="form-control" rows="3" placeholder="Enter Description" required>{{ expense.description }}</textarea>
+                    <textarea class="form-control" rows="3" disabled>{{ expense.description }}</textarea>
                   </div>
                 </div>
 
-                <!-- Amount (editable) -->
+                <!-- Amount (Disabled) -->
                 <div class="form-group row">
                   <label for="amount" class="col-sm-3 col-form-label">Amount</label>
                   <div class="col-sm-9">
-                    <input type="number" step="0.01" name="amount" class="form-control" value="{{ expense.amount }}" placeholder="Enter Amount" required>
+                    <input type="number" step="0.01" class="form-control" value="{{ expense.price }}" disabled>
                   </div>
                 </div>
 
-                <!-- Editable Date -->
+                <!-- Date Updated (Editable) -->
                 <div class="form-group row">
                   <label for="date_updated" class="col-sm-3 col-form-label">Date Updated</label>
                   <div class="col-sm-9">
@@ -121,13 +110,12 @@
               </div>
 
             </form>
-
           </div>
-
         </div>
       </div>
     </div>
   </section>
+
 </div>
 {% endblock %}
 

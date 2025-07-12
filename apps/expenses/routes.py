@@ -184,11 +184,13 @@ def edit_expense(expense_id):
 def delete_expense(get_id):
     connection = get_db_connection()
     cursor = connection.cursor(dictionary=True)
-    cursor.execute('DELETE FROM sales WHERE expenseID = %s', (get_id,))
+    cursor.execute('DELETE FROM sales WHERE salesID = %s', (get_id,))
     connection.commit()
     cursor.close()
     connection.close()
     return redirect(url_for('sales_blueprint.sales_view'))
+
+    
 
 
 @blueprint.route('/<template>')
