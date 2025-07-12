@@ -80,6 +80,7 @@
             <table id="salesTable" class="table table-bordered table-striped nowrap" width="100%">
               <thead>
                 <tr>
+                  <th>Sale ID </th>
                   <th>Product</th>
                   <th>Customer</th>
                   <th>Price</th>
@@ -93,6 +94,7 @@
               <tbody>
                 {% for s in sales %}
                 <tr>
+                  <td>{{ s.salesID  }}</td>
                   <td>{{ s.product_name }}</td>
                   <td>{{ s.customer_name }}</td>
                   <td>{{ s.price }}</td>
