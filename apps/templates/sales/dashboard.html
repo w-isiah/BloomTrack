@@ -1,0 +1,294 @@
+{% extends "layouts/base.html" %}
+{% block title %}Sales & Expenses Dashboard{% endblock %}
+{% block body_class %}sidebar-mini layout-fixed{% endblock %}
+
+{% block stylesheets %}
+<link rel="stylesheet" href="/static/assets/css/adminlte.min.css">
+<style>
+  .chart-container {
+    width: 100%;
+    max-width: 900px;
+    margin: 2rem auto;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="content-wrapper">
+  <section class="content-header">
+    <div class="container-fluid">
+      <h1>Sales & Expenses Dashboard</h1>
+      <form method="POST" class="form-inline mb-3">
+        <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+        <label for="start_date">Start Date:</label>
+        <input type="date" id="start_date" name="start_date" class="form-control mx-2" value="{{ start_date }}">
+        <label for="end_date">End Date:</label>
+        <input type="date" id="end_date" name="end_date" class="form-control mx-2" value="{{ end_date }}">
+        <button type="submit" class="btn btn-primary">Filter</button>
+      </form>
+    </div>
+  </section>
+
+  {% if searched %}
+  <section class="content">
+    <div class="container-fluid">
+
+      <!-- Summary Cards -->
+      <div class="row">
+        <div class="col-md-3">
+          <div class="info-box bg-success">
+            <span class="info-box-icon"><i class="fas fa-dollar-sign"></i></span>
+            <div class="info-box-content">
+              <span class="info-box-text">Total Sales (Discounted)</span>
+              <span class="info-box-number">UGX {{ total_sales | round(2) }}</span>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="info-box bg-secondary">
+            <span class="info-box-icon"><i class="fas fa-tag"></i></span>
+            <div class="info-box-content">
+              <span class="info-box-text">Total Before Discount</span>
+              <span class="info-box-number">UGX {{ total_before_discount | round(2) }}</span>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="info-box bg-warning">
+            <span class="info-box-icon"><i class="fas fa-percent"></i></span>
+            <div class="info-box-content">
+              <span class="info-box-text">Total Discount Given</span>
+              <span class="info-box-number">UGX {{ total_discount_given | round(2) }}</span>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="info-box bg-danger">
+            <span class="info-box-icon"><i class="fas fa-money-bill-wave"></i></span>
+            <div class="info-box-content">
+              <span class="info-box-text">Total Expenses</span>
+              <span class="info-box-number">UGX {{ total_expenses | round(2) }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- More summaries -->
+      <div class="row mb-4">
+        <div class="col-md-4">
+          <div class="info-box bg-info">
+            <span class="info-box-icon"><i class="fas fa-boxes"></i></span>
+            <div class="info-box-content">
+              <span class="info-box-text">Total Quantity Sold</span>
+              <span class="info-box-number">{{ total_quantity }}</span>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="info-box bg-primary">
+            <span class="info-box-icon"><i class="fas fa-users"></i></span>
+            <div class="info-box-content">
+              <span class="info-box-text">Unique Customers</span>
+              <span class="info-box-number">{{ num_customers }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Charts -->
+      <div class="chart-container">
+        <canvas id="salesExpensesChart"></canvas>
+      </div>
+
+      <div class="chart-container">
+        <canvas id="discountAvgChart"></canvas>
+      </div>
+
+      <div class="chart-container">
+        <canvas id="salesByProductChart"></canvas>
+      </div>
+
+      <div class="chart-container">
+        <canvas id="salesByCustomerChart"></canvas>
+      </div>
+
+      <div class="chart-container">
+        <canvas id="discountBracketsChart"></canvas>
+      </div>
+
+    </div>
+  </section>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block javascripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+
+<script>
+  {% if searched %}
+  // Utility to parse data for Chart.js
+  function parseTimeSeries(data) {
+    return {
+      labels: Object.keys(data),
+      values: Object.values(data)
+    };
+  }
+
+  // Sales & Expenses Line Chart
+  const salesExpensesData = {
+    labels: Object.keys({{ sales_time_series | tojson }}),
+    datasets: [
+      {
+        label: 'Sales (Discounted)',
+        data: Object.values({{ sales_time_series | tojson }}),
+        borderColor: 'green',
+        backgroundColor: 'rgba(0,128,0,0.2)',
+        fill: true,
+        tension: 0.3,
+        yAxisID: 'y',
+      },
+      {
+        label: 'Expenses',
+        data: Object.values({{ expenses_time_series | tojson }}),
+        borderColor: 'red',
+        backgroundColor: 'rgba(255,0,0,0.2)',
+        fill: true,
+        tension: 0.3,
+        yAxisID: 'y',
+      }
+    ]
+  };
+
+  const salesExpensesConfig = {
+    type: 'line',
+    data: salesExpensesData,
+    options: {
+      responsive: true,
+      interaction: {
+        mode: 'index',
+        intersect: false,
+      },
+      stacked: false,
+      scales: {
+        y: {
+          type: 'linear',
+          display: true,
+          position: 'left',
+          title: { display: true, text: 'Amount (UGX )' }
+        }
+      }
+    }
+  };
+
+  // Average Discount Line Chart
+  const discountAvgData = {
+    labels: Object.keys({{ avg_discount_time_series | tojson }}),
+    datasets: [{
+      label: 'Average Discount %',
+      data: Object.values({{ avg_discount_time_series | tojson }}),
+      borderColor: 'orange',
+      backgroundColor: 'rgba(255,165,0,0.2)',
+      fill: true,
+      tension: 0.3
+    }]
+  };
+  const discountAvgConfig = {
+    type: 'line',
+    data: discountAvgData,
+    options: {
+      responsive: true,
+      scales: {
+        y: {
+          min: 0,
+          max: 100,
+          title: { display: true, text: 'Discount (%)' }
+        }
+      }
+    }
+  };
+
+  // Sales By Product Bar Chart
+  const salesByProductData = {
+    labels: Object.keys({{ sales_by_product | tojson }}),
+    datasets: [{
+      label: 'Sales Amount (UGX )',
+      data: Object.values({{ sales_by_product | tojson }}),
+      backgroundColor: 'blue'
+    },{
+      label: 'Quantity Sold',
+      data: Object.values({{ sales_qty_by_product | tojson }}),
+      backgroundColor: 'lightblue'
+    }]
+  };
+  const salesByProductConfig = {
+    type: 'bar',
+    data: salesByProductData,
+    options: {
+      responsive: true,
+      scales: {
+        y: { beginAtZero: true, title: { display: true, text: 'Value' } }
+      }
+    }
+  };
+
+  // Sales By Customer Pie Chart
+  const salesByCustomerData = {
+    labels: Object.keys({{ sales_by_customer | tojson }}),
+    datasets: [{
+      label: 'Sales Amount (UGX )',
+      data: Object.values({{ sales_by_customer | tojson }}),
+      backgroundColor: [
+        '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF',
+        '#FF9F40', '#C9CBCF', '#66FF66', '#FF6666', '#6666FF'
+      ]
+    }]
+  };
+  const salesByCustomerConfig = {
+    type: 'pie',
+    data: salesByCustomerData,
+    options: {
+      responsive: true
+    }
+  };
+
+  // Discount Brackets Doughnut Chart
+  const discountBracketsData = {
+    labels: Object.keys({{ discount_brackets | tojson }}),
+    datasets: [{
+      label: 'Count',
+      data: Object.values({{ discount_brackets | tojson }}),
+      backgroundColor: [
+        '#4caf50', '#ffeb3b', '#ff9800', '#f44336'
+      ]
+    }]
+  };
+  const discountBracketsConfig = {
+    type: 'doughnut',
+    data: discountBracketsData,
+    options: {
+      responsive: true
+    }
+  };
+
+  // Render charts
+  window.addEventListener('DOMContentLoaded', () => {
+    const salesExpensesCtx = document.getElementById('salesExpensesChart').getContext('2d');
+    new Chart(salesExpensesCtx, salesExpensesConfig);
+
+    const discountAvgCtx = document.getElementById('discountAvgChart').getContext('2d');
+    new Chart(discountAvgCtx, discountAvgConfig);
+
+    const salesByProductCtx = document.getElementById('salesByProductChart').getContext('2d');
+    new Chart(salesByProductCtx, salesByProductConfig);
+
+    const salesByCustomerCtx = document.getElementById('salesByCustomerChart').getContext('2d');
+    new Chart(salesByCustomerCtx, salesByCustomerConfig);
+
+    const discountBracketsCtx = document.getElementById('discountBracketsChart').getContext('2d');
+    new Chart(discountBracketsCtx, discountBracketsConfig);
+  });
+  {% endif %}
+</script>
+{% endblock %}

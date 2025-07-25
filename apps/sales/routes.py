@@ -168,6 +168,15 @@ def save_sale():
 
 
 
+from flask import Blueprint, render_template, request, session, redirect, url_for, flash
+from datetime import datetime
+from decimal import Decimal, InvalidOperation
+
+
+
+
+blueprint = Blueprint('sales_blueprint', __name__)
+
 @blueprint.route('/sales_view', methods=['GET', 'POST'])
 def sales_view():
     if 'id' not in session:
@@ -178,7 +187,6 @@ def sales_view():
     cursor = connection.cursor(dictionary=True)
 
     try:
-        # Get user info from DB using session id
         cursor.execute("SELECT * FROM users WHERE id = %s", (session['id'],))
         user = cursor.fetchone()
         if not user:
@@ -186,8 +194,7 @@ def sales_view():
             return redirect(url_for('authentication_blueprint.login'))
 
         today = datetime.today().strftime('%Y-%m-%d')
-        start_date = today
-        end_date = today
+        start_date = end_date = today
         searched = False
 
         if request.method == 'POST':
@@ -195,15 +202,13 @@ def sales_view():
             end_date = request.form.get('end_date') or today
             searched = True
 
-        # ---- Sales Data ----
         cursor.execute("""
             SELECT 
                 s.salesID,
                 p.name AS product_name,
                 c.name AS customer_name,
-                s.price,
+                p.price AS current_price,
                 s.discount,
-                s.discounted_price,
                 s.qty,
                 s.date_updated
             FROM sales s
@@ -211,21 +216,44 @@ def sales_view():
             JOIN customer_list c ON s.customer_id = c.CustomerID
             WHERE s.type = 'sales' AND DATE(s.date_updated) BETWEEN %s AND %s
         """, (start_date, end_date))
-        sales = cursor.fetchall()
+        sales_raw = cursor.fetchall()
 
-        # ---- Sales Totals ----
-        cursor.execute("""
-            SELECT 
-                SUM(s.qty) AS total_quantity,
-                SUM(s.total_price) AS total_sales
-            FROM sales s
-            WHERE s.type = 'sales' AND DATE(s.date_updated) BETWEEN %s AND %s
-        """, (start_date, end_date))
-        totals = cursor.fetchone()
-        total_sales = totals['total_sales'] or 0
-        total_quantity = totals['total_quantity'] or 0
+        sales = []
+        total_sales = Decimal("0.00")
+        total_before_discount = Decimal("0.00")
+        total_quantity = 0
 
-        # ---- Expense Data ----
+        for row in sales_raw:
+            try:
+                unit_price = row['current_price'] or Decimal("0.00")
+                discount = Decimal(row['discount']) if row['discount'] is not None else Decimal("0.00")
+                qty = row['qty'] or 0
+
+                # Calculate discounted unit price
+                discount_fraction = discount / Decimal("100")
+                discounted_unit_price = unit_price - (unit_price * discount_fraction)
+
+                # Calculate line total
+                line_total = discounted_unit_price * qty
+
+                # Update row with computed values
+                row['discounted_price'] = round(discounted_unit_price, 2)
+                row['line_total'] = round(line_total, 2)
+
+                # Accumulate totals
+                total_sales += line_total
+                total_before_discount += unit_price * qty
+                total_quantity += qty
+
+                sales.append(row)
+
+            except (InvalidOperation, TypeError) as e:
+                print(f"Skipping invalid record in sales: {row} - {e}")
+                continue
+
+        total_discount_given = total_before_discount - total_sales
+
+        # Fetch expenses
         cursor.execute("""
             SELECT 
                 s.salesID,
@@ -241,10 +269,9 @@ def sales_view():
         """, (start_date, end_date))
         expenses = cursor.fetchall()
 
-        # ---- Expense Total ----
+        # Total expenses
         cursor.execute("""
-            SELECT 
-                SUM(s.total_price) AS total_expenses
+            SELECT SUM(s.price) AS total_expenses
             FROM sales s
             WHERE s.type = 'expense' AND DATE(s.date_updated) BETWEEN %s AND %s
         """, (start_date, end_date))
@@ -255,24 +282,211 @@ def sales_view():
         cursor.close()
         connection.close()
 
-    # Format numbers
-    formatted_total_sales = f"{total_sales:,.2f}"
-    formatted_total_expenses = f"{total_expenses:,.2f}"
-    formatted_total_quantity = f"{total_quantity:,}"
-
     return render_template(
         'sales/sales_view.html',
-        user=user,  # pass user to template for access to user.role etc.
+        user=user,
         sales=sales,
         expenses=expenses,
-        total_sales=formatted_total_sales,
-        total_expenses=formatted_total_expenses,
-        total_quantity=formatted_total_quantity,
+        total_sales=f"{total_sales:,.2f}",
+        total_quantity=f"{total_quantity:,}",
+        total_before_discount=f"{total_before_discount:,.2f}",
+        total_discount_given=f"{total_discount_given:,.2f}",
+        total_expenses=f"{Decimal(total_expenses):,.2f}",
         start_date=start_date,
         end_date=end_date,
         searched=searched,
         segment='sales_view'
     )
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+from flask import Blueprint, render_template, request
+from datetime import datetime, timedelta
+from decimal import Decimal
+from collections import defaultdict
+
+
+@blueprint.route('/dashboard_view', methods=['GET', 'POST'])
+def dashboard_view():
+    # Default date range: last 30 days
+    end_date = datetime.today()
+    start_date = end_date - timedelta(days=30)
+
+    if request.method == 'POST':
+        start_date_str = request.form.get('start_date')
+        end_date_str = request.form.get('end_date')
+        try:
+            if start_date_str:
+                start_date = datetime.strptime(start_date_str, '%Y-%m-%d')
+            if end_date_str:
+                end_date = datetime.strptime(end_date_str, '%Y-%m-%d')
+        except ValueError:
+            pass
+
+    start_date_str = start_date.strftime('%Y-%m-%d')
+    end_date_str = end_date.strftime('%Y-%m-%d')
+
+    connection = get_db_connection()
+    cursor = connection.cursor(dictionary=True)
+
+    try:
+        # Fetch sales
+        cursor.execute("""
+            SELECT 
+                s.salesID,
+                p.name AS product_name,
+                c.name AS customer_name,
+                p.price AS current_price,
+                s.discount,
+                s.qty,
+                s.date_updated
+            FROM sales s
+            JOIN product_list p ON s.ProductID = p.ProductID
+            JOIN customer_list c ON s.customer_id = c.CustomerID
+            WHERE s.type = 'sales' AND DATE(s.date_updated) BETWEEN %s AND %s
+        """, (start_date_str, end_date_str))
+        sales = cursor.fetchall()
+
+        # Fetch expenses
+        cursor.execute("""
+            SELECT 
+                s.salesID,
+                s.ProductID AS expense_code,
+                s.expense_name,
+                c.name AS customer_name,
+                s.price AS amount,
+                s.description,
+                s.date_updated
+            FROM sales s
+            JOIN customer_list c ON s.customer_id = c.CustomerID
+            WHERE s.type = 'expense' AND DATE(s.date_updated) BETWEEN %s AND %s
+        """, (start_date_str, end_date_str))
+        expenses = cursor.fetchall()
+
+    finally:
+        cursor.close()
+        connection.close()
+
+    # Initialize totals and aggregations
+    total_sales_discounted = Decimal('0.00')
+    total_before_discount = Decimal('0.00')
+    total_discount_given = Decimal('0.00')
+    total_expenses = Decimal('0.00')
+    total_quantity = 0
+    customers_set = set()
+
+    sales_time_series = defaultdict(Decimal)
+    expenses_time_series = defaultdict(Decimal)
+    discount_time_series = defaultdict(list)
+
+    sales_by_product = defaultdict(Decimal)
+    sales_qty_by_product = defaultdict(int)
+    sales_by_customer = defaultdict(Decimal)
+
+    discount_brackets = {
+        '0%': 0,
+        '1-10%': 0,
+        '11-20%': 0,
+        '>20%': 0
+    }
+
+    for s in sales:
+        unit_price = s['current_price'] or Decimal("0.00")
+        discount = Decimal(s['discount']) if s['discount'] is not None else Decimal("0.00")
+        qty = s['qty'] or 0
+
+        discounted_price = unit_price * (Decimal('1') - discount / Decimal('100'))
+
+        line_total_discounted = discounted_price * qty
+        line_total_before = unit_price * qty
+        line_discount = (unit_price - discounted_price) * qty
+
+        total_sales_discounted += line_total_discounted
+        total_before_discount += line_total_before
+        total_discount_given += line_discount
+        total_quantity += qty
+        customers_set.add(s['customer_name'])
+
+        date_key = s['date_updated'].strftime('%Y-%m-%d')
+        sales_time_series[date_key] += line_total_discounted
+        discount_time_series[date_key].append(float(discount))
+
+        sales_by_product[s['product_name']] += line_total_discounted
+        sales_qty_by_product[s['product_name']] += qty
+        sales_by_customer[s['customer_name']] += line_total_discounted
+
+        # Bracket counting
+        if discount == 0:
+            discount_brackets['0%'] += 1
+        elif 1 <= discount <= 10:
+            discount_brackets['1-10%'] += 1
+        elif 11 <= discount <= 20:
+            discount_brackets['11-20%'] += 1
+        else:
+            discount_brackets['>20%'] += 1
+
+    for e in expenses:
+        amount = Decimal(e['amount']) if e['amount'] else Decimal('0.00')
+        total_expenses += amount
+        date_key = e['date_updated'].strftime('%Y-%m-%d')
+        expenses_time_series[date_key] += amount
+
+    avg_discount_time_series = {}
+    for date_key, discounts in discount_time_series.items():
+        avg_discount_time_series[date_key] = round(sum(discounts) / len(discounts), 2) if discounts else 0
+
+    def sort_timeseries(ts):
+        return dict(sorted(ts.items()))
+
+    sales_time_series = sort_timeseries(sales_time_series)
+    expenses_time_series = sort_timeseries(expenses_time_series)
+    avg_discount_time_series = sort_timeseries(avg_discount_time_series)
+
+    def dec_to_float(d):
+        return float(d.quantize(Decimal('0.01')))
+
+    context = {
+        'start_date': start_date.strftime('%Y-%m-%d'),
+        'end_date': end_date.strftime('%Y-%m-%d'),
+        'searched': request.method == 'POST',
+        'total_sales': dec_to_float(total_sales_discounted),
+        'total_before_discount': dec_to_float(total_before_discount),
+        'total_discount_given': dec_to_float(total_discount_given),
+        'total_expenses': dec_to_float(total_expenses),
+        'total_quantity': total_quantity,
+        'num_customers': len(customers_set),
+        'sales_time_series': sales_time_series,
+        'expenses_time_series': expenses_time_series,
+        'avg_discount_time_series': avg_discount_time_series,
+        'sales_by_product': {k: dec_to_float(v) for k, v in sales_by_product.items()},
+        'sales_qty_by_product': sales_qty_by_product,
+        'sales_by_customer': {k: dec_to_float(v) for k, v in sales_by_customer.items()},
+        'discount_brackets': discount_brackets,
+    }
+
+    return render_template('sales/dashboard.html', **context)
+
+
 
 
 

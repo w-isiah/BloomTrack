@@ -3,11 +3,11 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="icon" href="/static/assets/img/logo2.png" type="image/x-icon">
+  <link rel="icon" href="#" type="image/x-icon">
   <link rel="canonical" href="#"/>
   
   <title>
-     Pos - {% block title %}{% endblock %} | online
+    Stock MGT - {% block title %}{% endblock %} | e_commerce
   </title> 
 
   {% block stylesheets %}{% endblock stylesheets %}
@@ -16,11 +16,13 @@
 <body class="hold-transition {% block body_class %}{% endblock body_class %}">
 <div class="wrapper">
 
- {% include 'includes/navigation.html' %}
+    {% include 'includes/navigation.html' %}
 
-
+    {% if session['role'] == 'admin' %}
         {% include 'includes/sidebar.html' %}
-
+    {% else %}
+        {% include 'includes/user_sidebar.html' %}
+    {% endif %}
 
     {% block content %}{% endblock content %}
 
@@ -36,7 +38,17 @@
 <!-- ./wrapper -->
 
 <!-- Specific Page JS goes HERE  -->
-{% block javascripts %}{% endblock javascripts %}
+{% block javascripts %}
+
+<script>
+    window.onbeforeunload = function() {
+        // Send a request to the server to log out
+        fetch("{{ url_for('authentication_blueprint.logout') }}", { method: "POST" });
+    };
+</script>
+
+
+{% endblock javascripts %}
 
 </body>
 </html>
