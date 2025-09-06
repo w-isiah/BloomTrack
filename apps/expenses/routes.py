@@ -7,14 +7,6 @@ from mysql.connector import Error
 from apps import get_db_connection
 from apps.expenses import blueprint
 import mysql.connector
-
-
-# Adjust if your DB connection function is named differently
-
-
-
-
-
 from datetime import datetime
 import pytz
 
@@ -89,30 +81,6 @@ def add_expense():
     return render_template('expenses/add_expense.html', customers=customers)
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-from datetime import datetime
-import pytz
-
-# Function to get current time in Kampala timezone
-def get_kampala_time(as_string: bool = False, fmt: str = "%Y-%m-%d %H:%M:%S") -> datetime | str:
-    kampala_tz = pytz.timezone("Africa/Kampala")
-    kampala_time = datetime.now(kampala_tz)
-    return kampala_time.strftime(fmt) if as_string else kampala_time
-
 @blueprint.route('/edit_expense/<int:expense_id>', methods=['GET', 'POST'])
 def edit_expense(expense_id):
     connection = get_db_connection()
@@ -171,15 +139,6 @@ def edit_expense(expense_id):
         connection.close()
 
 
-
-
-
-
-
-
-
-
-
 @blueprint.route('/delete_expense/<string:get_id>')
 def delete_expense(get_id):
     connection = get_db_connection()
@@ -191,8 +150,6 @@ def delete_expense(get_id):
     return redirect(url_for('sales_blueprint.sales_view'))
 
     
-
-
 @blueprint.route('/<template>')
 def route_template(template):
     try:

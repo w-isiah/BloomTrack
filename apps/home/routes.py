@@ -74,8 +74,9 @@ def index():
                     'segment': 'index'
                 }
 
-                if user['role'] == 'admin':
+                if user['role'] in ['admin', 'super_admin']:
                     return render_template('home/index.html', **context)
+
                 elif user['role'] == 'class_teacher':
                     return render_template('home/user_index.html', **context)
 

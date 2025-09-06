@@ -1,17 +1,30 @@
-from flask import render_template, request, jsonify, current_app,session
-from datetime import datetime
+from datetime import datetime, timedelta
+from decimal import Decimal, InvalidOperation
+from collections import defaultdict
+import pytz
 import mysql.connector
 import traceback
+
+from flask import (
+    Blueprint,
+    render_template,
+    request,
+    redirect,
+    url_for,
+    flash,
+    session,
+    jsonify,
+    current_app
+)
+
 from apps import get_db_connection
 from apps.sales import blueprint
-import traceback
-from flask import flash
-from flask import Blueprint, request, jsonify, session, current_app
-from datetime import datetime
-import pytz
-import traceback
 
 
+# Keep only one definition of get_kampala_time
+def get_kampala_time():
+    kampala = pytz.timezone("Africa/Kampala")
+    return datetime.now(kampala)
 
 @blueprint.route('/sales', methods=['GET'])
 def sales():
@@ -42,23 +55,6 @@ def sales():
             connection.close()
 
     return render_template('sales/sale.html', customers=customers, products=products, segment='sales')
-
-
-
-
-
-
-
-
-
-
-
-# Kampala timezone function
-def get_kampala_time():
-    kampala = pytz.timezone("Africa/Kampala")
-    return datetime.now(kampala)
-
-
 
 
 @blueprint.route('/save_sale', methods=['POST'])
@@ -154,29 +150,6 @@ def save_sale():
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-from flask import Blueprint, render_template, request, session, redirect, url_for, flash
-from datetime import datetime
-from decimal import Decimal, InvalidOperation
-
-
-
-
-blueprint = Blueprint('sales_blueprint', __name__)
-
 @blueprint.route('/sales_view', methods=['GET', 'POST'])
 def sales_view():
     if 'id' not in session:
@@ -187,21 +160,25 @@ def sales_view():
     cursor = connection.cursor(dictionary=True)
 
     try:
+        # Fetch current user
         cursor.execute("SELECT * FROM users WHERE id = %s", (session['id'],))
         user = cursor.fetchone()
         if not user:
             flash('User not found. Please log in again.', 'error')
             return redirect(url_for('authentication_blueprint.login'))
 
+        # Default dates
         today = datetime.today().strftime('%Y-%m-%d')
         start_date = end_date = today
         searched = False
 
+        # Handle filter form
         if request.method == 'POST':
             start_date = request.form.get('start_date') or today
             end_date = request.form.get('end_date') or today
             searched = True
 
+        # Fetch sales ordered by date_updated DESC
         cursor.execute("""
             SELECT 
                 s.salesID,
@@ -215,6 +192,7 @@ def sales_view():
             JOIN product_list p ON s.ProductID = p.ProductID
             JOIN customer_list c ON s.customer_id = c.CustomerID
             WHERE s.type = 'sales' AND DATE(s.date_updated) BETWEEN %s AND %s
+            ORDER BY s.date_updated DESC
         """, (start_date, end_date))
         sales_raw = cursor.fetchall()
 
@@ -229,31 +207,24 @@ def sales_view():
                 discount = Decimal(row['discount']) if row['discount'] is not None else Decimal("0.00")
                 qty = row['qty'] or 0
 
-                # Calculate discounted unit price
-                discount_fraction = discount / Decimal("100")
-                discounted_unit_price = unit_price - (unit_price * discount_fraction)
-
-                # Calculate line total
+                discounted_unit_price = unit_price * (Decimal("1.00") - discount / Decimal("100"))
                 line_total = discounted_unit_price * qty
 
-                # Update row with computed values
                 row['discounted_price'] = round(discounted_unit_price, 2)
                 row['line_total'] = round(line_total, 2)
 
-                # Accumulate totals
                 total_sales += line_total
                 total_before_discount += unit_price * qty
                 total_quantity += qty
 
                 sales.append(row)
-
             except (InvalidOperation, TypeError) as e:
-                print(f"Skipping invalid record in sales: {row} - {e}")
+                print(f"Skipping invalid sales record: {row} - {e}")
                 continue
 
         total_discount_given = total_before_discount - total_sales
 
-        # Fetch expenses
+        # Fetch expenses ordered by date_updated DESC
         cursor.execute("""
             SELECT 
                 s.salesID,
@@ -266,6 +237,7 @@ def sales_view():
             FROM sales s
             JOIN customer_list c ON s.customer_id = c.CustomerID
             WHERE s.type = 'expense' AND DATE(s.date_updated) BETWEEN %s AND %s
+            ORDER BY s.date_updated DESC
         """, (start_date, end_date))
         expenses = cursor.fetchall()
 
@@ -276,7 +248,7 @@ def sales_view():
             WHERE s.type = 'expense' AND DATE(s.date_updated) BETWEEN %s AND %s
         """, (start_date, end_date))
         expense_total = cursor.fetchone()
-        total_expenses = expense_total['total_expenses'] or 0
+        total_expenses = expense_total['total_expenses'] or Decimal("0.00")
 
     finally:
         cursor.close()
@@ -309,23 +281,6 @@ def sales_view():
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-from flask import Blueprint, render_template, request
-from datetime import datetime, timedelta
-from decimal import Decimal
-from collections import defaultdict
-
-
 @blueprint.route('/dashboard_view', methods=['GET', 'POST'])
 def dashboard_view():
     # Default date range: last 30 days
@@ -343,6 +298,7 @@ def dashboard_view():
         except ValueError:
             pass
 
+    # Format strings for SQL
     start_date_str = start_date.strftime('%Y-%m-%d')
     end_date_str = end_date.strftime('%Y-%m-%d')
 
@@ -387,7 +343,7 @@ def dashboard_view():
         cursor.close()
         connection.close()
 
-    # Initialize totals and aggregations
+    # Initialize totals
     total_sales_discounted = Decimal('0.00')
     total_before_discount = Decimal('0.00')
     total_discount_given = Decimal('0.00')
@@ -410,13 +366,13 @@ def dashboard_view():
         '>20%': 0
     }
 
+    # Process sales
     for s in sales:
-        unit_price = s['current_price'] or Decimal("0.00")
-        discount = Decimal(s['discount']) if s['discount'] is not None else Decimal("0.00")
+        unit_price = s['current_price'] or Decimal('0.00')
+        discount = Decimal(s['discount']) if s['discount'] is not None else Decimal('0.00')
         qty = s['qty'] or 0
 
         discounted_price = unit_price * (Decimal('1') - discount / Decimal('100'))
-
         line_total_discounted = discounted_price * qty
         line_total_before = unit_price * qty
         line_discount = (unit_price - discounted_price) * qty
@@ -435,7 +391,7 @@ def dashboard_view():
         sales_qty_by_product[s['product_name']] += qty
         sales_by_customer[s['customer_name']] += line_total_discounted
 
-        # Bracket counting
+        # Discount brackets
         if discount == 0:
             discount_brackets['0%'] += 1
         elif 1 <= discount <= 10:
@@ -445,23 +401,27 @@ def dashboard_view():
         else:
             discount_brackets['>20%'] += 1
 
+    # Process expenses
     for e in expenses:
         amount = Decimal(e['amount']) if e['amount'] else Decimal('0.00')
         total_expenses += amount
         date_key = e['date_updated'].strftime('%Y-%m-%d')
         expenses_time_series[date_key] += amount
 
+    # Average discount per day
     avg_discount_time_series = {}
     for date_key, discounts in discount_time_series.items():
         avg_discount_time_series[date_key] = round(sum(discounts) / len(discounts), 2) if discounts else 0
 
-    def sort_timeseries(ts):
-        return dict(sorted(ts.items()))
+    # Sort time series
+    def sort_dict(d):
+        return dict(sorted(d.items()))
 
-    sales_time_series = sort_timeseries(sales_time_series)
-    expenses_time_series = sort_timeseries(expenses_time_series)
-    avg_discount_time_series = sort_timeseries(avg_discount_time_series)
+    sales_time_series = sort_dict(sales_time_series)
+    expenses_time_series = sort_dict(expenses_time_series)
+    avg_discount_time_series = sort_dict(avg_discount_time_series)
 
+    # Convert Decimals to float for JSON-safe rendering
     def dec_to_float(d):
         return float(d.quantize(Decimal('0.01')))
 
@@ -475,41 +435,17 @@ def dashboard_view():
         'total_expenses': dec_to_float(total_expenses),
         'total_quantity': total_quantity,
         'num_customers': len(customers_set),
-        'sales_time_series': sales_time_series,
-        'expenses_time_series': expenses_time_series,
+        'sales_time_series': {k: dec_to_float(v) for k, v in sales_time_series.items()},
+        'expenses_time_series': {k: dec_to_float(v) for k, v in expenses_time_series.items()},
         'avg_discount_time_series': avg_discount_time_series,
         'sales_by_product': {k: dec_to_float(v) for k, v in sales_by_product.items()},
-        'sales_qty_by_product': sales_qty_by_product,
+        'sales_qty_by_product': dict(sales_qty_by_product),
         'sales_by_customer': {k: dec_to_float(v) for k, v in sales_by_customer.items()},
-        'discount_brackets': discount_brackets,
+        'discount_brackets': dict(discount_brackets),
     }
 
     return render_template('sales/dashboard.html', **context)
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-from datetime import datetime
-import pytz
-from flask import (
-    Blueprint, render_template, request, redirect, url_for, flash
-)
-
-def get_kampala_time(as_string: bool = False, fmt: str = "%Y-%m-%d %H:%M:%S") -> datetime | str:
-    kampala_tz = pytz.timezone("Africa/Kampala")
-    kampala_time = datetime.now(kampala_tz)
-    return kampala_time.strftime(fmt) if as_string else kampala_time
 
 @blueprint.route('/edit_sale/<int:salesID>', methods=['GET', 'POST'])
 def edit_sale(salesID):
@@ -581,14 +517,6 @@ def edit_sale(salesID):
         connection.close()
 
 
-
-
-
-
-
-
-
-
 @blueprint.route('/discount_percentage', methods=['GET', 'POST'])
 def discount_percentage():
     if request.method == 'POST':
@@ -614,20 +542,6 @@ def discount_percentage():
     return render_template('sales/discount_percentage.html')
 
 
-
-
-
-
-
-
-
-from datetime import datetime
-import pytz
-
-# Get Kampala time
-def get_kampala_time():
-    kampala = pytz.timezone("Africa/Kampala")
-    return datetime.now(kampala)
 
 @blueprint.route('/delete_sale/<int:sales_id>',methods=['GET', 'POST'])
 def delete_sale(sales_id):
@@ -685,9 +599,6 @@ def delete_sale(sales_id):
 
 
 
-
-
-
 @blueprint.route('/<template>')
 def route_template(template):
     """Renders a dynamic template page."""
@@ -704,16 +615,6 @@ def route_template(template):
 
     except Exception as e:
         return render_template('home/page-500.html'), 500
-
-
-
-
-
-
-
-
-
-
 
 
 

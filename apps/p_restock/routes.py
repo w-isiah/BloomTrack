@@ -9,6 +9,11 @@ import os
 import random
 import re
 from jinja2 import TemplateNotFound
+import pytz
+
+def get_kampala_time():
+    kampala = pytz.timezone("Africa/Kampala")
+    return datetime.now(kampala)
 
 
 # Route for the 'products' restock page
@@ -126,3 +131,5 @@ def get_segment(request):
     except Exception as e:
         logging.error(f"Error extracting segment: {e}")
         return None
+
+

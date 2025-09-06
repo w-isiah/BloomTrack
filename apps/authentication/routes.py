@@ -6,15 +6,12 @@ from datetime import datetime, timedelta
 from PIL import Image
 import os
 import mysql.connector
-
-
 from apps import get_db_connection
 from apps.authentication import blueprint
 from apps.utils.decorators import login_required  # Adjust path as needed
-
-
 from datetime import datetime
 import pytz
+
 def get_kampala_time():
     kampala = pytz.timezone("Africa/Kampala")
     return datetime.now(kampala)
@@ -85,17 +82,6 @@ def login():
 
     return render_template('accounts/login.html')
 
-
-
-
-
-
-
-
-
-
-
-
 @login_required
 @blueprint.before_app_request
 def check_inactivity():
@@ -144,19 +130,6 @@ def check_inactivity():
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 @blueprint.route('/logout')
 def logout():
     user_id = session.get('id')
@@ -183,11 +156,6 @@ def logout():
 
                     connection.commit()
                     print(f"User '{username}' logged out successfully.")
-
-
-
-                    
-
         except Exception as e:
             print(f"Exception in logout route: {e}")
             flash(f"An error occurred while updating the logout status: {str(e)}", 'danger')
@@ -195,10 +163,6 @@ def logout():
     session.clear()
     flash('You have been logged out successfully.', 'success')
     return redirect(url_for('authentication_blueprint.login'))
-
-
-
-
 
 
 @login_required
@@ -231,13 +195,6 @@ def force_logout(user_id):
         flash(f"Error during forced logout: {str(e)}", "danger")
 
     return redirect(url_for('authentication_blueprint.manage_users'))
-
-
-
-    
-
-
-
 
 
 @login_required
@@ -273,8 +230,6 @@ def manage_users():
     return render_template('accounts/manage_users.html', users=users, num=len(users))
 
 
-
-
 @login_required
 # Flask route (suggested)
 @blueprint.route('/get_all_user_statuses', methods=['GET'])
@@ -287,9 +242,6 @@ def get_all_user_statuses():
                 return jsonify(statuses)
     except Exception as e:
         return jsonify([]), 500
-
-
-
 
 
 @login_required
@@ -313,12 +265,6 @@ def activity_logs(id):
     except Exception as e:
         flash(f"An error occurred: {str(e)}", 'danger')
         return redirect(url_for('authentication_blueprint.login'))
-
-
-
-
-
-
 
 
 @login_required
@@ -361,17 +307,6 @@ def add_user():
         return redirect(url_for('home_blueprint.index'))  # Redirect to user management page
 
     return render_template("accounts/add_user.html", role=session.get('role'), username=session.get('username'))
-
-
-# Handle the form submission
-
-
-
-
-
-
-
-
 
 
 @blueprint.route('/edit_user/<int:id>', methods=['GET', 'POST'])
@@ -435,20 +370,6 @@ def edit_user(id):
             # GET request – render edit form
             return render_template("accounts/edit_user.html", user=user)
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 @login_required
 @blueprint.route('/view_user/<int:id>', methods=['GET'])
 def view_user(id):
@@ -477,13 +398,6 @@ def view_user(id):
         all_sub_categories=all_sub_categories,
         user_sub_category_ids=user_sub_category_ids
     )
-
-
-
-
-
-
-
 
 
 @login_required
@@ -530,13 +444,6 @@ def edit_user_roles(id):
     )
 
 
-
-
-
-
-
-
-
 @login_required
 @blueprint.route('/view_user_cat_roles/<int:id>', methods=['GET'])
 def view_user_cat_roles(id):
@@ -560,13 +467,6 @@ def view_user_cat_roles(id):
         all_categories=all_categories,
         user_category_ids=user_category_ids
     )
-
-
-
-
-
-
-
 
 
 @login_required
@@ -613,21 +513,6 @@ def edit_user_cat_roles(id):
     )
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 @login_required
 def get_user_password(cursor, user_id):
     cursor.execute('SELECT password FROM users WHERE id = %s', (user_id,))
@@ -643,8 +528,6 @@ def handle_profile_image(cursor, profile_image, user_id):
     else:
         cursor.execute('SELECT profile_image FROM users WHERE id = %s', (user_id,))
         return cursor.fetchone()['profile_image']
-
-
 
 
 @login_required
@@ -699,9 +582,6 @@ def handle_image_upload(image_file):
     return filename
 
 
-
-
-
 @login_required
 @blueprint.route('/edit_user_profile/<int:id>', methods=['GET', 'POST'])
 def edit_user_profile(id):
@@ -749,13 +629,6 @@ def edit_user_profile(id):
                 return redirect(url_for('home_blueprint.index'))
 
     return render_template('accounts/edit_user_profile.html', user=user)
-
-
-
-
-
-
-
 
 
 

@@ -125,6 +125,10 @@
         </div>
 
         <!-- Restock Items -->
+
+        {% if session['role'] == 'super_admin' %}
+
+        
         <div class="col-lg-3 col-6">
           <div class="small-box bg-danger">
             <div class="inner">
@@ -135,6 +139,9 @@
             <a href="/p_restock" class="small-box-footer">Restocking <i class="fas fa-arrow-circle-right"></i></a>
           </div>
         </div>
+
+
+        {% endif %}
       </div>
     </div>
   </section>
