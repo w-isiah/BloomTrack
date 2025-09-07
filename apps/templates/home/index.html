@@ -54,9 +54,7 @@
     cursor: pointer;
   }
 
-  th, td {
-    white-space: nowrap;
-  }
+  th, td { white-space: nowrap; }
 
   div.dataTables_wrapper {
     width: 100%;
@@ -112,7 +110,7 @@
         <div class="col-lg-3 col-6">
           <div class="small-box bg-primary">
             <div class="inner">
-              <h5>Today's QTY Sales: {{ total_items_sold_today_value or 0 }}</h5>
+              <h5>Today's QTY Sales: {{ total_items_sold_today or 0 }}</h5>
               <p>Sell</p>
             </div>
             <div class="icon"><i class="fas fa-cash-register"></i></div>
@@ -124,7 +122,7 @@
         <div class="col-lg-3 col-6">
           <div class="small-box bg-indigo">
             <div class="inner">
-              <h5>Today's Expenses: {{ formatted_expenses_today or 0 }}</h5>
+              <h5>Today's Expenses: {{ total_expenses_today }}</h5>
               <p>Expenses</p>
             </div>
             <div class="icon"><i class="fas fa-receipt"></i></div>
@@ -156,47 +154,44 @@
           </div>
         </div>
 
-         <!-- Sales Today -->
+        <!-- Stock -->
         <div class="col-lg-3 col-6">
-          <div class="small-box bg-warning">
+          <div class="small-box bg-success">
             <div class="inner">
               <h5>Stock</h5>
               <p>Activities</p>
             </div>
-            <div class="icon"><i class="fas fa-calendar-day"></i></div>
-            <a href="/items_index" class="small-box-footer">View Sales <i class="fas fa-arrow-circle-right"></i></a>
+            <div class="icon"><i class="fas fa-boxes"></i></div>
+            <a href="/items_index" class="small-box-footer">View Stock <i class="fas fa-arrow-circle-right"></i></a>
           </div>
         </div>
 
-         <!-- Sales Today -->
+        <!-- Customers -->
         <div class="col-lg-3 col-6">
-          <div class="small-box bg-warning">
+          <div class="small-box bg-teal">
             <div class="inner">
               <h5>Customers</h5>
               <p>Activities</p>
             </div>
-            <div class="icon"><i class="fas fa-calendar-day"></i></div>
+            <div class="icon"><i class="fas fa-users"></i></div>
             <a href="/customers" class="small-box-footer">View Customers <i class="fas fa-arrow-circle-right"></i></a>
           </div>
         </div>
 
         {% if session['role'] == 'super_admin' %}
-
-            <!-- Sales Today -->
+        <!-- User Accounts -->
         <div class="col-lg-3 col-6">
-          <div class="small-box bg-warning">
+          <div class="small-box bg-dark">
             <div class="inner">
               <h5>User Accounts</h5>
               <p>Activities</p>
             </div>
-            <div class="icon"><i class="fas fa-calendar-day"></i></div>
-            <a href="/manage_users" class="small-box-footer">View users <i class="fas fa-arrow-circle-right"></i></a>
+            <div class="icon"><i class="fas fa-user-shield"></i></div>
+            <a href="/manage_users" class="small-box-footer">Manage Users <i class="fas fa-arrow-circle-right"></i></a>
           </div>
-        </div>  {% endif %}
-
+        </div>
+        {% endif %}
       </div>
-
-     
 
       <!-- Low Stock Table -->
       <div class="card mt-4">
