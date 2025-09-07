@@ -1,337 +1,209 @@
 {% extends "layouts/base.html" %}
-{% block title %}Sales & Expenses Dashboard{% endblock %}
-{% block body_class %}sidebar-mini layout-fixed{% endblock %}
+
+{% block title %}Sales & Expenses Dashboard{% endblock title %}
 
 {% block stylesheets %}
-<link rel="stylesheet" href="/static/assets/css/adminlte.min.css">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
-<style>
-  .chart-card { min-height: 420px; }
-  .chart-container { position: relative; height: 340px; }
-  .kpi .info-box { box-shadow: 0 6px 18px rgba(0,0,0,.06); }
-</style>
-{% endblock %}
+  <!-- Google Font: Source Sans Pro -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='assets/plugins/fontawesome-free/css/all.min.css') }}">
+  <!-- Theme style -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='assets/css/adminlte.min.css') }}">
+  <style>
+    .kpi .info-box { box-shadow: 0 6px 18px rgba(0,0,0,.06); }
+    .chart-card { min-height: 400px; }
+  </style>
+{% endblock stylesheets %}
 
 {% block content %}
 <div class="content-wrapper">
+
   <!-- Header -->
   <section class="content-header">
-  <div class="container-fluid">
-    <div class="row mb-2">
-      <div class="col-sm-12">
-        <h1 class="m-0">Sales & Expenses Dashboard</h1>
+    <div class="container-fluid">
+      <div class="row mb-2">
+        <div class="col-sm-6">
+          <h1>Sales & Expenses Dashboard</h1>
+        </div>
+        <div class="col-sm-6">
+          <ol class="breadcrumb float-sm-right">
+            <li class="breadcrumb-item"><a href="/">Home</a></li>
+            <li class="breadcrumb-item active">Dashboard</li>
+          </ol>
+        </div>
       </div>
     </div>
+  </section>
 
-    <!-- Filter Card -->
-    <div class="card card-primary">
-      <div class="card-header">
-        <h3 class="card-title"><i class="fas fa-filter mr-1"></i> Filter Data</h3>
-      </div>
-      <div class="card-body">
-        <form method="POST">
-          <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
-          <div class="row">
-            <div class="col-md-3">
-              <div class="form-group mb-0">
+  <!-- Filter -->
+  <section class="content">
+    <div class="container-fluid">
+      <div class="card card-primary">
+        <div class="card-header">
+          <h3 class="card-title"><i class="fas fa-filter mr-1"></i> Filter Data</h3>
+        </div>
+        <div class="card-body">
+          <form method="POST">
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+            <div class="row">
+              <div class="col-md-3">
                 <label for="start_date">Start Date</label>
-                <div class="input-group">
-                  <div class="input-group-prepend">
-                    <span class="input-group-text"><i class="far fa-calendar-alt"></i></span>
-                  </div>
-                  <input type="date" id="start_date" name="start_date" class="form-control" value="{{ start_date }}">
-                </div>
+                <input type="date" id="start_date" name="start_date" class="form-control" value="{{ start_date }}">
               </div>
-            </div>
-            <div class="col-md-3">
-              <div class="form-group mb-0">
+              <div class="col-md-3">
                 <label for="end_date">End Date</label>
-                <div class="input-group">
-                  <div class="input-group-prepend">
-                    <span class="input-group-text"><i class="far fa-calendar-alt"></i></span>
-                  </div>
-                  <input type="date" id="end_date" name="end_date" class="form-control" value="{{ end_date }}">
-                </div>
+                <input type="date" id="end_date" name="end_date" class="form-control" value="{{ end_date }}">
+              </div>
+              <div class="col-md-3 align-self-end">
+                <button type="submit" class="btn btn-primary mt-4">
+                  <i class="fas fa-filter"></i> Filter
+                </button>
               </div>
             </div>
-            <div class="col-md-3 align-self-end">
-              <button type="submit" class="btn btn-primary mt-4">
-                <i class="fas fa-filter"></i> Filter
-              </button>
-            </div>
-          </div>
-        </form>
+          </form>
+        </div>
       </div>
-    </div>
 
-    {% if not searched %}
-    <!-- Info Card -->
-    <div class="card card-info">
-      <div class="card-body mb-0">
-        <i class="fas fa-info-circle mr-1"></i> 
-        Choose a date range and click <strong>Filter</strong> to load insights.
+      {% if not searched %}
+      <div class="card card-info">
+        <div class="card-body">
+          <i class="fas fa-info-circle mr-1"></i>
+          Choose a date range and click <strong>Filter</strong> to load insights.
+        </div>
       </div>
+      {% endif %}
     </div>
-    {% endif %}
-  </div>
-</section>
-
+  </section>
 
   {% if searched %}
   <!-- KPIs -->
- <section class="content kpi">
-  <div class="container-fluid">
-    <div class="row">
-      <div class="col-md-3">
-        <div class="info-box bg-success">
-          <span class="info-box-icon"><i class="">UGX</i></span>
-          <div class="info-box-content">
-            <span class="info-box-text">Total Sales (Discounted)</span>
-            <span class="info-box-number">UGX {{ '{:,.2f}'.format(total_sales) }}</span>
-          </div>
-        </div>
-      </div>
-      <div class="col-md-3">
-        <div class="info-box bg-secondary">
-          <span class="info-box-icon"><i class="fas fa-tag"></i></span>
-          <div class="info-box-content">
-            <span class="info-box-text">Total Before Discount</span>
-            <span class="info-box-number">UGX {{ '{:,.2f}'.format(total_before_discount) }}</span>
-          </div>
-        </div>
-      </div>
-      <div class="col-md-3">
-        <div class="info-box bg-warning">
-          <span class="info-box-icon"><i class="fas fa-percent"></i></span>
-          <div class="info-box-content">
-            <span class="info-box-text">Total Discount Given</span>
-            <span class="info-box-number">UGX {{ '{:,.2f}'.format(total_discount_given) }}</span>
-          </div>
-        </div>
-      </div>
-      <div class="col-md-3">
-        <div class="info-box bg-danger">
-          <span class="info-box-icon"><i class="fas fa-money-bill-wave"></i></span>
-          <div class="info-box-content">
-            <span class="info-box-text">Total Expenses</span>
-            <span class="info-box-number">UGX {{ '{:,.2f}'.format(total_expenses) }}</span>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="row mb-3">
-      <div class="col-md-4">
-        <div class="info-box bg-info">
-          <span class="info-box-icon"><i class="fas fa-boxes"></i></span>
-          <div class="info-box-content">
-            <span class="info-box-text">Total Quantity Sold</span>
-            <span class="info-box-number">{{ total_quantity }}</span>
-          </div>
-        </div>
-      </div>
-       <div class="col-md-4">
-          <div class="info-box bg-primary">
-            <span class="info-box-icon"><i class="fas fa-users"></i></span>
-            <div class="info-box-content">
-              <span class="info-box-text">Unique Customers</span>
-              <span class="info-box-number">{{ num_customers }}</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Charts Grid -->
+  <section class="content kpi">
+    <div class="container-fluid">
       <div class="row">
-        <!-- Sales vs Expenses -->
-        <div class="col-lg-12">
-          <div class="card chart-card">
-            <div class="card-header"><h3 class="card-title"><i class="fas fa-chart-line mr-2"></i>Sales vs Expenses</h3></div>
-            <div class="card-body">
-              <div class="chart-container"><canvas id="salesExpensesChart"></canvas></div>
+        <div class="col-md-3">
+          <div class="info-box bg-success">
+            <span class="info-box-icon"><i class="fas fa-cash-register"></i></span>
+            <div class="info-box-content">
+              <span class="info-box-text">Total Sales (Discounted)</span>
+              <span class="info-box-number">UGX {{ '{:,.2f}'.format(total_sales) }}</span>
             </div>
           </div>
         </div>
-
-        <!-- Avg Discount & Discount Brackets -->
-        <div class="col-lg-6">
-          <div class="card chart-card">
-            <div class="card-header"><h3 class="card-title"><i class="fas fa-percentage mr-2"></i>Average Discount %</h3></div>
-            <div class="card-body">
-              <div class="chart-container"><canvas id="discountAvgChart"></canvas></div>
+        <div class="col-md-3">
+          <div class="info-box bg-secondary">
+            <span class="info-box-icon"><i class="fas fa-tag"></i></span>
+            <div class="info-box-content">
+              <span class="info-box-text">Total Before Discount</span>
+              <span class="info-box-number">UGX {{ '{:,.2f}'.format(total_before_discount) }}</span>
             </div>
           </div>
         </div>
-        <div class="col-lg-6">
-          <div class="card chart-card">
-            <div class="card-header"><h3 class="card-title"><i class="fas fa-donut mr-2"></i>Discount Brackets</h3></div>
-            <div class="card-body">
-              <div class="chart-container"><canvas id="discountBracketsChart"></canvas></div>
+        <div class="col-md-3">
+          <div class="info-box bg-warning">
+            <span class="info-box-icon"><i class="fas fa-percent"></i></span>
+            <div class="info-box-content">
+              <span class="info-box-text">Total Discount Given</span>
+              <span class="info-box-number">UGX {{ '{:,.2f}'.format(total_discount_given) }}</span>
             </div>
           </div>
         </div>
-
-        <!-- Sales by Product & Customer -->
-        <div class="col-lg-6">
-          <div class="card chart-card">
-            <div class="card-header"><h3 class="card-title"><i class="fas fa-box-open mr-2"></i>Sales by Product</h3></div>
-            <div class="card-body">
-              <div class="chart-container"><canvas id="salesByProductChart"></canvas></div>
+        <div class="col-md-3">
+          <div class="info-box bg-danger">
+            <span class="info-box-icon"><i class="fas fa-money-bill-wave"></i></span>
+            <div class="info-box-content">
+              <span class="info-box-text">Total Expenses</span>
+              <span class="info-box-number">UGX {{ '{:,.2f}'.format(total_expenses) }}</span>
             </div>
           </div>
         </div>
-        <div class="col-lg-6">
-          <div class="card chart-card">
-            <div class="card-header"><h3 class="card-title"><i class="fas fa-user-friends mr-2"></i>Sales by Customer</h3></div>
-            <div class="card-body">
-              <div class="chart-container"><canvas id="salesByCustomerChart"></canvas></div>
-            </div>
-          </div>
-        </div>
-
       </div>
+
+      <!-- Charts -->
+      <div class="row">
+        <div class="col-md-6">
+          <div class="card chart-card">
+            <div class="card-header"><h5>Sales vs Expenses</h5></div>
+            <div class="card-body"><div id="sales-expenses-chart"></div></div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="card chart-card">
+            <div class="card-header"><h5>Sales by Customer</h5></div>
+            <div class="card-body"><div id="sales-customer-chart"></div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-md-6">
+          <div class="card chart-card">
+            <div class="card-header"><h5>Sales by Product</h5></div>
+            <div class="card-body"><div id="sales-product-chart"></div></div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="card chart-card">
+            <div class="card-header"><h5>Discount Brackets</h5></div>
+            <div class="card-body"><div id="discount-chart"></div></div>
+          </div>
+        </div>
+      </div>
+
     </div>
   </section>
   {% endif %}
 </div>
-{% endblock %}
+{% endblock content %}
 
 {% block javascripts %}
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-<script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
-<script>
+  <!-- jQuery -->
+  <script src="{{ url_for('static', filename='assets/plugins/jquery/jquery.min.js') }}"></script>
+  <!-- Bootstrap -->
+  <script src="{{ url_for('static', filename='assets/plugins/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
+  <!-- AdminLTE -->
+  <script src="{{ url_for('static', filename='assets/js/adminlte.min.js') }}"></script>
+  <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+
   {% if searched %}
-  // ---- Helpers ----
-  const UGX = new Intl.NumberFormat('en-UG', { style: 'currency', currency: 'UGX', maximumFractionDigits: 0 });
-  const fmtUGX = v => UGX.format(Number(v||0));
-  const sum = arr => arr.reduce((a,b)=>a+b,0);
-  const safeKeys = obj => obj ? Object.keys(obj) : [];
-  const safeVals = obj => obj ? Object.values(obj) : [];
-  const emptyTS = (obj) => !obj || Object.keys(obj).length === 0;
+  <script>
+    document.addEventListener("DOMContentLoaded", function() {
+      const salesTS = JSON.parse('{{ sales_time_series | tojson | safe }}');
+      const expensesTS = JSON.parse('{{ expenses_time_series | tojson | safe }}');
+      const byCustomer = JSON.parse('{{ sales_by_customer | tojson | safe }}');
+      const byProduct = JSON.parse('{{ sales_by_product | tojson | safe }}');
+      const discountBrackets = JSON.parse('{{ discount_brackets | tojson | safe }}');
 
-  // Pull data from Jinja (already JSON-safe from backend)
-  const SALES_TS = {{ sales_time_series | tojson }};
-  const EXP_TS = {{ expenses_time_series | tojson }};
-  const AVG_DISC_TS = {{ avg_discount_time_series | tojson }};
-  const BY_PRODUCT = {{ sales_by_product | tojson }};
-  const QTY_BY_PRODUCT = {{ sales_qty_by_product | tojson }};
-  const BY_CUSTOMER = {{ sales_by_customer | tojson }};
-  const DISC_BRACKETS = {{ discount_brackets | tojson }};
+      // Sales vs Expenses
+      new ApexCharts(document.querySelector("#sales-expenses-chart"), {
+        chart: { type: 'line', height: 350 },
+        series: [
+          { name: 'Sales', data: Object.values(salesTS) },
+          { name: 'Expenses', data: Object.values(expensesTS) }
+        ],
+        xaxis: { categories: Object.keys(salesTS) }
+      }).render();
 
-  // Common options
-  const legendTop = { plugins: { legend: { position: 'top' } } };
-  const tooltipUGX = {
-    plugins: {
-      tooltip: {
-        callbacks: {
-          label: (ctx) => `${ctx.dataset.label}: ${fmtUGX(ctx.parsed.y ?? ctx.parsed)}`
-        }
-      }
-    },
-    scales: {
-      y: {
-        ticks: { callback: (v) => fmtUGX(v) },
-        title: { display: true, text: 'Amount (UGX)' }
-      }
-    }
-  };
+      // Sales by Customer
+      new ApexCharts(document.querySelector("#sales-customer-chart"), {
+        chart: { type: 'pie', height: 350 },
+        series: Object.values(byCustomer),
+        labels: Object.keys(byCustomer)
+      }).render();
 
-  // Render helper with empty-state guard
-  function renderChart(id, config, fallbackText='No data in selected range'){
-    const el = document.getElementById(id);
-    if(!el) return;
-    const hasData = (config.data.labels||[]).length > 0 && (config.data.datasets||[]).some(d => (d.data||[]).length>0);
-    if(!hasData){
-      el.parentElement.innerHTML = `<div class="text-muted d-flex align-items-center justify-content-center w-100 h-100">${fallbackText}</div>`;
-      return;
-    }
-    new Chart(el.getContext('2d'), config);
-  }
+      // Sales by Product
+      new ApexCharts(document.querySelector("#sales-product-chart"), {
+        chart: { type: 'bar', height: 350 },
+        series: [{ name: 'Sales Amount', data: Object.values(byProduct) }],
+        xaxis: { categories: Object.keys(byProduct) }
+      }).render();
 
-  // --- Sales vs Expenses (Line) ---
-  const salesExpensesConfig = {
-    type: 'line',
-    data: {
-      labels: safeKeys(SALES_TS),
-      datasets: [
-        {
-          label: 'Sales (Discounted)',
-          data: safeVals(SALES_TS),
-          borderColor: 'rgba(40,167,69,1)',
-          backgroundColor: 'rgba(40,167,69,0.2)',
-          fill: true,
-          tension: 0.3,
-        },
-        {
-          label: 'Expenses',
-          data: safeVals(EXP_TS),
-          borderColor: 'rgba(220,53,69,1)',
-          backgroundColor: 'rgba(220,53,69,0.2)',
-          fill: true,
-          tension: 0.3,
-        }
-      ]
-    },
-    options: { responsive: true, interaction: { mode: 'index', intersect: false }, ...legendTop, ...tooltipUGX }
-  };
-
-  // --- Average Discount % (Line, 0-100) ---
-  const discountAvgConfig = {
-    type: 'line',
-    data: { labels: safeKeys(AVG_DISC_TS), datasets: [{ label: 'Average Discount %', data: safeVals(AVG_DISC_TS), borderColor: 'orange', backgroundColor: 'rgba(255,165,0,0.2)', fill: true, tension: 0.3 }] },
-    options: { responsive: true, ...legendTop, scales: { y: { min: 0, max: 100, title: { display: true, text: 'Discount (%)' } } } }
-  };
-
-  // --- Sales by Product (Bar, Dual Axis for UGX vs Qty) ---
-  const salesByProductConfig = {
-    type: 'bar',
-    data: {
-      labels: safeKeys(BY_PRODUCT),
-      datasets: [
-        { label: 'Sales Amount (UGX)', data: safeVals(BY_PRODUCT), yAxisID: 'y', order: 2 },
-        { label: 'Quantity Sold', data: safeKeys(BY_PRODUCT).map(k => QTY_BY_PRODUCT[k] || 0), type: 'line', yAxisID: 'y1', tension: 0.3, order: 1 }
-      ]
-    },
-    options: {
-      responsive: true,
-      ...legendTop,
-      scales: {
-        y: { beginAtZero: true, ticks: { callback: (v)=>fmtUGX(v) }, title: { display: true, text: 'Sales (UGX)' } },
-        y1: { beginAtZero: true, position: 'right', grid: { drawOnChartArea: false }, title: { display: true, text: 'Quantity' } }
-      },
-      plugins: { tooltip: { callbacks: { label: (ctx) => ctx.dataset.yAxisID === 'y' ? `${ctx.dataset.label}: ${fmtUGX(ctx.parsed.y)}` : `${ctx.dataset.label}: ${ctx.parsed.y}` } } }
-    }
-  };
-
-  // --- Sales by Customer (Pie) ---
-  const salesByCustomerConfig = {
-    type: 'pie',
-    data: { labels: safeKeys(BY_CUSTOMER), datasets: [{ data: safeVals(BY_CUSTOMER) }] },
-    options: {
-      responsive: true,
-      plugins: { tooltip: { callbacks: { label: (ctx) => `${ctx.label}: ${fmtUGX(ctx.parsed)} (${((ctx.parsed / sum(ctx.dataset.data)) * 100).toFixed(1)}%)` } } }
-    }
-  };
-
-  // --- Discount Brackets (Doughnut) ---
-  const discBracketsVals = safeVals(DISC_BRACKETS);
-  const discountBracketsConfig = {
-    type: 'doughnut',
-    data: { labels: safeKeys(DISC_BRACKETS), datasets: [{ data: discBracketsVals }] },
-    options: {
-      responsive: true,
-      plugins: { tooltip: { callbacks: { label: (ctx) => `${ctx.label}: ${ctx.parsed} (${(ctx.parsed / sum(ctx.dataset.data) * 100).toFixed(1)}%)` } } }
-    }
-  };
-
-  // Render all
-  document.addEventListener('DOMContentLoaded', function(){
-    renderChart('salesExpensesChart', salesExpensesConfig);
-    renderChart('discountAvgChart', discountAvgConfig);
-    renderChart('salesByProductChart', salesByProductConfig);
-    renderChart('salesByCustomerChart', salesByCustomerConfig);
-    renderChart('discountBracketsChart', discountBracketsConfig);
-  });
+      // Discount Brackets
+      new ApexCharts(document.querySelector("#discount-chart"), {
+        chart: { type: 'donut', height: 350 },
+        series: Object.values(discountBrackets),
+        labels: Object.keys(discountBrackets)
+      }).render();
+    });
+  </script>
   {% endif %}
-</script>
-{% endblock %}
+{% endblock javascripts %}

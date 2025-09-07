@@ -450,6 +450,148 @@ def dashboard_view():
     return render_template('sales/dashboard.html', **context)
 
 
+
+
+
+
+
+
+
+@blueprint.route('/categories_dashboard', methods=['GET', 'POST'])
+def categories_dashboard():
+    # Default date range: last 30 days
+    end_date = datetime.today()
+    start_date = end_date - timedelta(days=30)
+
+    if request.method == 'POST':
+        start_date_str = request.form.get('start_date')
+        end_date_str = request.form.get('end_date')
+        try:
+            if start_date_str:
+                start_date = datetime.strptime(start_date_str, '%Y-%m-%d')
+            if end_date_str:
+                end_date = datetime.strptime(end_date_str, '%Y-%m-%d')
+        except ValueError:
+            pass
+
+    start_date_str = start_date.strftime('%Y-%m-%d')
+    end_date_str = end_date.strftime('%Y-%m-%d')
+
+    connection = get_db_connection()
+    cursor = connection.cursor(dictionary=True)
+
+    try:
+        # Fetch sales joined with products and categories
+        cursor.execute("""
+            SELECT 
+                cl.name AS category_name,
+                s.qty,
+                s.price,
+                s.discount
+            FROM sales s
+            JOIN product_list p ON s.ProductID = p.ProductID
+            JOIN category_list cl ON p.category_id = cl.CategoryID
+            WHERE s.type = 'sales'
+            AND DATE(s.date_updated) BETWEEN %s AND %s
+        """, (start_date_str, end_date_str))
+
+        sales = cursor.fetchall()
+    finally:
+        cursor.close()
+        connection.close()
+
+    # Aggregate sales totals per category
+    sales_by_category = defaultdict(Decimal)
+    for s in sales:
+        unit_price = Decimal(s['price'] or 0)
+        discount = Decimal(s['discount'] or 0)
+        qty = s['qty'] or 0
+
+        discounted_price = unit_price * (Decimal('1') - discount / Decimal('100'))
+        line_total = discounted_price * qty
+
+        sales_by_category[s['category_name']] += line_total
+
+    # Convert Decimals to floats for JSON
+    sales_by_category = {k: float(v) for k, v in sales_by_category.items()}
+
+    context = {
+        'start_date': start_date.strftime('%Y-%m-%d'),
+        'end_date': end_date.strftime('%Y-%m-%d'),
+        'searched': request.method == 'POST',
+        'sales_by_category': sales_by_category,
+    }
+
+    return render_template('sales/categories_dashboard.html', **context)
+
+
+
+
+
+
+@blueprint.route('/expense_cat_dash', methods=['GET', 'POST'])
+def expense_cat_dash():
+    # Default last 30 days
+    end_date = datetime.today()
+    start_date = end_date - timedelta(days=30)
+
+    if request.method == 'POST':
+        start_date_str = request.form.get('start_date')
+        end_date_str = request.form.get('end_date')
+        try:
+            if start_date_str:
+                start_date = datetime.strptime(start_date_str, '%Y-%m-%d')
+            if end_date_str:
+                end_date = datetime.strptime(end_date_str, '%Y-%m-%d')
+        except ValueError:
+            pass
+
+    start_date_str = start_date.strftime('%Y-%m-%d')
+    end_date_str = end_date.strftime('%Y-%m-%d')
+
+    connection = get_db_connection()
+    cursor = connection.cursor(dictionary=True)
+
+    try:
+        # Fetch expenses with category
+        cursor.execute("""
+            SELECT 
+                s.expense_name,
+                s.price AS amount,
+                s.category_id,
+                c.name AS category_name,
+                s.date_updated
+            FROM sales s
+            LEFT JOIN category_list c ON s.category_id = c.CategoryID
+            WHERE s.type = 'expense' AND DATE(s.date_updated) BETWEEN %s AND %s
+        """, (start_date_str, end_date_str))
+        expenses = cursor.fetchall()
+    finally:
+        cursor.close()
+        connection.close()
+
+    # Aggregate expenses by category
+    expenses_by_category = defaultdict(Decimal)
+    for e in expenses:
+        category = e['category_name'] if e['category_name'] else "Uncategorized"
+        amount = Decimal(e['amount']) if e['amount'] else Decimal('0.00')
+        expenses_by_category[category] += amount
+
+    # Convert Decimals to float for JSON
+    expenses_by_category = {k: float(v) for k, v in expenses_by_category.items()}
+
+    context = {
+        'start_date': start_date.strftime('%Y-%m-%d'),
+        'end_date': end_date.strftime('%Y-%m-%d'),
+        'searched': request.method == 'POST',
+        'expenses_by_category': expenses_by_category
+    }
+
+    return render_template('sales/expense_categories_dashboard.html', **context)
+
+
+
+
 @blueprint.route('/edit_sale/<int:salesID>', methods=['GET', 'POST'])
 def edit_sale(salesID):
     connection = get_db_connection()

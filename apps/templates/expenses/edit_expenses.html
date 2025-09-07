@@ -7,6 +7,7 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
 <link rel="stylesheet" href="/static/assets/plugins/fontawesome-free/css/all.min.css">
 <link rel="stylesheet" href="/static/assets/css/adminlte.min.css">
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 {% endblock %}
 
 {% block content %}
@@ -78,11 +79,11 @@
                   </div>
                 </div>
 
-                <!-- Category Dropdown -->
+                <!-- Category Dropdown with Select2 -->
                 <div class="form-group row">
                   <label for="category_id" class="col-sm-3 col-form-label">Category</label>
                   <div class="col-sm-9">
-                    <select name="category_id" class="form-control" required>
+                    <select name="category_id" class="form-control select2" required>
                       {% for category in categories %}
                         <option value="{{ category.CategoryID }}" {% if category.CategoryID == expense.category_id %}selected{% endif %}>
                           {{ category.name }}
@@ -137,4 +138,13 @@
 <script src="/static/assets/plugins/jquery/jquery.min.js"></script>
 <script src="/static/assets/plugins/bootstrap/js/bootstrap.bundle.min.js"></script>
 <script src="/static/assets/js/adminlte.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script>
+  $(document).ready(function() {
+    $('.select2').select2({
+      width: '100%',
+      placeholder: "Select a category"
+    });
+  });
+</script>
 {% endblock %}
