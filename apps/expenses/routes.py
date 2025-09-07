@@ -15,12 +15,20 @@ def get_kampala_time():
     kampala = pytz.timezone("Africa/Kampala")
     return datetime.now(kampala)
 
+
+
+
+
 @blueprint.route('/add_expense', methods=['GET', 'POST'])
 def add_expense():
     connection = get_db_connection()
     cursor = connection.cursor(dictionary=True)
 
-    # Fetch customers for dropdown list
+    # Fetch categories for dropdown
+    cursor.execute('SELECT * FROM category_list ORDER BY name')
+    categories = cursor.fetchall()
+
+    # Fetch customers for dropdown
     cursor.execute('SELECT CustomerID, name FROM customer_list ORDER BY name')
     customers = cursor.fetchall()
 
@@ -29,10 +37,11 @@ def add_expense():
         expense_name = request.form.get('expense_name', '').strip()
         price = request.form.get('price', '').strip()
         customer_id = request.form.get('customer_id')
+        category_id = request.form.get('category_id')  # <-- new field
         description = request.form.get('description', '').strip()
 
         # Basic validation
-        if not expense_name or not price or not customer_id:
+        if not expense_name or not price or not customer_id or not category_id:
             flash("Please fill in all required fields", "danger")
             return redirect(request.url)
 
@@ -44,27 +53,25 @@ def add_expense():
             flash("Price must be a valid positive number.", "danger")
             return redirect(request.url)
 
-        # Auto-generated and static fields
-        product_id = f'EXP-{int(price * 100)}'  # Example logic to generate unique product ID
+        # Auto-generated/static fields
+        product_id = f'EXP-{int(price * 100)}'  # Example unique ID
         expense_type = 'expense'
         qty = 1
         discount = 0.0
         discounted_price = price
         total_price = price
+        date_added = get_kampala_time()  # Kampala timezone
 
-        # Get the current time in Kampala timezone
-        date_added = get_kampala_time()
-
-        # Insert into sales table, including the expense_name and date_added
+        # Insert into sales table including category_id
         try:
             cursor.execute('''
                 INSERT INTO sales 
-                    (ProductID, customer_id, type, price, discount, qty, discounted_price, total_price, description, expense_name, date_updated)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    (ProductID, customer_id, category_id, type, price, discount, qty, discounted_price, total_price, description, expense_name, date_updated)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             ''', (
-                product_id, customer_id, expense_type, price,
+                product_id, customer_id, category_id, expense_type, price,
                 discount, qty, discounted_price, total_price,
-                description, expense_name, date_added  # Adding date_added here
+                description, expense_name, date_added
             ))
 
             connection.commit()
@@ -78,8 +85,16 @@ def add_expense():
     cursor.close()
     connection.close()
 
-    return render_template('expenses/add_expense.html', customers=customers)
+    return render_template(
+        'expenses/add_expense.html',
+        categories=categories,
+        customers=customers
+    )
 
+
+
+
+from datetime import datetime
 
 @blueprint.route('/edit_expense/<int:expense_id>', methods=['GET', 'POST'])
 def edit_expense(expense_id):
@@ -87,7 +102,7 @@ def edit_expense(expense_id):
     cursor = connection.cursor(dictionary=True)
 
     try:
-        # Fetch the expense record
+        # Fetch the existing expense
         cursor.execute('SELECT * FROM sales WHERE salesID = %s', (expense_id,))
         expense = cursor.fetchone()
 
@@ -95,35 +110,63 @@ def edit_expense(expense_id):
             flash("Expense not found!", "warning")
             return redirect(url_for('expenses_blueprint.list_expenses'))
 
-        # Get customer list
-        cursor.execute('SELECT CustomerID, name FROM customer_list')
+        # Fetch customers and categories for dropdowns
+        cursor.execute('SELECT CustomerID, name FROM customer_list ORDER BY name')
         customers = cursor.fetchall()
+
+        cursor.execute('SELECT * FROM category_list ORDER BY name')
+        categories = cursor.fetchall()
 
         if request.method == 'POST':
             # Get form data
             customer_id = request.form.get('customer_id')
-            expense_name = request.form.get('expense_name')
-            description = request.form.get('description')
-            amount = request.form.get('amount')
+            category_id = request.form.get('category_id')
+            expense_name = request.form.get('expense_name', '').strip()
+            description = request.form.get('description', '').strip()
+            amount = request.form.get('amount', '').strip()
+            date_updated_str = request.form.get('date_updated')  # <-- from datetime-local input
 
-            # Automatically set current Kampala time
-            date_updated = get_kampala_time(as_string=True)
+            # Validation
+            if not customer_id or not category_id or not expense_name or not amount or not date_updated_str:
+                flash("Please fill in all required fields", "danger")
+                return redirect(request.url)
 
-            # Update the expense
+            try:
+                amount = float(amount)
+                if amount <= 0:
+                    raise ValueError("Amount must be positive")
+            except ValueError:
+                flash("Amount must be a valid positive number.", "danger")
+                return redirect(request.url)
+
+            try:
+                # Convert datetime-local string to datetime object
+                date_updated = datetime.strptime(date_updated_str, "%Y-%m-%dT%H:%M")
+            except ValueError:
+                flash("Invalid date/time format.", "danger")
+                return redirect(request.url)
+
+            # Update the expense record including category_id and editable date/time
             update_query = '''
-                UPDATE sales 
-                SET Customer_id = %s,
+                UPDATE sales
+                SET customer_id = %s,
+                    category_id = %s,
                     expense_name = %s,
                     description = %s,
                     price = %s,
+                    discounted_price = %s,
+                    total_price = %s,
                     date_updated = %s
                 WHERE salesID = %s
             '''
             cursor.execute(update_query, (
                 customer_id,
+                category_id,
                 expense_name,
                 description,
                 amount,
+                amount,  # discounted_price same as amount for expense
+                amount,  # total_price same as amount for expense
                 date_updated,
                 expense_id
             ))
@@ -132,11 +175,17 @@ def edit_expense(expense_id):
             flash("Expense updated successfully!", "success")
             return redirect(url_for('sales_blueprint.sales_view'))
 
-        return render_template('expenses/edit_expenses.html', expense=expense, customers=customers)
+        return render_template(
+            'expenses/edit_expenses.html',
+            categories=categories,
+            expense=expense,
+            customers=customers
+        )
 
     finally:
         cursor.close()
         connection.close()
+
 
 
 @blueprint.route('/delete_expense/<string:get_id>')

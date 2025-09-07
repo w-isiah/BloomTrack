@@ -1,18 +1,18 @@
 {% extends "layouts/base.html" %}
 
-{% block title %} Add Expense {% endblock %}
-
-{% block body_class %} sidebar-mini layout-footer-fixed {% endblock %}
+{% block title %}Add Expense{% endblock %}
+{% block body_class %}sidebar-mini layout-footer-fixed{% endblock %}
 
 {% block stylesheets %}
 <!-- Google Font: Source Sans Pro -->
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
 <!-- Font Awesome -->
 <link rel="stylesheet" href="/static/assets/plugins/fontawesome-free/css/all.min.css">
-<!-- Theme style -->
+<!-- AdminLTE -->
 <link rel="stylesheet" href="/static/assets/css/adminlte.min.css">
-<!-- Select2 CSS -->
-<link href="/static/assets/css/select2.min.css" rel="stylesheet" />
+<!-- Select2 -->
+<link rel="stylesheet" href="/static/assets/css/select2.min.css">
+
 <style>
   .alert-container {
     position: fixed;
@@ -39,21 +39,23 @@
 {% block content %}
 <div class="content-wrapper">
 
+  <!-- Flash Messages -->
   {% with messages = get_flashed_messages(with_categories=true) %}
-  {% if messages %}
-  <div class="alert-container" id="flashMessageContainer">
-    {% for category, message in messages %}
-    <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-      <strong>{{ message }}</strong>
-      <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-        <span aria-hidden="true">&times;</span>
-      </button>
-    </div>
-    {% endfor %}
-  </div>
-  {% endif %}
+    {% if messages %}
+      <div class="alert-container" id="flashMessageContainer">
+        {% for category, message in messages %}
+          <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+            <strong>{{ message }}</strong>
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
   {% endwith %}
 
+  <!-- Page Header -->
   <section class="content-header">
     <div class="container-fluid">
       <div class="row mb-2">
@@ -71,6 +73,7 @@
     </div>
   </section>
 
+  <!-- Form Section -->
   <section class="content">
     <div class="container-fluid">
       <div class="row justify-content-center">
@@ -79,24 +82,42 @@
             <div class="card-header">
               <h3 class="card-title">New Expense Details</h3>
             </div>
+
             <form action="{{ url_for('expenses_blueprint.add_expense') }}" method="POST" class="form-horizontal">
               <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
-
               <div class="card-body">
 
                 <!-- Expense Name -->
                 <div class="form-group row">
-                  <label for="expense_name" class="col-sm-3 col-form-label">Expense Name<span class="text-danger">*</span>:</label>
+                  <label for="expense_name" class="col-sm-3 col-form-label">
+                    Expense Name <span class="text-danger">*</span>:
+                  </label>
                   <div class="col-sm-9">
-                    <input type="text" id="expense_name" name="expense_name" class="form-control" placeholder="Enter Expense Name" required>
+                    <input type="text" id="expense_name" name="expense_name" class="form-control"
+                           placeholder="Enter Expense Name" required>
                   </div>
                 </div>
 
-                <!-- Amount (Price) -->
+                <!-- Category -->
                 <div class="form-group row">
-                  <label for="price" class="col-sm-3 col-form-label">Amount<span class="text-danger">*</span>:</label>
+                  <label for="category_id" class="col-sm-3 col-form-label">Category:</label>
                   <div class="col-sm-9">
-                    <input type="number" id="price" name="price" min="0.01" step="0.01" class="form-control" placeholder="Enter Expense Amount" required>
+                    <select name="category_id" class="form-control select2" required>
+                      {% for i in categories %}
+                        <option value="{{ i.CategoryID }}">{{ i.name }}</option>
+                      {% endfor %}
+                    </select>
+                  </div>
+                </div>
+
+                <!-- Amount -->
+                <div class="form-group row">
+                  <label for="price" class="col-sm-3 col-form-label">
+                    Amount <span class="text-danger">*</span>:
+                  </label>
+                  <div class="col-sm-9">
+                    <input type="number" id="price" name="price" min="0.01" step="0.01"
+                           class="form-control" placeholder="Enter Expense Amount" required>
                   </div>
                 </div>
 
@@ -104,18 +125,21 @@
                 <div class="form-group row">
                   <label for="description" class="col-sm-3 col-form-label">Description:</label>
                   <div class="col-sm-9">
-                    <textarea id="description" name="description" class="form-control" rows="3" placeholder="Enter Description (optional)"></textarea>
+                    <textarea id="description" name="description" class="form-control" rows="3"
+                              placeholder="Enter Description (optional)"></textarea>
                   </div>
                 </div>
 
                 <!-- Customer Dropdown -->
                 <div class="form-group row">
-                  <label for="customer_id" class="col-sm-3 col-form-label">Customer<span class="text-danger">*</span>:</label>
+                  <label for="customer_id" class="col-sm-3 col-form-label">
+                    Customer <span class="text-danger">*</span>:
+                  </label>
                   <div class="col-sm-9">
                     <select id="customer_id" name="customer_id" class="form-control select2" required>
                       <option value="" disabled selected>Select a customer</option>
                       {% for customer in customers %}
-                      <option value="{{ customer.CustomerID }}">{{ customer.name }}</option>
+                        <option value="{{ customer.CustomerID }}">{{ customer.name }}</option>
                       {% endfor %}
                     </select>
                   </div>
@@ -123,15 +147,18 @@
 
               </div>
 
+              <!-- Submit Button -->
               <div class="card-footer text-right">
                 <button type="submit" class="btn btn-success btn-sm">Save Expense</button>
               </div>
             </form>
+
           </div>
         </div>
       </div>
     </div>
   </section>
+
 </div>
 {% endblock %}
 
@@ -142,12 +169,14 @@
 <script src="/static/assets/plugins/bootstrap/js/bootstrap.bundle.min.js"></script>
 <!-- AdminLTE -->
 <script src="/static/assets/js/adminlte.min.js"></script>
-<!-- Select2 JS -->
+<!-- Select2 -->
 <script src="/static/assets/js/select2.min.js"></script>
+
 <script>
   $(document).ready(function () {
     $('.select2').select2();
 
+    // Flash messages animation
     if ($('#flashMessageContainer').length) {
       $('#flashMessageContainer').fadeIn(500).delay(3000).fadeOut(1000);
     }

@@ -224,18 +224,20 @@ def sales_view():
 
         total_discount_given = total_before_discount - total_sales
 
-        # Fetch expenses ordered by date_updated DESC
+        # Fetch expenses with category info
         cursor.execute("""
             SELECT 
                 s.salesID,
                 s.ProductID AS expense_code,
                 s.expense_name,
                 c.name AS customer_name,
+                cat.name AS category_name,
                 s.price AS amount,
                 s.description,
                 s.date_updated
             FROM sales s
             JOIN customer_list c ON s.customer_id = c.CustomerID
+            LEFT JOIN category_list cat ON s.category_id = cat.CategoryID
             WHERE s.type = 'expense' AND DATE(s.date_updated) BETWEEN %s AND %s
             ORDER BY s.date_updated DESC
         """, (start_date, end_date))
@@ -269,6 +271,7 @@ def sales_view():
         searched=searched,
         segment='sales_view'
     )
+
 
 
 

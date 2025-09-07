@@ -139,7 +139,7 @@
               <tr>
                 <td>{{ s.product_name }}</td>
                 <td>{{ s.customer_name }}</td>
-                <td class="money">{{ s.price }}</td>
+                <td class="money">{{ s.current_price }}</td>
                 <td>{{ s.discount }}%</td>
                 <td class="money">{{ s.discounted_price }}</td>
                 <td>{{ s.qty }}</td>
@@ -161,45 +161,53 @@
       </div>
 
       <!-- Expenses Table -->
-      <div class="card card-danger mb-4">
-        <div class="card-header"><h3 class="card-title">Expenses List</h3></div>
-        <div class="card-body">
-          {% if expenses %}
-          <table id="expensesTable" class="table table-bordered table-striped nowrap" width="100%">
-            <thead>
-              <tr>
-                <th>Person</th>
-                <th>Expense Name</th>
-                <th>Description</th>
-                <th class="money">Amount</th>
-                <th>Date</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for e in expenses %}
-              <tr>
-                <td>{{ e.customer_name }}</td>
-                <td>{{ e.expense_name }}</td>
-                <td>{{ e.description }}</td>
-                <td class="money">{{ e.amount }}</td>
-                <td>{{ e.date_updated.strftime("%Y-%m-%d %H:%M") }}</td>
-                <td>
-                  <a href="/edit_expense/{{ e.salesID }}" class="btn btn-warning btn-sm">Edit</a>
-                  {% if user.role == 'super_admin' %}
-                  <a href="/delete_expense/{{ e.salesID }}" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure you want to delete this expense?');">Del</a>
-                  {% endif %}
-                </td>
-              </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-          {% else %}
-          <p>No expense data for selected date range.</p>
-          {% endif %}
-        </div>
-      </div>
-      {% endif %}
+      
+
+
+      <!-- Expenses Table -->
+<div class="card card-danger mb-4">
+  <div class="card-header"><h3 class="card-title">Expenses List</h3></div>
+  <div class="card-body">
+    {% if expenses %}
+    <table id="expensesTable" class="table table-bordered table-striped nowrap" width="100%">
+      <thead>
+        <tr>
+          <th>Person</th>
+          <th>Expense Name</th>
+          <th>Category</th>
+          <th>Description</th>
+          <th class="money">Amount</th>
+          <th>Date</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for e in expenses %}
+        <tr>
+          <td>{{ e.customer_name }}</td>
+          <td>{{ e.expense_name }}</td>
+          <td>{{ e.category_name or 'N/A' }}</td>
+          <td>{{ e.description }}</td>
+          <td class="money">{{ e.amount }}</td>
+          <td>{{ e.date_updated.strftime("%Y-%m-%d %H:%M") }}</td>
+          <td>
+            <a href="/edit_expense/{{ e.salesID }}" class="btn btn-warning btn-sm">Edit</a>
+            {% if user.role == 'super_admin' %}
+            <a href="/delete_expense/{{ e.salesID }}" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure you want to delete this expense?');">Del</a>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <p>No expense data for selected date range.</p>
+    {% endif %}
+  </div>
+</div>
+
+
+{% endif %}
     </div>
   </section>
 </div>

@@ -79,58 +79,58 @@
 
   {% if searched %}
   <!-- KPIs -->
-  <section class="content kpi">
-    <div class="container-fluid">
-      <div class="row">
-        <div class="col-md-3">
-          <div class="info-box bg-success">
-            <span class="info-box-icon"><i class="fas fa-dollar-sign"></i></span>
-            <div class="info-box-content">
-              <span class="info-box-text">Total Sales (Discounted)</span>
-              <span class="info-box-number">UGX {{ total_sales | round(2) }}</span>
-            </div>
-          </div>
-        </div>
-        <div class="col-md-3">
-          <div class="info-box bg-secondary">
-            <span class="info-box-icon"><i class="fas fa-tag"></i></span>
-            <div class="info-box-content">
-              <span class="info-box-text">Total Before Discount</span>
-              <span class="info-box-number">UGX {{ total_before_discount | round(2) }}</span>
-            </div>
-          </div>
-        </div>
-        <div class="col-md-3">
-          <div class="info-box bg-warning">
-            <span class="info-box-icon"><i class="fas fa-percent"></i></span>
-            <div class="info-box-content">
-              <span class="info-box-text">Total Discount Given</span>
-              <span class="info-box-number">UGX {{ total_discount_given | round(2) }}</span>
-            </div>
-          </div>
-        </div>
-        <div class="col-md-3">
-          <div class="info-box bg-danger">
-            <span class="info-box-icon"><i class="fas fa-money-bill-wave"></i></span>
-            <div class="info-box-content">
-              <span class="info-box-text">Total Expenses</span>
-              <span class="info-box-number">UGX {{ total_expenses | round(2) }}</span>
-            </div>
+ <section class="content kpi">
+  <div class="container-fluid">
+    <div class="row">
+      <div class="col-md-3">
+        <div class="info-box bg-success">
+          <span class="info-box-icon"><i class="">UGX</i></span>
+          <div class="info-box-content">
+            <span class="info-box-text">Total Sales (Discounted)</span>
+            <span class="info-box-number">UGX {{ '{:,.2f}'.format(total_sales) }}</span>
           </div>
         </div>
       </div>
-
-      <div class="row mb-3">
-        <div class="col-md-4">
-          <div class="info-box bg-info">
-            <span class="info-box-icon"><i class="fas fa-boxes"></i></span>
-            <div class="info-box-content">
-              <span class="info-box-text">Total Quantity Sold</span>
-              <span class="info-box-number">{{ total_quantity }}</span>
-            </div>
+      <div class="col-md-3">
+        <div class="info-box bg-secondary">
+          <span class="info-box-icon"><i class="fas fa-tag"></i></span>
+          <div class="info-box-content">
+            <span class="info-box-text">Total Before Discount</span>
+            <span class="info-box-number">UGX {{ '{:,.2f}'.format(total_before_discount) }}</span>
           </div>
         </div>
-        <div class="col-md-4">
+      </div>
+      <div class="col-md-3">
+        <div class="info-box bg-warning">
+          <span class="info-box-icon"><i class="fas fa-percent"></i></span>
+          <div class="info-box-content">
+            <span class="info-box-text">Total Discount Given</span>
+            <span class="info-box-number">UGX {{ '{:,.2f}'.format(total_discount_given) }}</span>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="info-box bg-danger">
+          <span class="info-box-icon"><i class="fas fa-money-bill-wave"></i></span>
+          <div class="info-box-content">
+            <span class="info-box-text">Total Expenses</span>
+            <span class="info-box-number">UGX {{ '{:,.2f}'.format(total_expenses) }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row mb-3">
+      <div class="col-md-4">
+        <div class="info-box bg-info">
+          <span class="info-box-icon"><i class="fas fa-boxes"></i></span>
+          <div class="info-box-content">
+            <span class="info-box-text">Total Quantity Sold</span>
+            <span class="info-box-number">{{ total_quantity }}</span>
+          </div>
+        </div>
+      </div>
+       <div class="col-md-4">
           <div class="info-box bg-primary">
             <span class="info-box-icon"><i class="fas fa-users"></i></span>
             <div class="info-box-content">

@@ -6,7 +6,6 @@
 {% block stylesheets %}
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
 <link rel="stylesheet" href="/static/assets/plugins/fontawesome-free/css/all.min.css">
-<link rel="stylesheet" href="https://code.ionicframework.com/ionicons/2.0.1/css/ionicons.min.css">
 <link rel="stylesheet" href="/static/assets/css/adminlte.min.css">
 {% endblock %}
 
@@ -57,45 +56,61 @@
 
               <div class="card-body">
 
-                <!-- Person (Disabled) -->
+                <!-- Customer Dropdown -->
                 <div class="form-group row">
-                  <label for="customer_id" class="col-sm-3 col-form-label">Person</label>
+                  <label for="customer_id" class="col-sm-3 col-form-label">Customer</label>
                   <div class="col-sm-9">
-                    <select class="form-control" disabled>
+                    <select name="customer_id" class="form-control" required>
                       {% for c in customers %}
-                        <option value="{{ c.CustomerID }}" {% if c.CustomerID == expense.customer_id %}selected{% endif %}>{{ c.name }}</option>
+                        <option value="{{ c.CustomerID }}" {% if c.CustomerID == expense.customer_id %}selected{% endif %}>
+                          {{ c.name }}
+                        </option>
                       {% endfor %}
                     </select>
                   </div>
                 </div>
 
-                <!-- Expense Name (Disabled) -->
+                <!-- Expense Name -->
                 <div class="form-group row">
                   <label for="expense_name" class="col-sm-3 col-form-label">Expense Name</label>
                   <div class="col-sm-9">
-                    <input type="text" class="form-control" value="{{ expense.expense_name }}" disabled>
+                    <input type="text" name="expense_name" class="form-control" value="{{ expense.expense_name }}" required>
                   </div>
                 </div>
 
-                <!-- Description (Disabled) -->
+                <!-- Category Dropdown -->
+                <div class="form-group row">
+                  <label for="category_id" class="col-sm-3 col-form-label">Category</label>
+                  <div class="col-sm-9">
+                    <select name="category_id" class="form-control" required>
+                      {% for category in categories %}
+                        <option value="{{ category.CategoryID }}" {% if category.CategoryID == expense.category_id %}selected{% endif %}>
+                          {{ category.name }}
+                        </option>
+                      {% endfor %}
+                    </select>
+                  </div>
+                </div>
+
+                <!-- Description -->
                 <div class="form-group row">
                   <label for="description" class="col-sm-3 col-form-label">Description</label>
                   <div class="col-sm-9">
-                    <textarea class="form-control" rows="3" disabled>{{ expense.description }}</textarea>
+                    <textarea name="description" class="form-control" rows="3">{{ expense.description }}</textarea>
                   </div>
                 </div>
 
-                <!-- Amount (Disabled) -->
+                <!-- Amount -->
                 <div class="form-group row">
                   <label for="amount" class="col-sm-3 col-form-label">Amount</label>
                   <div class="col-sm-9">
-                    <input type="number" step="0.01" class="form-control" value="{{ expense.price }}" disabled>
+                    <input type="number" name="amount" step="0.01" class="form-control" value="{{ expense.price }}" required>
                   </div>
                 </div>
 
-                <!-- Date Updated (Editable) -->
+                <!-- Date & Time -->
                 <div class="form-group row">
-                  <label for="date_updated" class="col-sm-3 col-form-label">Date Updated</label>
+                  <label for="date_updated" class="col-sm-3 col-form-label">Date & Time</label>
                   <div class="col-sm-9">
                     <input type="datetime-local" name="date_updated" class="form-control"
                       value="{{ expense.date_updated.strftime('%Y-%m-%dT%H:%M') if expense.date_updated else '' }}" required>
@@ -115,7 +130,6 @@
       </div>
     </div>
   </section>
-
 </div>
 {% endblock %}
 
