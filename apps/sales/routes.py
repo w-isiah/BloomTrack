@@ -57,6 +57,10 @@ def sales():
     return render_template('sales/sale.html', customers=customers, products=products, segment='sales')
 
 
+
+
+
+
 @blueprint.route('/save_sale', methods=['POST'])
 def save_sale():
     connection = None
@@ -69,8 +73,6 @@ def save_sale():
         data = request.get_json()
         customer_id = data.get('customer_id')
         items = data.get('cart_items')
-        total_price = data.get('total_price')
-        discounted_price = data.get('discounted_price')
 
         current_app.logger.debug(f"Received data: {data}")
 
@@ -79,37 +81,47 @@ def save_sale():
             return jsonify({'message': 'Missing customer ID or cart items.'}), 400
         if len(items) == 0:
             return jsonify({'message': 'Cart items cannot be empty.'}), 400
-        if not total_price or discounted_price is None:
-            return jsonify({'message': 'Total price or discounted price missing.'}), 400
 
         connection = get_db_connection()
         cursor = connection.cursor(dictionary=True)
         connection.start_transaction()
 
-        # Insert into sales_summary
-        cursor.execute("""
-            INSERT INTO sales_summary (customer_id, total_price, discounted_price)
-            VALUES (%s, %s, %s)
-        """, (customer_id, total_price, discounted_price))
-        sale_id = cursor.lastrowid
+        total_price = 0
+        discounted_price_total = 0
 
+        log_time = get_kampala_time()
+
+        # Process each cart item securely
         for item in items:
             product_id = item.get('product_id')
-            price = item.get('price')
-            quantity = item.get('quantity')
-            discount = item.get('discount', 0.00)
-            total_item_price = item.get('total_price')
-            discounted_item_price = item.get('discounted_price')
+            quantity = int(item.get('quantity', 0))
+            discount = float(item.get('discount', 0.00))
 
-            current_app.logger.debug(f"Processing item: {item}")
+            if not product_id or quantity <= 0:
+                return jsonify({'message': f'Invalid product or quantity for item {item}'}), 400
 
-            if not price or not quantity or quantity <= 0:
-                return jsonify({'message': f'Invalid data for product ID {product_id}.'}), 400
-            if total_item_price is None or discounted_item_price is None:
-                return jsonify({'message': f'Missing price data for product ID {product_id}.'}), 400
+            # ✅ Fetch product details securely
+            cursor.execute("SELECT price, quantity FROM product_list WHERE ProductID = %s", (product_id,))
+            product = cursor.fetchone()
 
-            # Insert sale item with date_updated and type='sales'
-            log_time = get_kampala_time()
+            if not product:
+                return jsonify({'message': f'Product ID {product_id} not found.'}), 400
+
+            unit_price = float(product['price'])
+            stock_qty = int(product['quantity'])
+
+            if quantity > stock_qty:
+                return jsonify({'message': f'Not enough stock for product ID {product_id}. Available: {stock_qty}'}), 400
+
+            # ✅ Backend calculates totals
+            line_total = unit_price * quantity
+            discount_amount = (line_total * discount) / 100
+            discounted_price = line_total - discount_amount
+
+            total_price += line_total
+            discounted_price_total += discounted_price
+
+            # Insert into sales table
             cursor.execute("""
                 INSERT INTO sales (
                     ProductID, customer_id, price, discount, qty, total_price,
@@ -117,23 +129,33 @@ def save_sale():
                 )
                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
             """, (
-                product_id, customer_id, price, discount, quantity,
-                total_item_price, discounted_item_price, log_time, 'sales'
+                product_id, customer_id, unit_price, discount, quantity,
+                line_total, discounted_price, log_time, 'sales'
             ))
 
-            # Update inventory
+            # Update product stock
             cursor.execute("""
                 UPDATE product_list SET quantity = quantity - %s WHERE ProductID = %s
             """, (quantity, product_id))
 
-            # Log inventory change with Kampala time
+            # Log inventory movement
             cursor.execute("""
                 INSERT INTO inventory_logs (product_id, quantity_change, reason, log_date, user_id)
                 VALUES (%s, %s, %s, %s, %s)
             """, (product_id, -quantity, 'sale', log_time, user_id))
 
+        # ✅ Insert summary after calculating everything
+        cursor.execute("""
+            INSERT INTO sales_summary (customer_id, total_price, discounted_price)
+            VALUES (%s, %s, %s)
+        """, (customer_id, total_price, discounted_price_total))
+
         connection.commit()
-        return jsonify({'message': 'Sale data added and inventory updated successfully!'}), 201
+        return jsonify({
+            'message': 'Sale recorded successfully!',
+            'total_price': total_price,
+            'discounted_total': discounted_price_total
+        }), 201
 
     except Exception as e:
         if connection:
@@ -147,7 +169,6 @@ def save_sale():
             cursor.close()
         if connection:
             connection.close()
-
 
 
 @blueprint.route('/sales_view', methods=['GET', 'POST'])

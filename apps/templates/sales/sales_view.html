@@ -2,20 +2,20 @@
 
 {% block title %}Sales & Expenses Report{% endblock %}
 
-{% block body_class %}sidebar-mini layout-fixed{% endblock %}
-
 {% block stylesheets %}
-<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700">
-<link rel="stylesheet" href="/static/assets/plugins/fontawesome-free/css/all.min.css">
-<link rel="stylesheet" href="/static/assets/css/adminlte.min.css">
-<link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css">
-<link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.3.0/css/responsive.dataTables.min.css">
-<style>
-  .money {
-    text-align: right;
-  }
-</style>
-{% endblock %}
+  <!-- Google Font -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700">
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='assets/plugins/fontawesome-free/css/all.min.css') }}">
+  <!-- DataTables -->
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css">
+  <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.3.0/css/responsive.dataTables.min.css">
+  <!-- Theme style -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='assets/css/adminlte.min.css') }}">
+  <style>
+    .money { text-align: right; }
+  </style>
+{% endblock stylesheets %}
 
 {% block content %}
 <div class="content-wrapper">
@@ -24,7 +24,9 @@
   <section class="content-header">
     <div class="container-fluid">
       <div class="row mb-2">
-        <div class="col-sm-6"><h1>Sales & Expenses Report</h1></div>
+        <div class="col-sm-6">
+          <h1>Sales & Expenses Report</h1>
+        </div>
         <div class="col-sm-6">
           <ol class="breadcrumb float-sm-right">
             <li class="breadcrumb-item"><a href="/index">Home</a></li>
@@ -39,18 +41,18 @@
   <section class="content">
     <div class="container-fluid">
       {% with messages = get_flashed_messages(with_categories=true) %}
-      {% if messages %}
-      <div class="row mb-3">
-        <div class="col-12">
-          {% for category, message in messages %}
-          <div class="alert alert-{{ 'danger' if category=='error' else category }} alert-dismissible fade show" role="alert">
-            <i class="fas fa-info-circle"></i> {{ message }}
-            <button type="button" class="close" data-dismiss="alert">&times;</button>
+        {% if messages %}
+        <div class="row mb-3">
+          <div class="col-12">
+            {% for category, message in messages %}
+            <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+              <i class="fas fa-info-circle"></i> {{ message }}
+              <button type="button" class="close" data-dismiss="alert">&times;</button>
+            </div>
+            {% endfor %}
           </div>
-          {% endfor %}
         </div>
-      </div>
-      {% endif %}
+        {% endif %}
       {% endwith %}
     </div>
   </section>
@@ -80,9 +82,9 @@
       <div class="row mb-4">
         <div class="col-md-3">
           <div class="info-box bg-success">
-            <span class="info-box-icon"><i class="">UGX</i></span>
+            <span class="info-box-icon"><i class="fas fa-cash-register"></i></span>
             <div class="info-box-content">
-              <span class="info-box-text">Total Sales (Discounted)</span>
+              <span class="info-box-text">Total Sales (Net)</span>
               <span class="info-box-number money">{{ total_sales }}</span>
             </div>
           </div>
@@ -91,7 +93,7 @@
           <div class="info-box bg-secondary">
             <span class="info-box-icon"><i class="fas fa-tag"></i></span>
             <div class="info-box-content">
-              <span class="info-box-text">Total Before Discount</span>
+              <span class="info-box-text">Before Discount</span>
               <span class="info-box-number money">{{ total_before_discount }}</span>
             </div>
           </div>
@@ -100,7 +102,7 @@
           <div class="info-box bg-warning">
             <span class="info-box-icon"><i class="fas fa-percent"></i></span>
             <div class="info-box-content">
-              <span class="info-box-text">Total Discount Given</span>
+              <span class="info-box-text">Discounts</span>
               <span class="info-box-number money">{{ total_discount_given }}</span>
             </div>
           </div>
@@ -109,7 +111,7 @@
           <div class="info-box bg-danger">
             <span class="info-box-icon"><i class="fas fa-money-bill-wave"></i></span>
             <div class="info-box-content">
-              <span class="info-box-text">Total Expenses</span>
+              <span class="info-box-text">Expenses</span>
               <span class="info-box-number money">{{ total_expenses }}</span>
             </div>
           </div>
@@ -131,7 +133,6 @@
                 <th class="money">Discounted</th>
                 <th>Qty</th>
                 <th>Date</th>
-                <th>Action</th>
               </tr>
             </thead>
             <tbody>
@@ -144,12 +145,6 @@
                 <td class="money">{{ s.discounted_price }}</td>
                 <td>{{ s.qty }}</td>
                 <td>{{ s.date_updated.strftime("%Y-%m-%d %H:%M") }}</td>
-                <td>
-                  <a href="/edit_sale/{{ s.salesID }}" class="btn btn-warning btn-sm">Edit</a>
-                  {% if user.role == 'super_admin' %}
-                  <a href="/delete_sale/{{ s.salesID }}" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure you want to delete this sale?');">Del</a>
-                  {% endif %}
-                </td>
               </tr>
               {% endfor %}
             </tbody>
@@ -161,94 +156,64 @@
       </div>
 
       <!-- Expenses Table -->
-      
-
-
-      <!-- Expenses Table -->
-<div class="card card-danger mb-4">
-  <div class="card-header"><h3 class="card-title">Expenses List</h3></div>
-  <div class="card-body">
-    {% if expenses %}
-    <table id="expensesTable" class="table table-bordered table-striped nowrap" width="100%">
-      <thead>
-        <tr>
-          <th>Person</th>
-          <th>Expense Name</th>
-          <th>Category</th>
-          <th>Description</th>
-          <th class="money">Amount</th>
-          <th>Date</th>
-          <th>Action</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for e in expenses %}
-        <tr>
-          <td>{{ e.customer_name }}</td>
-          <td>{{ e.expense_name }}</td>
-          <td>{{ e.category_name or 'N/A' }}</td>
-          <td>{{ e.description }}</td>
-          <td class="money">{{ e.amount }}</td>
-          <td>{{ e.date_updated.strftime("%Y-%m-%d %H:%M") }}</td>
-          <td>
-            <a href="/edit_expense/{{ e.salesID }}" class="btn btn-warning btn-sm">Edit</a>
-            {% if user.role == 'super_admin' %}
-            <a href="/delete_expense/{{ e.salesID }}" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure you want to delete this expense?');">Del</a>
-            {% endif %}
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-    {% else %}
-    <p>No expense data for selected date range.</p>
-    {% endif %}
-  </div>
-</div>
-
-
-{% endif %}
+      <div class="card card-danger mb-4">
+        <div class="card-header"><h3 class="card-title">Expenses List</h3></div>
+        <div class="card-body">
+          {% if expenses %}
+          <table id="expensesTable" class="table table-bordered table-striped nowrap" width="100%">
+            <thead>
+              <tr>
+                <th>Person</th>
+                <th>Expense</th>
+                <th>Category</th>
+                <th class="money">Amount</th>
+                <th>Date</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for e in expenses %}
+              <tr>
+                <td>{{ e.customer_name }}</td>
+                <td>{{ e.expense_name }}</td>
+                <td>{{ e.category_name or 'N/A' }}</td>
+                <td class="money">{{ e.amount }}</td>
+                <td>{{ e.date_updated.strftime("%Y-%m-%d %H:%M") }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+          {% else %}
+          <p>No expense data for selected date range.</p>
+          {% endif %}
+        </div>
+      </div>
+      {% endif %}
     </div>
   </section>
 </div>
-{% endblock %}
+{% endblock content %}
 
 {% block javascripts %}
-<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-<script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
-<script src="https://cdn.datatables.net/responsive/2.3.0/js/dataTables.responsive.min.js"></script>
-<script src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>
-<script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <!-- jQuery -->
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <!-- DataTables -->
+  <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+  <script src="https://cdn.datatables.net/responsive/2.3.0/js/dataTables.responsive.min.js"></script>
 
-<script>
-function formatMoneyCells() {
-  $('.money').each(function () {
-    let val = parseFloat($(this).text().replace(/,/g,''));
-    if(!isNaN(val)) {
-      $(this).text(val.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}));
+  <script>
+    function formatMoneyCells() {
+      $('.money').each(function () {
+        let val = parseFloat($(this).text().replace(/,/g,''));
+        if(!isNaN(val)) {
+          $(this).text(val.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2}));
+        }
+      });
     }
-  });
-}
 
-$(document).ready(function () {
-  $('#salesTable').DataTable({
-    scrollX: true,
-    responsive: true,
-    dom: 'Bfrtip',
-    buttons: [{ extend: 'excelHtml5', title: 'Sales_Report' }],
-    initComplete: formatMoneyCells
-  });
-
-  $('#expensesTable').DataTable({
-    scrollX: true,
-    responsive: true,
-    dom: 'Bfrtip',
-    buttons: [{ extend: 'excelHtml5', title: 'Expenses_Report' }],
-    initComplete: formatMoneyCells
-  });
-
-  formatMoneyCells();
-});
-</script>
-{% endblock %}
+    $(document).ready(function () {
+      $('#salesTable').DataTable({ scrollX:true, responsive:true });
+      $('#expensesTable').DataTable({ scrollX:true, responsive:true });
+      formatMoneyCells();
+    });
+  </script>
+{% endblock javascripts %}
