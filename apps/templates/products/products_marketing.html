@@ -1,0 +1,163 @@
+{% extends "layouts/base-fullscreen.html" %}
+
+{% block title %}Products Marketing{% endblock %}
+
+{% block body_class %}sidebar-mini{% endblock %}
+
+{% block stylesheets %}
+<!-- Google Font: Source Sans Pro -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
+<!-- Font Awesome -->
+<link rel="stylesheet" href="/static/assets/plugins/fontawesome-free/css/all.min.css">
+<!-- AdminLTE -->
+<link rel="stylesheet" href="/static/assets/css/adminlte.min.css">
+<!-- Custom CSS -->
+<style>
+  .product-card {
+    transition: transform 0.2s;
+  }
+  .product-card:hover {
+    transform: scale(1.05);
+  }
+  .product-image {
+    height: 180px;
+    object-fit: cover;
+    border-radius: 5px;
+  }
+  .card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  /* Fixed search bar */
+  #searchContainer {
+    position: fixed;
+    top: 70px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1050;
+    width: 90%;
+    max-width: 600px;
+    background: #fff;
+    border-radius: 5px;
+    border: 1px solid #ddd;
+    padding: 10px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="content-wrapper">
+
+  <!-- Flash Messages -->
+  {% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+  <div class="container mt-3">
+    {% for category, message in messages %}
+    <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+      {{ message }}
+      <button type="button" class="close" data-dismiss="alert">&times;</button>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+  {% endwith %}
+
+  <!-- Page Header -->
+  <section class="content-header">
+    <div class="container-fluid">
+      <div class="row mb-2">
+        <div class="col-sm-6"><h1>Products Marketing</h1></div>
+        <div class="col-sm-6">
+          <ol class="breadcrumb float-sm-right">
+            <li class="breadcrumb-item"><a href="/index">Home</a></li>
+            <li class="breadcrumb-item active">Marketing</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Fixed Search -->
+  <div id="searchContainer">
+    <input type="text" id="searchInput" class="form-control" placeholder="Search by Name, SKU, Category, or Contact">
+  </div>
+
+  <!-- Spacer to prevent overlap -->
+  <div style="height:80px;"></div>
+
+  <!-- Product Grid -->
+  <section class="content">
+    <div class="container-fluid">
+      <div class="row" id="productGrid">
+        {% for product in products %}
+        <div class="col-sm-6 col-md-4 col-lg-3 product-item">
+          <div class="card product-card">
+            {% if product.image %}
+            <img src="/static/uploads/{{ product.image }}" class="card-img-top product-image" alt="{{ product.name }}">
+            {% else %}
+            <img src="/static/assets/img/no-image.png" class="card-img-top product-image" alt="No Image">
+            {% endif %}
+            <div class="card-body">
+              <h5 class="card-title">{{ product.name }}</h5>
+              <p class="card-text">
+                <small><b>Category:</b> {{ product.category_name }}</small><br>
+                <small><b>SKU:</b> {{ product.sku }}</small><br>
+                <small><b>Price:</b> {{ product.formatted_price }} UGX</small><br>
+                <small><b>Quantity:</b> {{ product.quantity }}</small><br>
+                <small><b>Contact:</b> {{ product.contact or '0757393160' }}</small>
+              </p>
+            </div>
+            <div class="card-footer">
+              <!-- Optional: Edit/Delete buttons -->
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+
+      <!-- Total Value -->
+      <div class="row mt-4">
+        <div class="col-12">
+          <div class="alert alert-info">
+            <h5>Total Value of All Products: <strong>{{ formatted_total_sum }} UGX</strong></h5>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</div>
+{% endblock %}
+
+{% block javascripts %}
+<script src="/static/assets/plugins/jquery/jquery.min.js"></script>
+<script src="/static/assets/plugins/bootstrap/js/bootstrap.bundle.min.js"></script>
+<script src="/static/assets/js/adminlte.min.js"></script>
+
+<script>
+$(document).ready(function() {
+  // Auto hide flash messages
+  setTimeout(() => {
+    $('.alert').fadeOut(800);
+  }, 3000);
+
+  // Live search filter (Name, SKU, Category, Contact)
+  $('#searchInput').on('keyup', function() {
+    const query = $(this).val().toLowerCase();
+    $('.product-item').each(function() {
+      const name = $(this).find('.card-title').text().toLowerCase();
+      const sku = $(this).find('small:contains("SKU")').text().toLowerCase();
+      const category = $(this).find('small:contains("Category")').text().toLowerCase();
+      const contact = $(this).find('small:contains("Contact")').text().toLowerCase();
+      if (name.includes(query) || sku.includes(query) || category.includes(query) || contact.includes(query)) {
+        $(this).show();
+      } else {
+        $(this).hide();
+      }
+    });
+  });
+});
+</script>
+{% endblock %}

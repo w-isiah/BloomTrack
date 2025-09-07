@@ -1,7 +1,7 @@
 import os
 import random
 import logging
-from flask import render_template, request, redirect, url_for, flash, current_app
+from flask import render_template, request, redirect, url_for, flash, current_app,jsonify
 from werkzeug.utils import secure_filename
 from mysql.connector import Error
 from apps import get_db_connection
@@ -63,6 +63,124 @@ def products():
                            products=products,
                            formatted_total_sum=formatted_total_sum,
                            segment='products')
+
+
+
+
+@blueprint.route('/products_marketing')
+def products_marketing():
+    """Renders the marketing page for products with search functionality."""
+    connection = None
+    cursor = None
+    search_query = request.args.get('q', '').strip()  # Get search term
+
+    try:
+        connection = get_db_connection()
+        cursor = connection.cursor(dictionary=True)
+
+        # Base query
+        query = """
+            SELECT 
+                p.*,
+                c.name AS category_name,
+                (p.quantity * p.price) AS total_price
+            FROM product_list p
+            LEFT JOIN category_list c ON p.category_id = c.CategoryID
+        """
+
+        params = []
+        # Add search filter if provided
+        if search_query:
+            query += """
+                WHERE p.name LIKE %s OR p.sku LIKE %s OR c.name LIKE %s
+            """
+            like_query = f"%{search_query}%"
+            params.extend([like_query, like_query, like_query])
+
+        query += " ORDER BY p.name"
+
+        cursor.execute(query, params)
+        products = cursor.fetchall()
+
+        # Calculate formatted totals
+        formatted_total_sum, formatted_total_price = calculate_formatted_totals(products)
+
+        # Format individual product prices
+        for product in products:
+            product['formatted_price'] = "{:,.2f}".format(product['price'] or 0)
+            product['formatted_total_price'] = "{:,.2f}".format(product['total_price'] or 0)
+
+    except Exception as e:
+        logging.error(f"Error fetching products: {e}", exc_info=True)
+        flash("An error occurred while fetching products.", "error")
+        return render_template('products/page-500.html'), 500
+
+    finally:
+        if cursor:
+            cursor.close()
+        if connection:
+            connection.close()
+
+    return render_template(
+        'products/products_marketing.html',
+        products=products,
+        formatted_total_sum=formatted_total_sum,
+        formatted_total_price=formatted_total_price,
+        segment='products',
+        search_query=search_query
+    )
+
+
+
+
+
+
+
+
+
+
+
+@blueprint.route('/api/products', methods=['GET'])
+def api_products():
+    connection = None
+    cursor = None
+    try:
+        connection = get_db_connection()
+        cursor = connection.cursor(dictionary=True)
+
+        cursor.execute('''
+            SELECT p.ProductID AS id, p.name, p.description, p.price, p.sku, p.quantity,
+                   p.image, c.name AS category_name, p.updated_at
+            FROM product_list p
+            JOIN category_list c ON p.category_id = c.CategoryID
+            ORDER BY p.name
+        ''')
+        products = cursor.fetchall()
+
+        for p in products:
+            if p['price'] is not None:
+                p['price'] = float(p['price'])
+            if p['quantity'] is not None:
+                p['quantity'] = int(p['quantity'])
+
+        return jsonify(products)
+
+    except Error as e:
+        logging.error(f"Database error: {e}")
+        return jsonify({"error": "Unable to fetch products"}), 500
+
+    finally:
+        if cursor:
+            cursor.close()
+        if connection:
+            connection.close()
+
+
+
+
+
+
+
 
 
 

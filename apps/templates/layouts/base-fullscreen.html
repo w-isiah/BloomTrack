@@ -3,23 +3,36 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="icon" href=/static/assets/img/logo2.png type="image/x-icon">
+  <link rel="icon" href="/static/assets/img/logo2.png" type="image/x-icon">
   <link rel="canonical" href=""/>
-  
-  <title>
-    Pos {% block title %}{% endblock %} | online
-  </title> 
 
-  <!-- Specific Page CSS goes HERE  -->  
+  <title>POS {% block title %}{% endblock %} | Online</title>
+
+  <!-- Google Font: Source Sans Pro -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="/static/assets/plugins/fontawesome-free/css/all.min.css">
+  <!-- Ionicons -->
+  <link rel="stylesheet" href="https://code.ionicframework.com/ionicons/2.0.1/css/ionicons.min.css">
+  <!-- AdminLTE -->
+  <link rel="stylesheet" href="/static/assets/css/adminlte.min.css">
+
+  <!-- Page-specific CSS -->
   {% block stylesheets %}{% endblock stylesheets %}
-
 </head>
+
 <body class="hold-transition {% block body_class %}{% endblock body_class %}">
 
   {% block content %}{% endblock content %}
 
-  <!-- Specific Page JS goes HERE  -->
-  {% block javascripts %}{% endblock javascripts %}
+  <!-- jQuery -->
+  <script src="/static/assets/plugins/jquery/jquery.min.js"></script>
+  <!-- Bootstrap 4 -->
+  <script src="/static/assets/plugins/bootstrap/js/bootstrap.bundle.min.js"></script>
+  <!-- AdminLTE -->
+  <script src="/static/assets/js/adminlte.min.js"></script>
 
+  <!-- Page-specific JS -->
+  {% block javascripts %}{% endblock javascripts %}
 </body>
 </html>

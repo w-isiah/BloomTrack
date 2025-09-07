@@ -475,15 +475,13 @@ def dashboard_view():
 
 
 
-
-
-
 @blueprint.route('/categories_dashboard', methods=['GET', 'POST'])
 def categories_dashboard():
     # Default date range: last 30 days
     end_date = datetime.today()
     start_date = end_date - timedelta(days=30)
 
+    # Parse POSTed dates if provided
     if request.method == 'POST':
         start_date_str = request.form.get('start_date')
         end_date_str = request.form.get('end_date')
@@ -493,7 +491,7 @@ def categories_dashboard():
             if end_date_str:
                 end_date = datetime.strptime(end_date_str, '%Y-%m-%d')
         except ValueError:
-            pass
+            pass  # ignore invalid date inputs
 
     start_date_str = start_date.strftime('%Y-%m-%d')
     end_date_str = end_date.strftime('%Y-%m-%d')
@@ -501,6 +499,7 @@ def categories_dashboard():
     connection = get_db_connection()
     cursor = connection.cursor(dictionary=True)
 
+    sales = []
     try:
         # Fetch sales joined with products and categories
         cursor.execute("""
@@ -521,30 +520,31 @@ def categories_dashboard():
         cursor.close()
         connection.close()
 
-    # Aggregate sales totals per category
+    # Aggregate total sales per category
     sales_by_category = defaultdict(Decimal)
     for s in sales:
-        unit_price = Decimal(s['price'] or 0)
-        discount = Decimal(s['discount'] or 0)
-        qty = s['qty'] or 0
+        try:
+            unit_price = Decimal(s.get('price') or 0)
+            discount = Decimal(s.get('discount') or 0)
+            qty = Decimal(s.get('qty') or 0)
+            discounted_price = unit_price * (Decimal('1') - discount / Decimal('100'))
+            line_total = discounted_price * qty
+            category_name = s.get('category_name') or 'Uncategorized'
+            sales_by_category[category_name] += line_total
+        except Exception as e:
+            # optional: log the error and skip invalid rows
+            continue
 
-        discounted_price = unit_price * (Decimal('1') - discount / Decimal('100'))
-        line_total = discounted_price * qty
-
-        sales_by_category[s['category_name']] += line_total
-
-    # Convert Decimals to floats for JSON
+    # Convert Decimal totals to floats for easier use in templates/JS
     sales_by_category = {k: float(v) for k, v in sales_by_category.items()}
 
-    context = {
-        'start_date': start_date.strftime('%Y-%m-%d'),
-        'end_date': end_date.strftime('%Y-%m-%d'),
-        'searched': request.method == 'POST',
-        'sales_by_category': sales_by_category,
-    }
-
-    return render_template('sales/categories_dashboard.html', **context)
-
+    return render_template(
+        'sales/categories_dashboard.html',
+        start_date=start_date_str,
+        end_date=end_date_str,
+        searched=request.method == 'POST',
+        sales_by_category=sales_by_category
+    )
 
 
 
