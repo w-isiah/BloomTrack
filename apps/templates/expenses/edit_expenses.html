@@ -13,124 +13,138 @@
 {% block content %}
 <div class="content-wrapper">
 
-  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% with messages = get_flashed_messages(with_categories=true) %}
     {% if messages %}
-      <div class="container mt-2">
-        {% for category, message in messages %}
-        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-          <strong>{{ message }}</strong>
-          <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
-          </button>
-        </div>
-        {% endfor %}
-      </div>
-    {% endif %}
-  {% endwith %}
-
-  <section class="content-header">
-    <div class="container-fluid">
-      <div class="row mb-2">
-        <div class="col-sm-6"><h1>Edit Expense</h1></div>
-        <div class="col-sm-6">
-          <ol class="breadcrumb float-sm-right">
-            <li class="breadcrumb-item"><a href="/index">Home</a></li>
-            <li class="breadcrumb-item"><a href="/sales_view">Expenses</a></li>
-            <li class="breadcrumb-item active">Edit Expense</li>
-          </ol>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <section class="content">
-    <div class="container-fluid">
-      <div class="row justify-content-center">
-        <div class="col-md-8">
-          <div class="card card-primary">
-            <div class="card-header">
-              <h3 class="card-title">Edit Expense</h3>
+        <div class="container mt-2">
+            {% for category, message in messages %}
+            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                <strong>{{ message }}</strong>
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
             </div>
-
-            <form action="{{ url_for('expenses_blueprint.edit_expense', expense_id=expense.salesID) }}" method="POST" class="form-horizontal">
-              <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
-
-              <div class="card-body">
-
-                <!-- Customer Dropdown -->
-                <div class="form-group row">
-                  <label for="customer_id" class="col-sm-3 col-form-label">Customer</label>
-                  <div class="col-sm-9">
-                    <select name="customer_id" class="form-control" required>
-                      {% for c in customers %}
-                        <option value="{{ c.CustomerID }}" {% if c.CustomerID == expense.customer_id %}selected{% endif %}>
-                          {{ c.name }}
-                        </option>
-                      {% endfor %}
-                    </select>
-                  </div>
-                </div>
-
-                <!-- Expense Name -->
-                <div class="form-group row">
-                  <label for="expense_name" class="col-sm-3 col-form-label">Expense Name</label>
-                  <div class="col-sm-9">
-                    <input type="text" name="expense_name" class="form-control" value="{{ expense.expense_name }}" required>
-                  </div>
-                </div>
-
-                <!-- Category Dropdown with Select2 -->
-                <div class="form-group row">
-                  <label for="category_id" class="col-sm-3 col-form-label">Category</label>
-                  <div class="col-sm-9">
-                    <select name="category_id" class="form-control select2" required>
-                      {% for category in categories %}
-                        <option value="{{ category.CategoryID }}" {% if category.CategoryID == expense.category_id %}selected{% endif %}>
-                          {{ category.name }}
-                        </option>
-                      {% endfor %}
-                    </select>
-                  </div>
-                </div>
-
-                <!-- Description -->
-                <div class="form-group row">
-                  <label for="description" class="col-sm-3 col-form-label">Description</label>
-                  <div class="col-sm-9">
-                    <textarea name="description" class="form-control" rows="3">{{ expense.description }}</textarea>
-                  </div>
-                </div>
-
-                <!-- Amount -->
-                <div class="form-group row">
-                  <label for="amount" class="col-sm-3 col-form-label">Amount</label>
-                  <div class="col-sm-9">
-                    <input type="number" name="amount" step="0.01" class="form-control" value="{{ expense.price }}" required>
-                  </div>
-                </div>
-
-                <!-- Date & Time -->
-                <div class="form-group row">
-                  <label for="date_updated" class="col-sm-3 col-form-label">Date & Time</label>
-                  <div class="col-sm-9">
-                    <input type="datetime-local" name="date_updated" class="form-control"
-                      value="{{ expense.date_updated.strftime('%Y-%m-%dT%H:%M') if expense.date_updated else '' }}" required>
-                  </div>
-                </div>
-
-              </div>
-
-              <div class="card-footer text-right">
-                <button type="submit" class="btn btn-success">Save Changes</button>
-                <a href="{{ url_for('sales_blueprint.sales_view') }}" class="btn btn-secondary">Cancel</a>
-              </div>
-
-            </form>
-          </div>
+            {% endfor %}
         </div>
-      </div>
-    </div>
-  </section>
+    {% endif %}
+    {% endwith %}
+
+    <section class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6"><h1>Edit Expense</h1></div>
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item"><a href="/index">Home</a></li>
+                        <li class="breadcrumb-item"><a href="/sales_view">Expenses</a></li>
+                        <li class="breadcrumb-item active">Edit Expense</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="content">
+        <div class="container-fluid">
+            <div class="row justify-content-center">
+                <div class="col-md-8">
+                    <div class="card card-primary">
+                        <div class="card-header">
+                            <h3 class="card-title">Edit Expense</h3>
+                        </div>
+
+                        <form action="{{ url_for('expenses_blueprint.edit_expense', expense_id=expense.salesID) }}" method="POST" class="form-horizontal">
+                            <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+
+                            <div class="card-body">
+
+                                <!-- Expense Name -->
+                                <div class="form-group row">
+                                    <label for="expense_name" class="col-sm-3 col-form-label">Expense Name</label>
+                                    <div class="col-sm-9">
+                                        <input type="text" name="expense_name" class="form-control" value="{{ expense.expense_name }}" required>
+                                    </div>
+                                </div>
+
+                                <!-- Customer Dropdown -->
+                                <div class="form-group row">
+                                    <label for="customer_id" class="col-sm-3 col-form-label">Customer / Vendor</label>
+                                    <div class="col-sm-9">
+                                        <select name="customer_id" class="form-control select2" required>
+                                            {% for c in customers %}
+                                                <option value="{{ c.CustomerID }}" {% if c.CustomerID == expense.customer_id %}selected{% endif %}>
+                                                    {{ c.name }}
+                                                </option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <!-- Category Dropdown with Select2 -->
+                                <div class="form-group row">
+                                    <label for="category_id" class="col-sm-3 col-form-label">Category</label>
+                                    <div class="col-sm-9">
+                                        <select name="category_id" class="form-control select2" required>
+                                            {% for category in categories %}
+                                                <option value="{{ category.CategoryID }}" {% if category.CategoryID == expense.category_id %}selected{% endif %}>
+                                                    {{ category.name }}
+                                                </option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </div>
+                                
+                                <!-- Farm Dropdown - ADDED FIELD -->
+                                <div class="form-group row">
+                                    <label for="farm_id" class="col-sm-3 col-form-label">Farm</label>
+                                    <div class="col-sm-9">
+                                        <select name="farm_id" class="form-control select2" required>
+                                            {% for farm in farms %}
+                                                <option value="{{ farm.FarmID }}" {% if farm.FarmID == expense.farm_id %}selected{% endif %}>
+                                                    {{ farm.name | capitalize }}
+                                                </option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <!-- Description -->
+                                <div class="form-group row">
+                                    <label for="description" class="col-sm-3 col-form-label">Description</label>
+                                    <div class="col-sm-9">
+                                        <textarea name="description" class="form-control" rows="3">{{ expense.description }}</textarea>
+                                    </div>
+                                </div>
+
+                                <!-- Amount -->
+                                <div class="form-group row">
+                                    <label for="amount" class="col-sm-3 col-form-label">Amount</label>
+                                    <div class="col-sm-9">
+                                        <input type="number" name="amount" step="0.01" class="form-control" value="{{ expense.price }}" required>
+                                    </div>
+                                </div>
+
+                                <!-- Date & Time -->
+                                <div class="form-group row">
+                                    <label for="date_updated" class="col-sm-3 col-form-label">Date & Time</label>
+                                    <div class="col-sm-9">
+                                        <input type="datetime-local" name="date_updated" class="form-control"
+                                            value="{{ expense.date_updated.strftime('%Y-%m-%dT%H:%M') if expense.date_updated else '' }}" required>
+                                    </div>
+                                </div>
+
+                            </div>
+
+                            <div class="card-footer text-right">
+                                <button type="submit" class="btn btn-success">Save Changes</button>
+                                <a href="{{ url_for('sales_blueprint.sales_view') }}" class="btn btn-secondary">Cancel</a>
+                            </div>
+
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
 </div>
 {% endblock %}
 
@@ -140,11 +154,11 @@
 <script src="/static/assets/js/adminlte.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script>
-  $(document).ready(function() {
-    $('.select2').select2({
-      width: '100%',
-      placeholder: "Select a category"
+    $(document).ready(function() {
+        $('.select2').select2({
+            width: '100%',
+            placeholder: "Select a value"
+        });
     });
-  });
 </script>
 {% endblock %}

@@ -1,0 +1,126 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Edit Farm{% endblock %}
+
+{% block body_class %}sidebar-mini layout-footer-fixed{% endblock body_class %}
+
+{% block stylesheets %}
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
+<link rel="stylesheet" href="/static/assets/plugins/fontawesome-free/css/all.min.css">
+<link rel="stylesheet" href="/static/assets/css/adminlte.min.css">
+{% endblock stylesheets %}
+
+{% block content %}
+<div class="content-wrapper">
+    <section class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    {# Changed title to Edit Farm #}
+                    <h1>Edit Farm</h1>
+                </div>
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item"><a href="/index">Home</a></li>
+                        {# Changed breadcrumb link and text to Farms #}
+                        <li class="breadcrumb-item"><a href="/farms">Farms</a></li>
+                        {# Changed active breadcrumb to Edit Farm #}
+                        <li class="breadcrumb-item active">Edit Farm</li>
+                    </ol>
+                </div>
+            </div>
+        </div></section>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        <div class="alert-container">
+            {% for category, message in messages %}
+            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                <strong>{{ message }}</strong>
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+    {% endwith %}
+
+    <section class="content">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            {# Changed card title to Edit Farm Information #}
+                            <h3 class="card-title">Edit Farm Information</h3>
+                        </div>
+                        <div class="card-body">
+
+                            <div class="widget-content nopadding">
+                                {# Updated blueprint and function name, and variable from farm to farm #}
+                                <form action="{{ url_for('farms_blueprint.edit_farm', farm_id=farm.FarmID) }}" method="POST">
+                                    <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+
+                                    <div class="row mb-3">
+                                        <label for="name" class="col-sm-2 col-form-label">Farm Name:</label>
+                                        <div class="col-sm-10">
+                                            {# Updated placeholder and variable from farm.name to farm.name #}
+                                            <input type="text" name="name" class="form-control" value="{{ farm.name }}" id="name" placeholder="Enter Farm Name" required>
+                                        </div>
+                                    </div>
+
+                                    <div class="row mb-3">
+                                        {# Changed label from Contact to Location #}
+                                        <label for="location" class="col-sm-2 col-form-label">Location:</label>
+                                        <div class="col-sm-10">
+                                            {# Changed name/id/placeholder and variable from farm.contact to farm.location #}
+                                            <input type="text" name="location" class="form-control" value="{{ farm.location }}" id="location" placeholder="Enter Farm Location" required>
+                                        </div>
+                                    </div>
+
+                                    <div class="row mb-3">
+                                        {# Changed label from Address to Owner Contact #}
+                                        <label for="owner_contact" class="col-sm-2 col-form-label">Owner Contact:</label>
+                                        <div class="col-sm-10">
+                                            {# Changed name/id/placeholder and variable from farm.address to farm.owner_contact #}
+                                            <input type="text" name="owner_contact" class="form-control" value="{{ farm.owner_contact }}" id="owner_contact" placeholder="Enter Owner Contact" required>
+                                        </div>
+                                    </div>
+
+                                    <div class="row mb-3">
+                                        {# Changed label from Loyalty Points to Size (Acres) #}
+                                        <label for="size_acres" class="col-sm-2 col-form-label">Size (Acres):</label>
+                                        <div class="col-sm-10">
+                                            {# Changed name/id/placeholder and variable from farm.loyaltypoints to farm.size_acres #}
+                                            <input type="number" name="size_acres" class="form-control" value="{{ farm.size_acres }}" id="size_acres" placeholder="Enter Size in Acres">
+                                        </div>
+                                    </div>
+
+                                    <div class="form-actions">
+                                        <button type="submit" class="btn btn-sm btn-success" style="--bs-btn-padding-y: .25rem; --bs-btn-padding-x: .5rem; --bs-btn-font-size: .75rem;">
+                                            Save Changes
+                                        </button>
+                                    </div>
+
+                                </form>
+                            </div>
+
+                        </div>
+                        <div class="card-footer">
+                            Footer
+                        </div>
+                        </div>
+                    </div>
+            </div>
+        </div>
+    </section>
+    </div>
+{% endblock content %}
+
+{% block javascripts %}
+<script src="/static/assets/plugins/jquery/jquery.min.js"></script>
+<script src="/static/assets/plugins/bootstrap/js/bootstrap.bundle.min.js"></script>
+<script src="/static/assets/js/adminlte.min.js"></script>
+<script src="/static/assets/js/demo.js"></script>
+{% endblock javascripts %}

@@ -171,12 +171,45 @@ def save_sale():
             connection.close()
 
 
+
+
+
+from decimal import Decimal, InvalidOperation
+from datetime import datetime
+from flask import render_template, session, flash, redirect, url_for, request
+
+
+
+
+
+
+
+
+from flask import Blueprint, render_template, request, session, flash, redirect, url_for
+from decimal import Decimal
+
+from flask import Blueprint, render_template, request, session, flash, redirect, url_for
+from decimal import Decimal, InvalidOperation
+from datetime import datetime
+
+from datetime import datetime
+from decimal import Decimal, InvalidOperation # Import necessary Decimal components
+# Assuming get_db_connection, flash, redirect, url_for, request, session, and blueprint are defined
+
+from flask import request, session, redirect, url_for, flash, render_template
+from datetime import datetime
+from decimal import Decimal, InvalidOperation
+# Assuming get_db_connection is imported from a utility file
+
+# ... blueprint definition and other routes here
+
 @blueprint.route('/sales_view', methods=['GET', 'POST'])
 def sales_view():
     if 'id' not in session:
         flash('Login required to access this page.', 'error')
         return redirect(url_for('authentication_blueprint.login'))
 
+    # NOTE: Assuming get_db_connection() and connection/cursor handling are correct
     connection = get_db_connection()
     cursor = connection.cursor(dictionary=True)
 
@@ -188,51 +221,62 @@ def sales_view():
             flash('User not found. Please log in again.', 'error')
             return redirect(url_for('authentication_blueprint.login'))
 
-        # Default dates
+        # Default filters
         today = datetime.today().strftime('%Y-%m-%d')
         start_date = end_date = today
+        selected_farm_id = ''
         searched = False
 
-        # Handle filter form
         if request.method == 'POST':
             start_date = request.form.get('start_date') or today
             end_date = request.form.get('end_date') or today
+            # Retrieve FarmID from the form
+            selected_farm_id = request.form.get('farm_id') or ''
             searched = True
 
-        # Fetch sales ordered by date_updated DESC
-        cursor.execute("""
-            SELECT 
-                s.salesID,
-                p.name AS product_name,
-                c.name AS customer_name,
-                p.price AS current_price,
-                s.discount,
-                s.qty,
-                s.date_updated
-            FROM sales s
-            JOIN product_list p ON s.ProductID = p.ProductID
-            JOIN customer_list c ON s.customer_id = c.CustomerID
-            WHERE s.type = 'sales' AND DATE(s.date_updated) BETWEEN %s AND %s
-            ORDER BY s.date_updated DESC
-        """, (start_date, end_date))
+        # Get all farms for filter dropdown (FarmID and name)
+        cursor.execute("SELECT FarmID, name FROM farm_list ORDER BY name")
+        farms = cursor.fetchall()
+        
+        # --- SALES QUERY ---
+        # Fetches sales data, including discount percentage. Total calculations are done in Python.
+        sales_query = """
+        SELECT s.salesID, p.name AS product_name, c.name AS customer_name,
+                p.price AS current_price, s.discount, s.qty, s.date_updated, f.name AS farm_name
+        FROM sales s
+        JOIN product_list p ON s.ProductID = p.ProductID
+        JOIN customer_list c ON s.customer_id = c.CustomerID
+        LEFT JOIN farm_list f ON s.farm_id = f.FarmID
+        WHERE s.type = 'sales' AND DATE(s.date_updated) BETWEEN %s AND %s
+        """
+        params = [start_date, end_date]
+
+        if selected_farm_id:
+            sales_query += " AND s.farm_id = %s"
+            params.append(selected_farm_id)
+
+        sales_query += " ORDER BY s.date_updated DESC"
+        cursor.execute(sales_query, params)
         sales_raw = cursor.fetchall()
 
+        # Calculation logic: Calculate line totals, discounted prices, and overall sales totals
         sales = []
-        total_sales = Decimal("0.00")
-        total_before_discount = Decimal("0.00")
+        total_sales = Decimal("0.00")           # Net Sales (After Discount)
+        total_before_discount = Decimal("0.00") # Gross Sales (Before Discount)
         total_quantity = 0
 
         for row in sales_raw:
             try:
-                unit_price = row['current_price'] or Decimal("0.00")
-                discount = Decimal(row['discount']) if row['discount'] is not None else Decimal("0.00")
-                qty = row['qty'] or 0
+                unit_price = Decimal(str(row['current_price'] or 0))
+                discount = Decimal(str(row['discount'] or 0))
+                qty = int(row['qty'] or 0)
 
+                # Calculate discounted price and line total
                 discounted_unit_price = unit_price * (Decimal("1.00") - discount / Decimal("100"))
                 line_total = discounted_unit_price * qty
 
                 row['discounted_price'] = round(discounted_unit_price, 2)
-                row['line_total'] = round(line_total, 2)
+                row['line_total'] = round(line_total, 2) # The net revenue from this sale item
 
                 total_sales += line_total
                 total_before_discount += unit_price * qty
@@ -240,59 +284,78 @@ def sales_view():
 
                 sales.append(row)
             except (InvalidOperation, TypeError) as e:
+                # Log invalid records instead of crashing
                 print(f"Skipping invalid sales record: {row} - {e}")
                 continue
 
+        # Total Discount Given is the difference between Gross Sales and Net Sales
         total_discount_given = total_before_discount - total_sales
 
-        # Fetch expenses with category info
-        cursor.execute("""
-            SELECT 
-                s.salesID,
-                s.ProductID AS expense_code,
-                s.expense_name,
-                c.name AS customer_name,
-                cat.name AS category_name,
-                s.price AS amount,
-                s.description,
-                s.date_updated
-            FROM sales s
-            JOIN customer_list c ON s.customer_id = c.CustomerID
-            LEFT JOIN category_list cat ON s.category_id = cat.CategoryID
-            WHERE s.type = 'expense' AND DATE(s.date_updated) BETWEEN %s AND %s
-            ORDER BY s.date_updated DESC
-        """, (start_date, end_date))
+        # --- EXPENSES QUERY (For detailed expense list) ---
+        expenses_query = """
+        SELECT s.salesID, s.ProductID AS expense_code, s.expense_name, c.name AS customer_name,
+                cat.name AS category_name, s.price AS amount, s.date_updated, f.name AS farm_name
+        FROM sales s
+        LEFT JOIN customer_list c ON s.customer_id = c.CustomerID
+        LEFT JOIN category_list cat ON s.category_id = cat.CategoryID
+        LEFT JOIN product_list p ON s.ProductID = p.ProductID
+        LEFT JOIN farm_list f ON s.farm_id = f.FarmID
+        WHERE s.type = 'expense' AND DATE(s.date_updated) BETWEEN %s AND %s
+        """
+        expense_params = [start_date, end_date]
+
+        if selected_farm_id:
+            expenses_query += " AND s.farm_id = %s"
+            expense_params.append(selected_farm_id)
+
+        expenses_query += " ORDER BY s.date_updated DESC"
+        cursor.execute(expenses_query, expense_params)
         expenses = cursor.fetchall()
 
-        # Total expenses
-        cursor.execute("""
+        # --- TOTAL EXPENSES QUERY (For summary) ---
+        total_expenses_query = """
             SELECT SUM(s.price) AS total_expenses
             FROM sales s
             WHERE s.type = 'expense' AND DATE(s.date_updated) BETWEEN %s AND %s
-        """, (start_date, end_date))
+            """
+        total_expense_params = [start_date, end_date]
+
+        if selected_farm_id:
+            total_expenses_query += " AND s.farm_id = %s"
+            total_expense_params.append(selected_farm_id)
+
+        cursor.execute(total_expenses_query, total_expense_params)
         expense_total = cursor.fetchone()
-        total_expenses = expense_total['total_expenses'] or Decimal("0.00")
+        
+        # Ensure total_expenses is a Decimal, defaulting to 0.00
+        total_expenses = Decimal(str(expense_total['total_expenses'] or 0))
+
+        # Net profit is Net Sales minus Total Expenses
+        net_profit = total_sales - total_expenses
 
     finally:
         cursor.close()
         connection.close()
 
+    # Pass all calculated totals and data to the template
     return render_template(
         'sales/sales_view.html',
         user=user,
         sales=sales,
         expenses=expenses,
-        total_sales=f"{total_sales:,.2f}",
+        farms=farms,
+        selected_farm_id=selected_farm_id,
+        total_sales=f"{total_sales:,.2f}", # Net Sales (After Discount)
+        total_before_discount=f"{total_before_discount:,.2f}", # Gross Sales
+        total_discount_given=f"{total_discount_given:,.2f}", # Total Discount Value
+        total_expenses=f"{total_expenses:,.2f}", # Total Expenses
+        net_profit=f"{net_profit:,.2f}",
         total_quantity=f"{total_quantity:,}",
-        total_before_discount=f"{total_before_discount:,.2f}",
-        total_discount_given=f"{total_discount_given:,.2f}",
-        total_expenses=f"{Decimal(total_expenses):,.2f}",
         start_date=start_date,
         end_date=end_date,
         searched=searched,
         segment='sales_view'
     )
-
 
 
 

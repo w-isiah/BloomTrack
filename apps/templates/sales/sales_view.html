@@ -3,217 +3,254 @@
 {% block title %}Sales & Expenses Report{% endblock %}
 
 {% block stylesheets %}
-  <!-- Google Font -->
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700">
-  <!-- Font Awesome -->
-  <link rel="stylesheet" href="{{ url_for('static', filename='assets/plugins/fontawesome-free/css/all.min.css') }}">
-  <!-- DataTables -->
-  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css">
-  <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.3.0/css/responsive.dataTables.min.css">
-  <!-- Theme style -->
-  <link rel="stylesheet" href="{{ url_for('static', filename='assets/css/adminlte.min.css') }}">
-  <style>
-    .money { text-align: right; }
-  </style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700">
+<link rel="stylesheet" href="{{ url_for('static', filename='assets/plugins/fontawesome-free/css/all.min.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='assets/css/adminlte.min.css') }}">
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css">
+<link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.3.0/css/responsive.dataTables.min.css">
+<style>.money { text-align: right; }</style>
 {% endblock stylesheets %}
 
 {% block content %}
 <div class="content-wrapper">
 
-  <!-- Page Header -->
-  <section class="content-header">
-    <div class="container-fluid">
-      <div class="row mb-2">
-        <div class="col-sm-6">
-          <h1>Sales & Expenses Report</h1>
-        </div>
-        <div class="col-sm-6">
-          <ol class="breadcrumb float-sm-right">
-            <li class="breadcrumb-item"><a href="/index">Home</a></li>
-            <li class="breadcrumb-item active">Sales & Expenses</li>
-          </ol>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- Flash Messages -->
-  <section class="content">
-    <div class="container-fluid">
-      {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-        <div class="row mb-3">
-          <div class="col-12">
-            {% for category, message in messages %}
-            <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
-              <i class="fas fa-info-circle"></i> {{ message }}
-              <button type="button" class="close" data-dismiss="alert">&times;</button>
+    <!-- Page Header -->
+    <section class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6"><h1>Sales & Expenses Report</h1></div>
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item"><a href="/index">Home</a></li>
+                        <li class="breadcrumb-item active">Sales & Expenses</li>
+                    </ol>
+                </div>
             </div>
-            {% endfor %}
-          </div>
         </div>
-        {% endif %}
-      {% endwith %}
-    </div>
-  </section>
+    </section>
 
-  <!-- Date Filter Form -->
-  <section class="content">
-    <div class="container-fluid">
-      <form method="POST" class="card card-primary card-outline p-3 mb-4">
-        <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
-        <div class="row">
-          <div class="col-md-5">
-            <label>Start Date:</label>
-            <input type="date" name="start_date" class="form-control" value="{{ start_date }}">
-          </div>
-          <div class="col-md-5">
-            <label>End Date:</label>
-            <input type="date" name="end_date" class="form-control" value="{{ end_date }}">
-          </div>
-          <div class="col-md-2 d-flex align-items-end">
-            <button type="submit" class="btn btn-primary btn-block">Search</button>
-          </div>
+    <!-- Flash Messages -->
+    <section class="content">
+        <div class="container-fluid">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="row mb-3"><div class="col-12">
+                    {% for category, message in messages %}
+                    <div class="alert alert-{{ 'danger' if category=='error' else category }} alert-dismissible fade show">
+                        <i class="fas fa-info-circle"></i> {{ message }}
+                        <button type="button" class="close" data-dismiss="alert">&times;</button>
+                    </div>
+                    {% endfor %}
+                </div></div>
+            {% endif %}
+            {% endwith %}
         </div>
-      </form>
+    </section>
 
-      {% if searched %}
-      <!-- Totals Summary Cards -->
-      <div class="row mb-4">
-        <div class="col-md-3">
-          <div class="info-box bg-success">
-            <span class="info-box-icon"><i class="fas fa-cash-register"></i></span>
-            <div class="info-box-content">
-              <span class="info-box-text">Total Sales (Net)</span>
-              <span class="info-box-number money">{{ total_sales }}</span>
-            </div>
-          </div>
-        </div>
-        <div class="col-md-3">
-          <div class="info-box bg-secondary">
-            <span class="info-box-icon"><i class="fas fa-tag"></i></span>
-            <div class="info-box-content">
-              <span class="info-box-text">Before Discount</span>
-              <span class="info-box-number money">{{ total_before_discount }}</span>
-            </div>
-          </div>
-        </div>
-        <div class="col-md-3">
-          <div class="info-box bg-warning">
-            <span class="info-box-icon"><i class="fas fa-percent"></i></span>
-            <div class="info-box-content">
-              <span class="info-box-text">Discounts</span>
-              <span class="info-box-number money">{{ total_discount_given }}</span>
-            </div>
-          </div>
-        </div>
-        <div class="col-md-3">
-          <div class="info-box bg-danger">
-            <span class="info-box-icon"><i class="fas fa-money-bill-wave"></i></span>
-            <div class="info-box-content">
-              <span class="info-box-text">Expenses</span>
-              <span class="info-box-number money">{{ total_expenses }}</span>
-            </div>
-          </div>
-        </div>
-      </div>
+    <!-- Filter Form (Updated: name="farm_id", iterates over farm objects) -->
+    <section class="content">
+        <div class="container-fluid">
+            <form method="POST" class="card card-primary card-outline p-3 mb-4">
+                <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+                <div class="row">
+                    <div class="col-md-3">
+                        <label>Start Date:</label>
+                        <input type="date" name="start_date" class="form-control" value="{{ start_date }}">
+                    </div>
+                    <div class="col-md-3">
+                        <label>End Date:</label>
+                        <input type="date" name="end_date" class="form-control" value="{{ end_date }}">
+                    </div>
+                    <div class="col-md-4">
+                        <label>Farm:</label>
+                        {# Updated to use farm_id and iterate over farm objects #}
+                        <select name="farm_id" class="form-control">
+                            <option value="">All Farms</option>
+                            {% for farm in farms %}
+                            <option value="{{ farm.FarmID }}" {% if selected_farm_id|string == farm.FarmID|string %}selected{% endif %}>{{ farm.name|capitalize }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-2 d-flex align-items-end">
+                        <button type="submit" class="btn btn-primary btn-block"><i class="fas fa-search"></i> Search</button>
+                    </div>
+                </div>
+            </form>
 
-      <!-- Sales Table -->
-      <div class="card card-success mb-4">
-        <div class="card-header"><h3 class="card-title">Sales List</h3></div>
-        <div class="card-body">
-          {% if sales %}
-          <table id="salesTable" class="table table-bordered table-striped nowrap" width="100%">
-            <thead>
-              <tr>
-                <th>Product</th>
-                <th>Customer</th>
-                <th class="money">Price</th>
-                <th>Discount</th>
-                <th class="money">Discounted</th>
-                <th>Qty</th>
-                <th>Date</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for s in sales %}
-              <tr>
-                <td>{{ s.product_name }}</td>
-                <td>{{ s.customer_name }}</td>
-                <td class="money">{{ s.current_price }}</td>
-                <td>{{ s.discount }}%</td>
-                <td class="money">{{ s.discounted_price }}</td>
-                <td>{{ s.qty }}</td>
-                <td>{{ s.date_updated.strftime("%Y-%m-%d %H:%M") }}</td>
-              </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-          {% else %}
-          <p>No sales data for selected date range.</p>
-          {% endif %}
-        </div>
-      </div>
+            {% if searched %}
+            <!-- Info Boxes -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="info-box bg-success">
+                        <span class="info-box-icon"><i class="fas fa-cash-register"></i></span>
+                        <div class="info-box-content">
+                            <span class="info-box-text">Total Sales (Net)</span>
+                            <span class="info-box-number money">{{ total_sales }}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="info-box bg-secondary">
+                        <span class="info-box-icon"><i class="fas fa-tag"></i></span>
+                        <div class="info-box-content">
+                            <span class="info-box-text">Before Discount</span>
+                            <span class="info-box-number money">{{ total_before_discount }}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <div class="info-box bg-warning">
+                        <span class="info-box-icon"><i class="fas fa-percent"></i></span>
+                        <div class="info-box-content">
+                            <span class="info-box-text">Discounts</span>
+                            <span class="info-box-number money">{{ total_discount_given }}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <div class="info-box bg-danger">
+                        <span class="info-box-icon"><i class="fas fa-money-bill-wave"></i></span>
+                        <div class="info-box-content">
+                            <span class="info-box-text">Expenses</span>
+                            <span class="info-box-number money">{{ total_expenses }}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <div class="info-box {{ 'bg-success' if net_profit|float > 0 else 'bg-danger' }}">
+                        <span class="info-box-icon"><i class="fas fa-chart-line"></i></span>
+                        <div class="info-box-content">
+                            <span class="info-box-text">Profit / Loss</span>
+                            <span class="info-box-number money">{{ net_profit }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-      <!-- Expenses Table -->
-      <div class="card card-danger mb-4">
-        <div class="card-header"><h3 class="card-title">Expenses List</h3></div>
-        <div class="card-body">
-          {% if expenses %}
-          <table id="expensesTable" class="table table-bordered table-striped nowrap" width="100%">
-            <thead>
-              <tr>
-                <th>Person</th>
-                <th>Expense</th>
-                <th>Category</th>
-                <th class="money">Amount</th>
-                <th>Date</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for e in expenses %}
-              <tr>
-                <td>{{ e.customer_name }}</td>
-                <td>{{ e.expense_name }}</td>
-                <td>{{ e.category_name or 'N/A' }}</td>
-                <td class="money">{{ e.amount }}</td>
-                <td>{{ e.date_updated.strftime("%Y-%m-%d %H:%M") }}</td>
-              </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-          {% else %}
-          <p>No expense data for selected date range.</p>
-          {% endif %}
+            <!-- Sales Table (Updated: displays s.farm_name) -->
+            <div class="card card-success mb-4">
+                <div class="card-header"><h3 class="card-title">Sales List</h3></div>
+                <div class="card-body">
+                    {% if sales %}
+                    <table id="salesTable" class="table table-bordered table-striped nowrap" width="100%">
+                        <thead>
+                            <tr>
+                                <th>Sale ID</th>
+                                <th>Farm</th>
+                                <th>Product</th>
+                                <th>Customer</th>
+                                <th class="money">Price</th>
+                                <th>Discount</th>
+                                <th class="money">Discounted</th>
+                                <th>Qty</th>
+                                <th>Date</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for s in sales %}
+                            <tr>
+                                <td>{{ s.salesID }}</td>
+                                <td>{{ s.farm_name|capitalize }}</td>
+                                <td>{{ s.product_name }}</td>
+                                <td>{{ s.customer_name }}</td>
+                                <td class="money">{{ s.current_price }}</td>
+                                <td>{{ s.discount }}%</td>
+                                <td class="money">{{ s.discounted_price }}</td>
+                                <td>{{ s.qty }}</td>
+                                <td>{{ s.date_updated.strftime("%Y-%m-%d %H:%M") }}</td>
+                                <td>
+                                    <a href="/edit_sale/{{ s.salesID }}" class="btn btn-warning btn-sm">Edit</a>
+                                    {% if user.role=='super_admin' %}
+                                    <a href="/delete_sale/{{ s.salesID }}" class="btn btn-danger btn-sm">Delete</a>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    {% else %}<p>No sales data for the selected filter.</p>{% endif %}
+                </div>
+            </div>
+
+            <!-- Expenses Table (Updated: displays e.farm_name) -->
+            <div class="card card-danger mb-4">
+                <div class="card-header"><h3 class="card-title">Expenses List</h3></div>
+                <div class="card-body">
+                    {% if expenses %}
+                    <table id="expensesTable" class="table table-bordered table-striped nowrap" width="100%">
+                        <thead>
+                            <tr>
+                                <th>Expense ID</th>
+                                <th>Farm</th>
+                                <th>Person</th>
+                                <th>Expense</th>
+                                <th>Category</th>
+                                <th class="money">Amount</th>
+                                <th>Date</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for e in expenses %}
+                            <tr>
+                                <td>{{ e.salesID }}</td>
+                                <td>{{ e.farm_name|capitalize }}</td>
+                                <td>{{ e.customer_name }}</td>
+                                <td>{{ e.expense_name }}</td>
+                                <td>{{ e.category_name or 'N/A' }}</td>
+                                <td class="money">{{ e.amount }}</td>
+                                <td>{{ e.date_updated.strftime("%Y-%m-%d %H:%M") }}</td>
+                                <td>
+                                    <a href="/edit_expense/{{ e.salesID }}" class="btn btn-warning btn-sm">Edit</a>
+                                    {% if user.role=='super_admin' %}
+                                    <a href="/delete_expense/{{ e.salesID }}" class="btn btn-danger btn-sm">Delete</a>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    {% else %}<p>No expense data for the selected filter.</p>{% endif %}
+                </div>
+            </div>
+            {% endif %}
+
         </div>
-      </div>
-      {% endif %}
-    </div>
-  </section>
+    </section>
 </div>
 {% endblock content %}
 
 {% block javascripts %}
-  <!-- jQuery -->
-  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-  <!-- DataTables -->
-  <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
-  <script src="https://cdn.datatables.net/responsive/2.3.0/js/dataTables.responsive.min.js"></script>
+<script src="{{ url_for('static', filename='assets/plugins/jquery/jquery.min.js') }}"></script>
+<script src="{{ url_for('static', filename='assets/plugins/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
+<script src="{{ url_for('static', filename='assets/js/adminlte.min.js') }}"></script>
+<script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/responsive/2.3.0/js/dataTables.responsive.min.js"></script>
 
-  <script>
-    function formatMoneyCells() {
-      $('.money').each(function () {
+<script>
+function formatMoneyCells() {
+    $('.money').each(function() {
         let val = parseFloat($(this).text().replace(/,/g,''));
-        if(!isNaN(val)) {
-          $(this).text(val.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2}));
-        }
-      });
-    }
-
-    $(document).ready(function () {
-      $('#salesTable').DataTable({ scrollX:true, responsive:true });
-      $('#expensesTable').DataTable({ scrollX:true, responsive:true });
-      formatMoneyCells();
+        if(!isNaN(val)) $(this).text(val.toLocaleString(undefined,{minimumFractionDigits:2, maximumFractionDigits:2}));
     });
-  </script>
+}
+$(document).ready(function() {
+    // Initialize DataTables
+    $('#salesTable').DataTable({ 
+        scrollX: true, 
+        responsive: true 
+    });
+    $('#expensesTable').DataTable({ 
+        scrollX: true, 
+        responsive: true 
+    });
+    
+    // Format money values after tables are initialized
+    formatMoneyCells();
+
+    // NOTE: Removed the non-compliant 'onclick="return confirm()"' from delete links. 
+    // All deletion confirmation must now be handled server-side or via a custom modal UI.
+});
+</script>
 {% endblock javascripts %}

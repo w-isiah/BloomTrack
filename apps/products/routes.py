@@ -8,6 +8,15 @@ from apps import get_db_connection
 from apps.products import blueprint
 import mysql.connector
 
+from datetime import datetime
+import pytz
+
+def get_kampala_time():
+    """Returns the current datetime in Kampala timezone."""
+    kampala = pytz.timezone("Africa/Kampala")
+    return datetime.now(kampala)
+
+
 
 # Helper function to calculate formatted totals
 def calculate_formatted_totals(products):
@@ -30,6 +39,10 @@ def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in current_app.config['ALLOWED_EXTENSIONS']
 
 
+
+
+
+
 # Route for the 'products' page
 @blueprint.route('/products')
 def products():
@@ -39,13 +52,23 @@ def products():
 
     try:
         cursor.execute(''' 
-            SELECT p.*, c.name AS category_name, (p.quantity * p.price) AS total_price
-            FROM product_list p
-            JOIN category_list c ON p.category_id = c.CategoryID
-            ORDER BY p.name
+            SELECT 
+                p.*, 
+                c.name AS category_name, 
+                f.name AS farm_name,  -- <-- Added farm name here
+                (p.quantity * p.price) AS total_price
+            FROM 
+                product_list p
+            JOIN 
+                category_list c ON p.category_id = c.CategoryID
+            LEFT JOIN -- Using LEFT JOIN ensures products without a FarmID are still shown
+                farm_list f ON p.FarmID = f.FarmID -- <-- Joined farm_list table
+            ORDER BY 
+                p.name
         ''')
         products = cursor.fetchall()
 
+        # Assuming calculate_formatted_totals is defined elsewhere
         # Calculate totals and format them
         formatted_total_sum, formatted_total_price = calculate_formatted_totals(products)
 
@@ -59,76 +82,79 @@ def products():
         connection.close()
 
     return render_template('products/products.html',
-                           formatted_total_price=formatted_total_price,
-                           products=products,
-                           formatted_total_sum=formatted_total_sum,
-                           segment='products')
+                            formatted_total_price=formatted_total_price,
+                            products=products,
+                            formatted_total_sum=formatted_total_sum,
+                            segment='products')
+
+
+
+
+
+
 
 
 
 
 @blueprint.route('/products_marketing')
 def products_marketing():
-    """Renders the marketing page for products with search functionality."""
-    connection = None
-    cursor = None
-    search_query = request.args.get('q', '').strip()  # Get search term
+    connection = get_db_connection()
+    cursor = connection.cursor(dictionary=True)
 
     try:
-        connection = get_db_connection()
-        cursor = connection.cursor(dictionary=True)
+        # Log page view
+        cursor.execute(
+            "INSERT INTO page_views (page, ip_address, user_agent, view_time) "
+            "VALUES (%s, %s, %s, NOW())",
+            ('products_marketing', request.remote_addr, request.headers.get('User-Agent'))
+        )
+        connection.commit()
 
-        # Base query
-        query = """
-            SELECT 
-                p.*,
-                c.name AS category_name,
-                (p.quantity * p.price) AS total_price
+        # Fetch products
+        cursor.execute('''
+            SELECT p.*, c.name AS category_name, (p.quantity * p.price) AS total_price
             FROM product_list p
-            LEFT JOIN category_list c ON p.category_id = c.CategoryID
-        """
-
-        params = []
-        # Add search filter if provided
-        if search_query:
-            query += """
-                WHERE p.name LIKE %s OR p.sku LIKE %s OR c.name LIKE %s
-            """
-            like_query = f"%{search_query}%"
-            params.extend([like_query, like_query, like_query])
-
-        query += " ORDER BY p.name"
-
-        cursor.execute(query, params)
+            JOIN category_list c ON p.category_id = c.CategoryID
+            ORDER BY p.name
+        ''')
         products = cursor.fetchall()
 
-        # Calculate formatted totals
+        # Calculate totals
         formatted_total_sum, formatted_total_price = calculate_formatted_totals(products)
 
-        # Format individual product prices
-        for product in products:
-            product['formatted_price'] = "{:,.2f}".format(product['price'] or 0)
-            product['formatted_total_price'] = "{:,.2f}".format(product['total_price'] or 0)
-
-    except Exception as e:
-        logging.error(f"Error fetching products: {e}", exc_info=True)
-        flash("An error occurred while fetching products.", "error")
-        return render_template('products/page-500.html'), 500
-
     finally:
-        if cursor:
-            cursor.close()
-        if connection:
-            connection.close()
+        cursor.close()
+        connection.close()
 
     return render_template(
         'products/products_marketing.html',
         products=products,
         formatted_total_sum=formatted_total_sum,
-        formatted_total_price=formatted_total_price,
-        segment='products',
-        search_query=search_query
+        formatted_total_price=formatted_total_price
     )
+
+
+# Endpoint to track product clicks
+@blueprint.route('/track_click', methods=['POST'])
+def track_click():
+    product_id = request.form.get('product_id')
+    if not product_id:
+        return jsonify({'status': 'error', 'message': 'Product ID missing'}), 400
+
+    try:
+        connection = get_db_connection()
+        cursor = connection.cursor()
+        cursor.execute(
+            "INSERT INTO product_clicks (product_id, ip_address, user_agent, click_time) "
+            "VALUES (%s, %s, %s, NOW())",
+            (product_id, request.remote_addr, request.headers.get('User-Agent'))
+        )
+        connection.commit()
+    finally:
+        cursor.close()
+        connection.close()
+
+    return jsonify({'status': 'success'})
 
 
 
@@ -183,17 +209,20 @@ def api_products():
 
 
 
-
 # Route to add a new product
 @blueprint.route('/add_product', methods=['GET', 'POST'])
 def add_product():
     connection = get_db_connection()
     cursor = connection.cursor(dictionary=True)
 
-    # Fetch categories from the database
+    # 1. Fetch categories from the database
     cursor.execute('SELECT * FROM category_list ORDER BY name')
     categories = cursor.fetchall()
 
+    # 2. Fetch farms (FarmID and name) from the database
+    # Changed from hardcoded list to a database query
+    cursor.execute('SELECT FarmID, name FROM farm_list ORDER BY name')
+    farm_options = cursor.fetchall()
 
     # Generate a random SKU
     random_num = random.randint(1005540, 9978799)
@@ -214,6 +243,8 @@ def add_product():
         description = request.form.get('description')
         quantity = 0
         reorder_level = request.form.get('reorder_level')
+        # IMPORTANT: This now retrieves the FarmID from the dropdown value
+        farm_id = request.form.get('farm_id')
 
         # Check for existing product with the same name in the selected category
         cursor.execute('SELECT * FROM product_list WHERE category_id = %s AND name = %s', (category_id, name))
@@ -222,27 +253,29 @@ def add_product():
         if existing_product:
             flash("This product already exists in the selected category!", "danger")
         else:
-            # Handle image upload
+            # Handle image upload (assuming 'allowed_file' and 'current_app' are defined elsewhere)
             image_file = request.files.get('image')
             image_filename = None  # Default if no image is uploaded
 
             if image_file and allowed_file(image_file.filename):
                 filename = secure_filename(image_file.filename)
-                image_filename = f"{random_num}_{filename}"  # Rename with SKU to avoid conflicts
-                
+                image_filename = f"{random_num}_{filename}"
+
                 # Ensure the directory exists before saving the file
+                # NOTE: current_app must be imported or available in the scope (e.g., from flask import current_app)
                 image_folder = os.path.join(current_app.config['UPLOAD_FOLDER'])
                 if not os.path.exists(image_folder):
-                    os.makedirs(image_folder)  # Create the folder if it doesn't exist
+                    os.makedirs(image_folder)
 
                 image_path = os.path.join(image_folder, image_filename)
-                image_file.save(image_path)  # Save image
+                image_file.save(image_path)
 
             # Insert new product into the database
+            # Updated to insert FarmID instead of 'farm' (which should be FarmID in product_list table)
             cursor.execute('''INSERT INTO product_list 
-                (category_id, sku, price, name, description, quantity, reorder_level, image) 
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)''',
-                (category_id, sku, price, name, description, quantity, reorder_level, image_filename))
+                (category_id, sku, price, name, description, quantity, reorder_level, image, FarmID) 
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)''',
+                (category_id, sku, price, name, description, quantity, reorder_level, image_filename, farm_id))
             
             connection.commit()
             flash("Product successfully added!", "success")
@@ -250,7 +283,14 @@ def add_product():
     cursor.close()
     connection.close()
 
-    return render_template('products/add_product.html', random_num=random_num, categories=categories, segment='add_product')
+    return render_template(
+        'products/add_product.html',
+        random_num=random_num,
+        categories=categories,
+        farm_options=farm_options,    # Pass fetched farm list
+        segment='add_product'
+    )
+
 
 
 # Route to edit an existing product
@@ -260,77 +300,97 @@ def edit_product(product_id):
     connection = get_db_connection()
     cursor = connection.cursor(dictionary=True)
 
-    # Fetch the product data from the database
+    # 1. Fetch the product data from the database
+    # Fetching all details is fine, including the existing FarmID
     cursor.execute('SELECT * FROM product_list WHERE ProductID = %s', (product_id,))
     product = cursor.fetchone()
 
     if not product:
         flash("Product not found!")
-        return redirect(url_for('products_blueprint.products'))  # Redirect to a products list page or home
+        return redirect(url_for('products_blueprint.products'))  # Redirect to products list
 
-    # Fetch categories from the database for the dropdown
-    cursor.execute('SELECT * FROM category_list')
+    # 2. Fetch categories for dropdown
+    cursor.execute('SELECT * FROM category_list ORDER BY name')
     categories = cursor.fetchall()
 
+    # 3. Fetch farms (FarmID and name) from the database
+    # Changed from hardcoded list to a database query
+    cursor.execute('SELECT FarmID, name FROM farm_list ORDER BY name')
+    farm_options = cursor.fetchall()
+
     if request.method == 'POST':
-        # Get the form data
+        # Get form data
         category_id = request.form.get('category_id')
         sku = request.form.get('serial_no')
         price = request.form.get('price')
         name = request.form.get('name')
         description = request.form.get('description')
         reorder_level = request.form.get('reorder_level')
+        # IMPORTANT: Retrieve the FarmID from the dropdown value
+        farm_id = request.form.get('farm_id') 
 
-        # Handle image upload
-        image_filename = product['image']  # Default to existing image if no new one is uploaded
+        # Handle image upload (assuming 'allowed_file' and 'current_app' are defined elsewhere)
+        image_filename = product['image']  # Keep old image unless new uploaded
         image_file = request.files.get('image')
 
         if image_file and allowed_file(image_file.filename):
             filename = secure_filename(image_file.filename)
-            image_filename = f"{product_id}_{filename}"  # Rename with product ID to avoid conflicts
+            image_filename = f"{product_id}_{filename}"  # Rename with product ID
             
-            # Ensure the directory exists before saving the file
+            # Ensure directory exists
             image_folder = os.path.join(current_app.config['UPLOAD_FOLDER'])
             if not os.path.exists(image_folder):
-                os.makedirs(image_folder)  # Create the folder if it doesn't exist
+                os.makedirs(image_folder)
 
             image_path = os.path.join(image_folder, image_filename)
-            image_file.save(image_path)  # Save new image
+            image_file.save(image_path)
 
-        # Calculate the price change if the price has been updated
+        # Track price change
         old_price = product['price']
         price_change = None
-
         if price != old_price:
-            price_change = float(price) - float(old_price)  # Calculate the price change
+            # Safely compare and calculate change, ensuring types are floats/decimals
+            try:
+                price_change = float(price) - float(old_price)
+            except (ValueError, TypeError):
+                # Handle case where price conversion fails
+                price_change = None 
 
-        # Update the product data in the database
+
+        # Update product
+        # IMPORTANT: Updated farm parameter to use FarmID and the corresponding database column
         cursor.execute(''' 
             UPDATE product_list
             SET category_id = %s, sku = %s, price = %s, name = %s, description = %s,
-                 reorder_level = %s, image = %s, updated_at = CURRENT_TIMESTAMP
+                reorder_level = %s, image = %s, FarmID = %s, updated_at = CURRENT_TIMESTAMP
             WHERE ProductID = %s
-        ''', (category_id, sku, price, name, description, reorder_level, image_filename, product_id))
+        ''', (category_id, sku, price, name, description, reorder_level, image_filename, farm_id, product_id))
 
-        # If there's a price change, insert it into the inventory_logs table
+        # Log price change
         if price_change is not None:
             cursor.execute('''
                 INSERT INTO inventory_logs (product_id, quantity_change, log_date, reason, price_change, old_price)
                 VALUES (%s, 0, CURRENT_TIMESTAMP, %s, %s, %s)
             ''', (product_id, 'Price Update', price_change, old_price))
 
-        # Commit the transaction
         connection.commit()
-
-        flash("Product updated successfully!")
+        flash("Product updated successfully!", "success")
+        
+        # Close connection before redirect
+        cursor.close()
+        connection.close()
         return redirect(url_for('products_blueprint.products'))
 
- 
-
+    # GET request returns render_template
     cursor.close()
     connection.close()
 
-    return render_template('products/edit_product.html', product=product, categories=categories)
+    return render_template(
+        'products/edit_product.html',
+        product=product,
+        categories=categories,
+        farm_options=farm_options
+    )
 
 
 

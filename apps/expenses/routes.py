@@ -32,16 +32,22 @@ def add_expense():
     cursor.execute('SELECT CustomerID, name FROM customer_list ORDER BY name')
     customers = cursor.fetchall()
 
+    # --- NEW: Fetch farms for dropdown ---
+    cursor.execute('SELECT FarmID, name FROM farm_list ORDER BY name')
+    farms = cursor.fetchall()
+    # -------------------------------------
+
     if request.method == 'POST':
         # Get form data
         expense_name = request.form.get('expense_name', '').strip()
         price = request.form.get('price', '').strip()
         customer_id = request.form.get('customer_id')
-        category_id = request.form.get('category_id')  # <-- new field
+        category_id = request.form.get('category_id')
+        farm_id = request.form.get('farm_id')  # <-- NEW: Get Farm ID
         description = request.form.get('description', '').strip()
 
-        # Basic validation
-        if not expense_name or not price or not customer_id or not category_id:
+        # Basic validation (Updated to include farm_id)
+        if not expense_name or not price or not customer_id or not category_id or not farm_id:
             flash("Please fill in all required fields", "danger")
             return redirect(request.url)
 
@@ -62,16 +68,16 @@ def add_expense():
         total_price = price
         date_added = get_kampala_time()  # Kampala timezone
 
-        # Insert into sales table including category_id
+        # Insert into sales table including category_id and FarmID
         try:
             cursor.execute('''
-                INSERT INTO sales 
-                    (ProductID, customer_id, category_id, type, price, discount, qty, discounted_price, total_price, description, expense_name, date_updated)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                INSERT INTO sales
+                    (ProductID, customer_id, category_id, type, price, discount, qty, discounted_price, total_price, description, expense_name, date_updated, farm_id)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             ''', (
                 product_id, customer_id, category_id, expense_type, price,
                 discount, qty, discounted_price, total_price,
-                description, expense_name, date_added
+                description, expense_name, date_added, farm_id  # <-- NEW: Pass Farm ID
             ))
 
             connection.commit()
@@ -88,7 +94,8 @@ def add_expense():
     return render_template(
         'expenses/add_expense.html',
         categories=categories,
-        customers=customers
+        customers=customers,
+        farms=farms  # <-- NEW: Pass farms to template
     )
 
 
@@ -110,24 +117,30 @@ def edit_expense(expense_id):
             flash("Expense not found!", "warning")
             return redirect(url_for('expenses_blueprint.list_expenses'))
 
-        # Fetch customers and categories for dropdowns
+        # Fetch customers, categories, and farms for dropdowns
         cursor.execute('SELECT CustomerID, name FROM customer_list ORDER BY name')
         customers = cursor.fetchall()
 
         cursor.execute('SELECT * FROM category_list ORDER BY name')
         categories = cursor.fetchall()
+        
+        # NEW: Fetch farms list
+        cursor.execute('SELECT FarmID, name FROM farm_list ORDER BY name')
+        farms = cursor.fetchall()
 
         if request.method == 'POST':
             # Get form data
             customer_id = request.form.get('customer_id')
             category_id = request.form.get('category_id')
+            farm_id = request.form.get('farm_id')  # NEW: Get Farm ID from form
             expense_name = request.form.get('expense_name', '').strip()
             description = request.form.get('description', '').strip()
             amount = request.form.get('amount', '').strip()
-            date_updated_str = request.form.get('date_updated')  # <-- from datetime-local input
+            date_updated_str = request.form.get('date_updated')
 
             # Validation
-            if not customer_id or not category_id or not expense_name or not amount or not date_updated_str:
+            # NEW: Included farm_id in validation
+            if not customer_id or not category_id or not farm_id or not expense_name or not amount or not date_updated_str:
                 flash("Please fill in all required fields", "danger")
                 return redirect(request.url)
 
@@ -146,11 +159,12 @@ def edit_expense(expense_id):
                 flash("Invalid date/time format.", "danger")
                 return redirect(request.url)
 
-            # Update the expense record including category_id and editable date/time
+            # Update the expense record including farm_id
             update_query = '''
                 UPDATE sales
                 SET customer_id = %s,
                     category_id = %s,
+                    farm_id = %s,  -- ADDED farm_id to the query
                     expense_name = %s,
                     description = %s,
                     price = %s,
@@ -162,6 +176,7 @@ def edit_expense(expense_id):
             cursor.execute(update_query, (
                 customer_id,
                 category_id,
+                farm_id,  # ADDED farm_id parameter
                 expense_name,
                 description,
                 amount,
@@ -173,20 +188,21 @@ def edit_expense(expense_id):
 
             connection.commit()
             flash("Expense updated successfully!", "success")
-            return redirect(url_for('sales_blueprint.sales_view'))
+            # Assuming you want to redirect to the sales view or expense list after update
+            return redirect(url_for('sales_blueprint.sales_view')) 
 
+        # If GET request, render the template
         return render_template(
             'expenses/edit_expenses.html',
             categories=categories,
             expense=expense,
-            customers=customers
+            customers=customers,
+            farms=farms  # NEW: Pass farms list to the template
         )
 
     finally:
         cursor.close()
         connection.close()
-
-
 
 @blueprint.route('/delete_expense/<string:get_id>')
 def delete_expense(get_id):

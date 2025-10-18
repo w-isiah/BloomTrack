@@ -1,0 +1,186 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Farm List{% endblock %}
+
+{% block body_class %}sidebar-mini{% endblock %}
+
+{% block stylesheets %}
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
+<link rel="stylesheet" href="/static/assets/plugins/fontawesome-free/css/all.min.css">
+<link rel="stylesheet" href="https://code.ionicframework.com/ionicons/2.0.1/css/ionicons.min.css">
+<link rel="stylesheet" href="/static/assets/css/adminlte.min.css">
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css">
+<link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.3.0/css/responsive.dataTables.min.css">
+<style>
+    .alert-container {
+        position: fixed;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 9999;
+        width: 80%;
+        display: none; /* Initially hidden */
+    }
+
+    .alert {
+        opacity: 1;
+        transition: opacity 1s ease-out;
+        margin-bottom: 10px;
+    }
+
+    .alert.alert-dismissible {
+        padding-right: 30px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="content-wrapper">
+
+    <section class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    {# Changed H1 title from Customers to Farms #}
+                    <h1>Farms</h1>
+                </div>
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item"><a href="/index">Home</a></li>
+                        <li class="breadcrumb-item"><a href="/categories">Categories</a></li>
+                        {# Changed active breadcrumb from Category List to Farm List #}
+                        <li class="breadcrumb-item active">Farm List</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        <div class="alert-container" id="flashMessageContainer">
+            {% for category, message in messages %}
+            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                <strong>{{ message }}</strong>
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+    {% endwith %}
+
+    <section class="content">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+
+                        <div class="card-header d-flex justify-content-between">
+                            {# Changed Card Title from Customer List to Farm List #}
+                            <h3 class="card-title">Farm List</h3>
+
+                            <div>
+                                {# Changed link and text from add_customer to add_farm #}
+                                <a href="/add_farm" class="btn btn-primary btn-sm">
+                                    <i class="fas fa-plus-circle"></i> Add Farm
+                                </a>
+                            </div>
+
+                        </div>
+
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                {# Changed table ID from customers to farms #}
+                                <table id="farms" class="display stripe nowrap" style="width:100%">
+                                    <thead>
+                                        <tr>
+                                            <th>Farm Name</th>
+                                            <th>Location</th>
+                                            <th>Owner Contact</th>
+                                            <th>Edit</th>
+                                            <th>Delete</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {# Changed loop variable from 'customer' to 'farms' #}
+                                        {% for i in farms %}
+                                        <tr class="gradeX">
+                                            {# Display farm name #}
+                                            <td>{{ i.name }}</td>
+                                            {# Changed from i.contact to i.location #}
+                                            <td>{{ i.location }}</td>
+                                            {# Changed from i.address to i.owner_contact (assuming the database schema changes from the Python code) #}
+                                            <td>{{ i.owner_contact }}</td>
+
+
+                                            <td>
+                                                {# Changed link from /edit_customer/{{ i.CustomerID }} to /edit_farm/{{ i.FarmID }} #}
+                                                <a href="/edit_farm/{{ i.FarmID }}"
+                                                   class="btn btn-sm btn-warning"
+                                                   style="--bs-btn-padding-y: .25rem; --bs-btn-padding-x: .5rem; --bs-btn-font-size: .75rem;">
+                                                    Edit
+                                                </a>
+                                            </td>
+
+
+                                            <td>
+                                                {% if session['role'] == 'super_admin' %}
+                                                {# Changed link from /delete_customer/{{ i.CustomerID }} to /delete_farm/{{ i.FarmID }} #}
+                                                <a href="/delete_farm/{{ i.FarmID }}"
+                                                   class="btn btn-sm btn-danger"
+                                                   style="--bs-btn-padding-y: .25rem; --bs-btn-padding-x: .5rem; --bs-btn-font-size: .75rem;"
+                                                   onclick="return confirm('Are you sure you want to delete farm {{ i.name }}?')">
+                                                    Delete
+                                                </a>
+                                                {% else %}
+                                                <span>Admin</span>
+                                                {% endif %}
+                                            </td>
+
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        </div>
+                    </div>
+            </div>
+        </div>
+    </section>
+    </div>
+{% endblock %}
+
+{% block javascripts %}
+<script src="/static/assets/plugins/jquery/jquery.min.js"></script>
+<script src="/static/assets/plugins/bootstrap/js/bootstrap.bundle.min.js"></script>
+<script src="/static/assets/js/adminlte.js"></script>
+<script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/responsive/2.3.0/js/dataTables.responsive.min.js"></script>
+
+<script>
+    $(document).ready(function() {
+        // Changed DataTables selector from #customers to #farms
+        $('#farms').DataTable({
+            paging: true,
+            searching: true,
+            ordering: true,
+            responsive: true,
+            stripeClasses: ['odd', 'even'],
+            language: {
+                paginate: {
+                    next: 'Next',
+                    previous: 'Previous'
+                }
+            }
+        });
+
+        // Flash message fade-in and fade-out effect
+        if ($('#flashMessageContainer').length) {
+            $('#flashMessageContainer').fadeIn(500).delay(3000).fadeOut(1000);
+        }
+    });
+</script>
+{% endblock %}

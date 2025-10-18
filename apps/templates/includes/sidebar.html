@@ -37,7 +37,7 @@
       <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false">
 
         <!-- Dashboard -->
-        <li class="nav-item {% if 'index' in segment %}menu-open{% endif %}">
+        <li class="nav-item {% if '#' in segment %}menu-open{% endif %}">
           <a href="/index" class="nav-link {% if 'index' in segment %}active{% endif %}">
             <i class="nav-icon fas fa-tachometer-alt"></i>
             <p>Dashboard</p>
@@ -46,15 +46,15 @@
 
         <!-- Sell Items -->
         <li class="nav-item">
-          <a href="/sales" class="nav-link {% if 'sales' in segment %}active{% endif %}">
+          <a href="/sales" class="nav-link {% if '#' in segment %}active{% endif %}">
             <i class="nav-icon fas fa-cart-plus"></i>
             <p>Sell Items</p>
           </a>
         </li>
 
         <!-- Analytics -->
-        <li class="nav-item has-treeview {% if 'sales_view' in segment %}menu-open{% endif %}">
-          <a href="#" class="nav-link {% if 'sales_view' in segment %}active{% endif %}">
+        <li class="nav-item has-treeview {% if '#' in segment %}menu-open{% endif %}">
+          <a href="#" class="nav-link {% if '#' in segment %}active{% endif %}">
             <i class="nav-icon fas fa-chart-line"></i>
             <p>
               Analytics
@@ -64,20 +64,20 @@
           </a>
           <ul class="nav nav-treeview">
             <li class="nav-item">
-              <a href="/dashboard_view" class="nav-link {% if 'sales_view' in segment %}active{% endif %}">
+              <a href="/dashboard_view" class="nav-link {% if '#' in segment %}active{% endif %}">
                 <i class="far fa-circle nav-icon"></i>
                 <p>Dashboard 1</p>
               </a>
             </li>
             <li class="nav-item">
-              <a href="/categories_dashboard" class="nav-link {% if 'sales_view' in segment %}active{% endif %}">
+              <a href="/categories_dashboard" class="nav-link {% if '#' in segment %}active{% endif %}">
                 <i class="far fa-circle nav-icon"></i>
                 <p>Dashboard 2</p>
               </a>
             </li>
 
              <li class="nav-item">
-              <a href="/expense_cat_dash" class="nav-link {% if 'sales_view' in segment %}active{% endif %}">
+              <a href="/expense_cat_dash" class="nav-link {% if '#' in segment %}active{% endif %}">
                 <i class="far fa-circle nav-icon"></i>
                 <p>Dashboard 3</p>
               </a>
@@ -89,7 +89,7 @@
 
         <!-- View Sales -->
         <li class="nav-item">
-          <a href="/sales_view" class="nav-link {% if 'sales_view' in segment %}active{% endif %}">
+          <a href="/sales_view" class="nav-link {% if '#' in segment %}active{% endif %}">
             <i class="nav-icon fas fa-eye"></i>
             <p>View Sales</p>
           </a>
@@ -98,7 +98,7 @@
 
          <!-- View Sales -->
         <li class="nav-item">
-          <a href="/products_marketing" class="nav-link {% if 'sales_view' in segment %}active{% endif %}">
+          <a href="/products_marketing" class="nav-link {% if '#' in segment %}active{% endif %}">
             <i class="nav-icon fas fa-eye"></i>
             <p>Marketing Dash</p>
           </a>
@@ -108,7 +108,7 @@
 
 
         <!-- Items -->
-        <li class="nav-item has-treeview {% if 'products' in segment %}menu-open{% endif %}">
+        <li class="nav-item has-treeview {% if '#' in segment %}menu-open{% endif %}">
           <a href="#" class="nav-link {% if 'products' in segment %}active{% endif %}">
             <i class="nav-icon fas fa-cogs"></i>
             <p>
@@ -118,7 +118,7 @@
           </a>
           <ul class="nav nav-treeview">
             <li class="nav-item">
-              <a href="/products" class="nav-link {% if 'products' in segment %}active{% endif %}">
+              <a href="/products" class="nav-link {% if '#' in segment %}active{% endif %}">
                 <i class="far fa-circle nav-icon"></i>
                 <p>View Items</p>
               </a>
@@ -141,7 +141,7 @@
         </li>
 
         <!-- Categories -->
-        <li class="nav-item has-treeview {% if 'categories' in segment %}menu-open{% endif %}">
+        <li class="nav-item has-treeview {% if '#' in segment %}menu-open{% endif %}">
           <a href="#" class="nav-link {% if 'categories' in segment %}active{% endif %}">
             <i class="nav-icon fas fa-th"></i>
             <p>
@@ -151,13 +151,13 @@
           </a>
           <ul class="nav nav-treeview">
             <li class="nav-item">
-              <a href="/categories" class="nav-link {% if 'categories' in segment %}active{% endif %}">
+              <a href="/categories" class="nav-link {% if '#' in segment %}active{% endif %}">
                 <i class="far fa-circle nav-icon"></i>
                 <p>View Categories</p>
               </a>
             </li>
             <li class="nav-item">
-              <a href="/add_category" class="nav-link {% if 'add_category' in segment %}active{% endif %}">
+              <a href="/add_category" class="nav-link {% if '#' in segment %}active{% endif %}">
                 <i class="far fa-plus-square nav-icon"></i>
                 <p>Add Category</p>
               </a>
@@ -165,34 +165,56 @@
           </ul>
         </li>
 
-        <!-- Customers -->
-        <li class="nav-item has-treeview {% if 'customers' in segment %}menu-open{% endif %}">
-          <a href="#" class="nav-link {% if 'customers' in segment %}active{% endif %}">
+        <!-- farms -->
+        <li class="nav-item has-treeview {% if '#' in segment %}menu-open{% endif %}">
+          <a href="#" class="nav-link {% if '#' in segment %}active{% endif %}">
             <i class="nav-icon fas fa-users"></i>
             <p>
-              Customers
+              farms
               <i class="right fas fa-angle-left"></i>
             </p>
           </a>
           <ul class="nav nav-treeview">
             <li class="nav-item">
-              <a href="/customers" class="nav-link {% if 'customers' in segment %}active{% endif %}">
+              <a href="/farms" class="nav-link {% if '#' in segment %}active{% endif %}">
                 <i class="far fa-circle nav-icon"></i>
-                <p>View Customers</p>
+                <p>View farms</p>
               </a>
             </li>
             <li class="nav-item">
-              <a href="{{ url_for('customers_blueprint.add_customer') }}" class="nav-link {% if 'add_customer' in segment %}active{% endif %}">
+              <a href="{{ url_for('farms_blueprint.add_farm') }}" class="nav-link {% if 'add_farm' in segment %}active{% endif %}">
                 <i class="far fa-plus-square nav-icon"></i>
-                <p>Add Customer</p>
+                <p>Add farm</p>
               </a>
             </li>
           </ul>
         </li>
 
+
+
+        <li class="nav-item has-treeview {% if '#' in segment %}menu-open{% endif %}">
+    <a href="#" class="nav-link {% if 'farms' in segment %}active{% endif %}">
+        <i class="nav-icon fas fa-seedling"></i> <p>
+            Farms <i class="right fas fa-angle-left"></i>
+        </p>
+    </a>
+    <ul class="nav nav-treeview">
+        <li class="nav-item">
+            <a href="/farms" class="nav-link {% if 'farms' == segment %}active{% endif %}"> <i class="far fa-circle nav-icon"></i>
+                <p>View Farms</p> </a>
+        </li>
+        <li class="nav-item">
+            <a href="{{ url_for('farms_blueprint.add_farm') }}" class="nav-link {% if 'add_farm' in segment %}active{% endif %}"> <i class="far fa-plus-square nav-icon"></i>
+                <p>Add Farm</p> </a>
+        </li>
+    </ul>
+</li>
+
+
+
         {% if session['role'] == 'super_admin' %}
         <!-- User Accounts -->
-        <li class="nav-item has-treeview {% if 'manage_users' in segment %}menu-open{% endif %}">
+        <li class="nav-item has-treeview {% if '#' in segment %}menu-open{% endif %}">
           <a href="#" class="nav-link {% if 'manage_users' in segment %}active{% endif %}">
             <i class="nav-icon fas fa-user-cog"></i>
             <p>
@@ -202,13 +224,13 @@
           </a>
           <ul class="nav nav-treeview">
             <li class="nav-item">
-              <a href="/manage_users" class="nav-link {% if 'manage_users' in segment %}active{% endif %}">
+              <a href="/manage_users" class="nav-link {% if '#' in segment %}active{% endif %}">
                 <i class="far fa-circle nav-icon"></i>
                 <p>View Users</p>
               </a>
             </li>
             <li class="nav-item">
-              <a href="/add_user" class="nav-link {% if 'add_user' in segment %}active{% endif %}">
+              <a href="/add_user" class="nav-link {% if '#' in segment %}active{% endif %}">
                 <i class="far fa-plus-square nav-icon"></i>
                 <p>Add User</p>
               </a>
