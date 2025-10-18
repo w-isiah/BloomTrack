@@ -230,12 +230,12 @@ def sales_view():
         if request.method == 'POST':
             start_date = request.form.get('start_date') or today
             end_date = request.form.get('end_date') or today
-            # Retrieve FarmID from the form
+            # Retrieve farm_id from the form
             selected_farm_id = request.form.get('farm_id') or ''
             searched = True
 
-        # Get all farms for filter dropdown (FarmID and name)
-        cursor.execute("SELECT FarmID, name FROM farm_list ORDER BY name")
+        # Get all farms for filter dropdown (farm_id and name)
+        cursor.execute("SELECT farm_id, name FROM farm_list ORDER BY name")
         farms = cursor.fetchall()
         
         # --- SALES QUERY ---
@@ -246,7 +246,7 @@ def sales_view():
         FROM sales s
         JOIN product_list p ON s.ProductID = p.ProductID
         JOIN customer_list c ON s.customer_id = c.CustomerID
-        LEFT JOIN farm_list f ON s.farm_id = f.FarmID
+        LEFT JOIN farm_list f ON s.farm_id = f.farm_id
         WHERE s.type = 'sales' AND DATE(s.date_updated) BETWEEN %s AND %s
         """
         params = [start_date, end_date]
@@ -299,7 +299,7 @@ def sales_view():
         LEFT JOIN customer_list c ON s.customer_id = c.CustomerID
         LEFT JOIN category_list cat ON s.category_id = cat.CategoryID
         LEFT JOIN product_list p ON s.ProductID = p.ProductID
-        LEFT JOIN farm_list f ON s.farm_id = f.FarmID
+        LEFT JOIN farm_list f ON s.farm_id = f.farm_id
         WHERE s.type = 'expense' AND DATE(s.date_updated) BETWEEN %s AND %s
         """
         expense_params = [start_date, end_date]

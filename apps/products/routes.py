@@ -61,8 +61,8 @@ def products():
                 product_list p
             JOIN 
                 category_list c ON p.category_id = c.CategoryID
-            LEFT JOIN -- Using LEFT JOIN ensures products without a FarmID are still shown
-                farm_list f ON p.FarmID = f.FarmID -- <-- Joined farm_list table
+            LEFT JOIN -- Using LEFT JOIN ensures products without a farm_id are still shown
+                farm_list f ON p.farm_id = f.farm_id -- <-- Joined farm_list table
             ORDER BY 
                 p.name
         ''')
@@ -219,9 +219,9 @@ def add_product():
     cursor.execute('SELECT * FROM category_list ORDER BY name')
     categories = cursor.fetchall()
 
-    # 2. Fetch farms (FarmID and name) from the database
+    # 2. Fetch farms (farm_id and name) from the database
     # Changed from hardcoded list to a database query
-    cursor.execute('SELECT FarmID, name FROM farm_list ORDER BY name')
+    cursor.execute('SELECT farm_id, name FROM farm_list ORDER BY name')
     farm_options = cursor.fetchall()
 
     # Generate a random SKU
@@ -243,7 +243,7 @@ def add_product():
         description = request.form.get('description')
         quantity = 0
         reorder_level = request.form.get('reorder_level')
-        # IMPORTANT: This now retrieves the FarmID from the dropdown value
+        # IMPORTANT: This now retrieves the farm_id from the dropdown value
         farm_id = request.form.get('farm_id')
 
         # Check for existing product with the same name in the selected category
@@ -271,9 +271,9 @@ def add_product():
                 image_file.save(image_path)
 
             # Insert new product into the database
-            # Updated to insert FarmID instead of 'farm' (which should be FarmID in product_list table)
+            # Updated to insert farm_id instead of 'farm' (which should be farm_id in product_list table)
             cursor.execute('''INSERT INTO product_list 
-                (category_id, sku, price, name, description, quantity, reorder_level, image, FarmID) 
+                (category_id, sku, price, name, description, quantity, reorder_level, image, farm_id) 
                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)''',
                 (category_id, sku, price, name, description, quantity, reorder_level, image_filename, farm_id))
             
@@ -301,7 +301,7 @@ def edit_product(product_id):
     cursor = connection.cursor(dictionary=True)
 
     # 1. Fetch the product data from the database
-    # Fetching all details is fine, including the existing FarmID
+    # Fetching all details is fine, including the existing farm_id
     cursor.execute('SELECT * FROM product_list WHERE ProductID = %s', (product_id,))
     product = cursor.fetchone()
 
@@ -313,9 +313,9 @@ def edit_product(product_id):
     cursor.execute('SELECT * FROM category_list ORDER BY name')
     categories = cursor.fetchall()
 
-    # 3. Fetch farms (FarmID and name) from the database
+    # 3. Fetch farms (farm_id and name) from the database
     # Changed from hardcoded list to a database query
-    cursor.execute('SELECT FarmID, name FROM farm_list ORDER BY name')
+    cursor.execute('SELECT farm_id, name FROM farm_list ORDER BY name')
     farm_options = cursor.fetchall()
 
     if request.method == 'POST':
@@ -326,7 +326,7 @@ def edit_product(product_id):
         name = request.form.get('name')
         description = request.form.get('description')
         reorder_level = request.form.get('reorder_level')
-        # IMPORTANT: Retrieve the FarmID from the dropdown value
+        # IMPORTANT: Retrieve the farm_id from the dropdown value
         farm_id = request.form.get('farm_id') 
 
         # Handle image upload (assuming 'allowed_file' and 'current_app' are defined elsewhere)
@@ -358,11 +358,11 @@ def edit_product(product_id):
 
 
         # Update product
-        # IMPORTANT: Updated farm parameter to use FarmID and the corresponding database column
+        # IMPORTANT: Updated farm parameter to use farm_id and the corresponding database column
         cursor.execute(''' 
             UPDATE product_list
             SET category_id = %s, sku = %s, price = %s, name = %s, description = %s,
-                reorder_level = %s, image = %s, FarmID = %s, updated_at = CURRENT_TIMESTAMP
+                reorder_level = %s, image = %s, farm_id = %s, updated_at = CURRENT_TIMESTAMP
             WHERE ProductID = %s
         ''', (category_id, sku, price, name, description, reorder_level, image_filename, farm_id, product_id))
 

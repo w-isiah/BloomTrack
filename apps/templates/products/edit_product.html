@@ -109,7 +109,7 @@
                                         <select name="farm_id" class="form-control" required>
                                             <option value="">-- Select Farm --</option>
                                             {% for farm in farm_options %}
-                                                {# Use farm.FarmID as the value and check against product.FarmID for 'selected' #}
+                                                {# Use farm.farm_id as the value and check against product.FarmID for 'selected' #}
                                                 <option value="{{ farm.FarmID }}" {% if farm.FarmID == product.FarmID %}selected{% endif %}>
                                                     {{ farm.name }}
                                                 </option>
