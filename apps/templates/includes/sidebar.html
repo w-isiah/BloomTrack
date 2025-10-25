@@ -191,24 +191,18 @@
         </li>
 
 
-
-        <li class="nav-item has-treeview {% if '#' in segment %}menu-open{% endif %}">
-    <a href="#" class="nav-link {% if 'farms' in segment %}active{% endif %}">
-        <i class="nav-icon fas fa-seedling"></i> <p>
-            Farms <i class="right fas fa-angle-left"></i>
-        </p>
-    </a>
-    <ul class="nav nav-treeview">
-        <li class="nav-item">
-            <a href="/farms" class="nav-link {% if 'farms' == segment %}active{% endif %}"> <i class="far fa-circle nav-icon"></i>
-                <p>View Farms</p> </a>
-        </li>
-        <li class="nav-item">
-            <a href="{{ url_for('farms_blueprint.add_farm') }}" class="nav-link {% if 'add_farm' in segment %}active{% endif %}"> <i class="far fa-plus-square nav-icon"></i>
-                <p>Add Farm</p> </a>
-        </li>
-    </ul>
+<!-- Traffic Report -->
+<li class="nav-item">
+  <a href="/traffic_report" class="nav-link {% if 'traffic_report' in segment %}active{% endif %}">
+    <i class="nav-icon fas fa-chart-bar"></i>
+    <p>
+      Website Traffic
+    </p>
+  </a>
 </li>
+
+
+
 
 
 
