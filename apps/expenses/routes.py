@@ -33,7 +33,7 @@ def add_expense():
     customers = cursor.fetchall()
 
     # --- NEW: Fetch farms for dropdown ---
-    cursor.execute('SELECT FarmID, name FROM farm_list ORDER BY name')
+    cursor.execute('SELECT farm_id, name FROM farm_list ORDER BY name')
     farms = cursor.fetchall()
     # -------------------------------------
 
@@ -68,7 +68,7 @@ def add_expense():
         total_price = price
         date_added = get_kampala_time()  # Kampala timezone
 
-        # Insert into sales table including category_id and FarmID
+        # Insert into sales table including category_id and farm_id
         try:
             cursor.execute('''
                 INSERT INTO sales
@@ -125,7 +125,7 @@ def edit_expense(expense_id):
         categories = cursor.fetchall()
         
         # NEW: Fetch farms list
-        cursor.execute('SELECT FarmID, name FROM farm_list ORDER BY name')
+        cursor.execute('SELECT farm_id, name FROM farm_list ORDER BY name')
         farms = cursor.fetchall()
 
         if request.method == 'POST':

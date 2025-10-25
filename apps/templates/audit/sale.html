@@ -1,0 +1,334 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Sales{% endblock title %}
+
+{% block stylesheets %}
+  <!-- Google Font: Source Sans Pro -->
+  <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='assets/plugins/fontawesome-free/css/all.min.css') }}">
+  <!-- Select2 -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='assets/css/select2.min.css') }}">
+  <!-- Theme style -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='assets/css/adminlte.min.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='assets/css/mine.css') }}">
+{% endblock stylesheets %}
+
+{% block content %}
+<div class="content-wrapper">
+
+  <!-- Content Header -->
+  <section class="content-header">
+    <div id="notification" class="notification" style="display: none;">
+      <div class="notification-content">
+        <span id="notification-message"></span>
+        <button id="close-notification" class="close-btn">X</button>
+      </div>
+    </div>
+
+    <div class="container-fluid">
+      <div class="row mb-2">
+        <div class="col-sm-6">
+          <h1>Sell Items</h1>
+        </div>
+        <div class="col-sm-6">
+          <ol class="breadcrumb float-sm-right">
+            <li class="breadcrumb-item"><a href="/index">Home</a></li>
+            <li class="breadcrumb-item active">Sell Items</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Main Content -->
+  <section class="content">
+    <div class="container-fluid">
+      <div class="row">
+
+        <div class="col-12">
+          <div class="card">
+
+            <div class="card-header">
+              <h3 class="card-title">POS Terminal</h3>
+              <div class="card-tools">
+                <div class="btn-group mb-2">
+                  <a href="/sales_view" class="btn btn-sm btn-outline-primary">View Sales</a>
+                  <a href="/discount_percentage" target="_blank" class="btn btn-sm btn-outline-primary">Discount (%)</a>
+                </div>
+                <button type="button" class="btn btn-tool" data-card-widget="collapse" title="Collapse">
+                  <i class="fas fa-minus"></i>
+                </button>
+                <button type="button" class="btn btn-tool" data-card-widget="remove" title="Remove">
+                  <i class="fas fa-times"></i>
+                </button>
+              </div>
+            </div>
+
+            <div class="card-body">
+              <div class="row">
+
+                <!-- Left Side: Form -->
+                <div class="col-md-4">
+                  <form id="pos-form">
+                    <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+
+                    <div class="form-group mb-3">
+                      <label for="customer-id">Customer</label>
+                      <select id="customer-id" name="customer-id" class="form-control select2">
+                        <option value="" disabled selected>Select Customer</option>
+                        {% for customer in customers %}
+                          <option value="{{ customer.CustomerID }}">{{ customer.name }}</option>
+                        {% endfor %}
+                      </select>
+                    </div>
+
+                    <div class="form-group mb-3">
+                      <label for="product-id">Product</label>
+                      <select id="product-id" name="product-id" class="form-control select2">
+                        <option value="" disabled selected>Select Product</option>
+                        {% for product in products %}
+                          <option data-available="{{ product.quantity }}"
+                                  data-price="{{ product.price }}"
+                                  value="{{ product.ProductID }}">
+                            {{ product.name }} | {{ product.category_name }} | {{ product.price }} | Available: {{ product.quantity }}
+                          </option>
+                        {% endfor %}
+                      </select>
+                    </div>
+
+                    <div class="form-group mb-3">
+                      <label for="product-qty">Quantity</label>
+                      <input id="product-qty" type="number" min="1" name="quantity"
+                             class="form-control" placeholder="Enter Quantity" required>
+                      <small id="available-qty-info" class="form-text text-muted">Available: 0</small>
+                    </div>
+
+                    <div class="form-group mb-3">
+                      <label for="discount">Discount (%)</label>
+                      <input id="discount" type="number" min="0" max="100" step="0.01"
+                             name="discount" class="form-control" placeholder="Enter Discount">
+                    </div>
+
+                    <div class="form-group">
+                      <button type="button" id="add_item" class="btn btn-primary btn-sm">Add to Cart</button>
+                    </div>
+                  </form>
+                </div>
+
+                <!-- Right Side: Cart -->
+                <div class="col-md-8">
+                  <h4>Cart Summary</h4>
+                  <div id="cart-list">
+                    <table id="cart-table" class="table table-striped">
+                      <thead>
+                        <tr>
+                          <th>Product</th>
+                          <th>Quantity</th>
+                          <th>Total Price</th>
+                          <th>Discount (%)</th>
+                          <th>Discounted Price</th>
+                          <th>Action</th>
+                        </tr>
+                      </thead>
+                      <tbody id="item-list"></tbody>
+                    </table>
+
+                    <div class="total-price mb-2">
+                      <strong>Total: </strong><span id="total-price">0.00 Ugx</span>
+                    </div>
+
+                    <div class="form-group mb-3">
+                      <label for="amount-tendered">Amount Tendered</label>
+                      <input id="amount-tendered" type="number" min="0" step="0.01"
+                             name="amount-tendered" class="form-control" placeholder="Enter Amount Tendered">
+                    </div>
+
+                    <div class="total-price mb-2">
+                      <strong>Change: </strong><span id="change">0.00 Ugx</span>
+                    </div>
+
+                    <div class="form-group">
+                      <button type="button" id="checkout" class="btn btn-success btn-sm">Checkout</button>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+
+            <div class="card-footer">Footer</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+</div>
+{% endblock content %}
+
+{% block javascripts %}
+  <!-- jQuery -->
+  <script src="{{ url_for('static', filename='assets/plugins/jquery/jquery.min.js') }}"></script>
+  <!-- Bootstrap -->
+  <script src="{{ url_for('static', filename='assets/plugins/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
+  <!-- AdminLTE -->
+  <script src="{{ url_for('static', filename='assets/js/adminlte.min.js') }}"></script>
+  <!-- Select2 -->
+  <script src="{{ url_for('static', filename='assets/js/select2.min.js') }}"></script>
+
+  <script>
+    $(document).ready(function() {
+      // Initialize Select2
+      $('select').select2({ placeholder: "Search...", allowClear: true });
+
+      // Product selection
+      $('#product-id').change(function() {
+        const selectedOption = $(this).find('option:selected');
+        const availableQty = selectedOption.data('available');
+        $('#available-qty-info').text(`Available: ${availableQty}`);
+        $('#product-qty').attr('max', availableQty);
+      });
+
+      let totalAmount = 0;
+
+      // Update total
+      function updateTotalAmount() {
+        totalAmount = 0;
+        $('#item-list tr').each(function() {
+          totalAmount += parseFloat($(this).find('.discounted-price').text().replace(' Ugx', '')) || 0;
+        });
+        $('#total-price').text(`${totalAmount.toFixed(2)} Ugx`);
+        $('#amount-tendered').trigger('keyup');
+      }
+
+      // Notification
+      function showNotification(message) {
+        $('#notification-message').text(message);
+        $('#notification').fadeIn();
+        setTimeout(() => { $('#notification').fadeOut(); }, 5000);
+      }
+
+      // Add item
+      $('#add_item').on('click', function() {
+        const selectedOption = $('#product-id').find('option:selected');
+        const productName = selectedOption.text();
+        const availableQty = selectedOption.data('available');
+        const price = selectedOption.data('price');
+        const quantity = parseInt($('#product-qty').val()) || 0;
+        const discount = parseFloat($('#discount').val()) || 0;
+
+        if (!productName || quantity < 1 || quantity > availableQty || price <= 0) {
+          showNotification("Invalid product selection or quantity.");
+          return;
+        }
+
+        const totalPrice = price * quantity;
+        const discountedPrice = totalPrice - (totalPrice * discount / 100);
+
+        const row = $(`
+          <tr data-product-id="${selectedOption.val()}">
+            <td>${productName}</td>
+            <td><input type="number" class="form-control cart-qty" value="${quantity}" min="1" max="${availableQty}" data-price="${price}"></td>
+            <td class="price">${totalPrice.toFixed(2)} Ugx</td>
+            <td class="item-discount">${discount.toFixed(2)}%</td>
+            <td class="discounted-price">${discountedPrice.toFixed(2)} Ugx</td>
+            <td><button class="btn btn-sm btn-danger remove-item">Remove</button></td>
+          </tr>
+        `);
+
+        $('#item-list').append(row);
+        updateTotalAmount();
+      });
+
+      // Change quantity
+      $(document).on('change', '.cart-qty', function() {
+        const newQuantity = parseInt($(this).val()) || 1;
+        const maxQuantity = parseInt($(this).attr('max'));
+        const price = parseFloat($(this).data('price'));
+        const discount = parseFloat($(this).closest('tr').find('.item-discount').text());
+
+        if (newQuantity < 1 || newQuantity > maxQuantity) {
+          showNotification(`Quantity must be between 1 and ${maxQuantity}.`);
+          $(this).val(1);
+          return;
+        }
+
+        const totalPrice = price * newQuantity;
+        const discountedPrice = totalPrice - (totalPrice * discount / 100);
+
+        $(this).closest('tr').find('.price').text(`${totalPrice.toFixed(2)} Ugx`);
+        $(this).closest('tr').find('.discounted-price').text(`${discountedPrice.toFixed(2)} Ugx`);
+        updateTotalAmount();
+      });
+
+      // Remove item
+      $(document).on('click', '.remove-item', function() {
+        $(this).closest('tr').remove();
+        updateTotalAmount();
+      });
+
+      // Tendered amount
+      $('#amount-tendered').on('keyup', function() {
+        const tendered = parseFloat($(this).val()) || 0;
+        const change = tendered - totalAmount;
+        $('#change').text(change < 0 ? `0.00 Ugx` : `${change.toFixed(2)} Ugx`);
+      });
+
+      // Checkout
+      $('#checkout').on('click', function() {
+        if (totalAmount <= 0) {
+          showNotification("Cart is empty.");
+          return;
+        }
+
+        const customerID = $('#customer-id').val();
+        const cartItems = [];
+
+        $('#item-list tr').each(function() {
+          const productID = $(this).data('product-id');
+          const quantity = parseInt($(this).find('.cart-qty').val());
+          const price = parseFloat($(this).find('.price').text().replace(' Ugx', ''));
+          const discount = parseFloat($(this).find('.item-discount').text().replace('%', ''));
+          const discountedPrice = parseFloat($(this).find('.discounted-price').text().replace(' Ugx', ''));
+
+          cartItems.push({
+            product_id: productID,
+            quantity: quantity,
+            price: price,
+            discount: discount,
+            discounted_price: discountedPrice
+          });
+        });
+
+        $.ajax({
+          url: '/save_sale',
+          method: 'POST',
+          contentType: 'application/json',
+          headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
+          data: JSON.stringify({
+            customer_id: customerID,
+            cart_items: cartItems,
+            total_price: totalAmount,
+            discounted_price: totalAmount
+          }),
+          success: function(response) {
+            showNotification('Success: ' + response.message);
+            $('#pos-form')[0].reset();
+            $('#item-list').empty();
+            $('#total-price').text('0.00 Ugx');
+            $('#change').text('0.00 Ugx');
+          },
+          error: function(xhr) {
+            let msg = xhr.responseJSON?.message || 'An error occurred';
+            showNotification('Error: ' + msg);
+          }
+        });
+      });
+
+      // Close notification
+      $('#close-notification').on('click', () => $('#notification').fadeOut());
+    });
+  </script>
+{% endblock javascripts %}

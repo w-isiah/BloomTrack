@@ -212,6 +212,38 @@
 
 
 
+<li class="nav-item has-treeview {% if 'customer' in segment %}menu-open{% endif %}">
+    <a href="#" class="nav-link {% if 'customer' in segment %}active{% endif %}">
+        <!-- Changed icon from fa-seedling to fa-users for customers -->
+        <i class="nav-icon fas fa-users"></i> <p>
+            Customers <i class="right fas fa-angle-left"></i>
+        </p>
+    </a>
+    <ul class="nav nav-treeview">
+        <li class="nav-item">
+            <!-- Assuming the main customers list view uses the segment 'customers' -->
+            <a href="{{ url_for('customers_blueprint.customers') }}" class="nav-link {% if 'customers' == segment or 'customer_details' in segment %}active{% endif %}"> 
+                <i class="far fa-circle nav-icon"></i>
+                <p>View Customers</p> 
+            </a>
+        </li>
+        <li class="nav-item">
+            <!-- Link to the add customer page -->
+            <a href="{{ url_for('customers_blueprint.add_customer') }}" class="nav-link {% if 'add_customer' in segment %}active{% endif %}"> 
+                <i class="far fa-plus-square nav-icon"></i>
+                <p>Add a Customer</p> 
+            </a>
+        </li>
+    </ul>
+</li>
+
+
+
+
+
+
+
+
         {% if session['role'] == 'super_admin' %}
         <!-- User Accounts -->
         <li class="nav-item has-treeview {% if '#' in segment %}menu-open{% endif %}">
@@ -237,6 +269,28 @@
             </li>
           </ul>
         </li>
+
+            <!-- Audit -->
+        <li class="nav-item has-treeview {% if segment == 'inventory_view' %}menu-open{% endif %}">
+          <a href="#" class="nav-link {% if segment == 'inventory_view' %}active{% endif %}">
+            <i class="nav-icon fas fa-clipboard-list"></i>
+            <p>
+              Audit
+              <i class="right fas fa-angle-left"></i>
+            </p>
+          </a>
+          <ul class="nav nav-treeview">
+            <li class="nav-item">
+              <a href="/inventory_view" class="nav-link {% if segment == 'inventory_view' %}active{% endif %}">
+                <i class="far fa-circle nav-icon"></i>
+                <p>Inventory Movement Report</p>
+              </a>
+            </li>
+            <!-- Add other audit reports here if needed -->
+          </ul>
+        </li>
+
+
         {% endif %}
 
       </ul>

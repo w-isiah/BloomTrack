@@ -1,0 +1,209 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Sales & Expenses Dashboard{% endblock title %}
+
+{% block stylesheets %}
+  <!-- Google Font: Source Sans Pro -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='assets/plugins/fontawesome-free/css/all.min.css') }}">
+  <!-- Theme style -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='assets/css/adminlte.min.css') }}">
+  <style>
+    .kpi .info-box { box-shadow: 0 6px 18px rgba(0,0,0,.06); }
+    .chart-card { min-height: 400px; }
+  </style>
+{% endblock stylesheets %}
+
+{% block content %}
+<div class="content-wrapper">
+
+  <!-- Header -->
+  <section class="content-header">
+    <div class="container-fluid">
+      <div class="row mb-2">
+        <div class="col-sm-6">
+          <h1>Sales & Expenses Dashboard</h1>
+        </div>
+        <div class="col-sm-6">
+          <ol class="breadcrumb float-sm-right">
+            <li class="breadcrumb-item"><a href="/">Home</a></li>
+            <li class="breadcrumb-item active">Dashboard</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Filter -->
+  <section class="content">
+    <div class="container-fluid">
+      <div class="card card-primary">
+        <div class="card-header">
+          <h3 class="card-title"><i class="fas fa-filter mr-1"></i> Filter Data</h3>
+        </div>
+        <div class="card-body">
+          <form method="POST">
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+            <div class="row">
+              <div class="col-md-3">
+                <label for="start_date">Start Date</label>
+                <input type="date" id="start_date" name="start_date" class="form-control" value="{{ start_date }}">
+              </div>
+              <div class="col-md-3">
+                <label for="end_date">End Date</label>
+                <input type="date" id="end_date" name="end_date" class="form-control" value="{{ end_date }}">
+              </div>
+              <div class="col-md-3 align-self-end">
+                <button type="submit" class="btn btn-primary mt-4">
+                  <i class="fas fa-filter"></i> Filter
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      {% if not searched %}
+      <div class="card card-info">
+        <div class="card-body">
+          <i class="fas fa-info-circle mr-1"></i>
+          Choose a date range and click <strong>Filter</strong> to load insights.
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </section>
+
+  {% if searched %}
+  <!-- KPIs -->
+  <section class="content kpi">
+    <div class="container-fluid">
+      <div class="row">
+        <div class="col-md-3">
+          <div class="info-box bg-success">
+            <span class="info-box-icon"><i class="fas fa-cash-register"></i></span>
+            <div class="info-box-content">
+              <span class="info-box-text">Total Sales (Discounted)</span>
+              <span class="info-box-number">UGX {{ '{:,.2f}'.format(total_sales) }}</span>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="info-box bg-secondary">
+            <span class="info-box-icon"><i class="fas fa-tag"></i></span>
+            <div class="info-box-content">
+              <span class="info-box-text">Total Before Discount</span>
+              <span class="info-box-number">UGX {{ '{:,.2f}'.format(total_before_discount) }}</span>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="info-box bg-warning">
+            <span class="info-box-icon"><i class="fas fa-percent"></i></span>
+            <div class="info-box-content">
+              <span class="info-box-text">Total Discount Given</span>
+              <span class="info-box-number">UGX {{ '{:,.2f}'.format(total_discount_given) }}</span>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="info-box bg-danger">
+            <span class="info-box-icon"><i class="fas fa-money-bill-wave"></i></span>
+            <div class="info-box-content">
+              <span class="info-box-text">Total Expenses</span>
+              <span class="info-box-number">UGX {{ '{:,.2f}'.format(total_expenses) }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Charts -->
+      <div class="row">
+        <div class="col-md-6">
+          <div class="card chart-card">
+            <div class="card-header"><h5>Sales vs Expenses</h5></div>
+            <div class="card-body"><div id="sales-expenses-chart"></div></div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="card chart-card">
+            <div class="card-header"><h5>Sales by Customer</h5></div>
+            <div class="card-body"><div id="sales-customer-chart"></div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-md-6">
+          <div class="card chart-card">
+            <div class="card-header"><h5>Sales by Product</h5></div>
+            <div class="card-body"><div id="sales-product-chart"></div></div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="card chart-card">
+            <div class="card-header"><h5>Discount Brackets</h5></div>
+            <div class="card-body"><div id="discount-chart"></div></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+  {% endif %}
+</div>
+{% endblock content %}
+
+{% block javascripts %}
+  <!-- jQuery -->
+  <script src="{{ url_for('static', filename='assets/plugins/jquery/jquery.min.js') }}"></script>
+  <!-- Bootstrap -->
+  <script src="{{ url_for('static', filename='assets/plugins/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
+  <!-- AdminLTE -->
+  <script src="{{ url_for('static', filename='assets/js/adminlte.min.js') }}"></script>
+  <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+
+  {% if searched %}
+  <script>
+    document.addEventListener("DOMContentLoaded", function() {
+      const salesTS = JSON.parse('{{ sales_time_series | tojson | safe }}');
+      const expensesTS = JSON.parse('{{ expenses_time_series | tojson | safe }}');
+      const byCustomer = JSON.parse('{{ sales_by_customer | tojson | safe }}');
+      const byProduct = JSON.parse('{{ sales_by_product | tojson | safe }}');
+      const discountBrackets = JSON.parse('{{ discount_brackets | tojson | safe }}');
+
+      // Sales vs Expenses
+      new ApexCharts(document.querySelector("#sales-expenses-chart"), {
+        chart: { type: 'line', height: 350 },
+        series: [
+          { name: 'Sales', data: Object.values(salesTS) },
+          { name: 'Expenses', data: Object.values(expensesTS) }
+        ],
+        xaxis: { categories: Object.keys(salesTS) }
+      }).render();
+
+      // Sales by Customer
+      new ApexCharts(document.querySelector("#sales-customer-chart"), {
+        chart: { type: 'pie', height: 350 },
+        series: Object.values(byCustomer),
+        labels: Object.keys(byCustomer)
+      }).render();
+
+      // Sales by Product
+      new ApexCharts(document.querySelector("#sales-product-chart"), {
+        chart: { type: 'bar', height: 350 },
+        series: [{ name: 'Sales Amount', data: Object.values(byProduct) }],
+        xaxis: { categories: Object.keys(byProduct) }
+      }).render();
+
+      // Discount Brackets
+      new ApexCharts(document.querySelector("#discount-chart"), {
+        chart: { type: 'donut', height: 350 },
+        series: Object.values(discountBrackets),
+        labels: Object.keys(discountBrackets)
+      }).render();
+    });
+  </script>
+  {% endif %}
+{% endblock javascripts %}

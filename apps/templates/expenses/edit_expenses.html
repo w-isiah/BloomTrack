@@ -99,7 +99,7 @@
                                     <div class="col-sm-9">
                                         <select name="farm_id" class="form-control select2" required>
                                             {% for farm in farms %}
-                                                <option value="{{ farm.FarmID }}" {% if farm.FarmID == expense.farm_id %}selected{% endif %}>
+                                                <option value="{{ farm.farm_id }}" {% if farm.FarmID == expense.farm_id %}selected{% endif %}>
                                                     {{ farm.name | capitalize }}
                                                 </option>
                                             {% endfor %}

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Products Marketing</title>
+  <title>Jacaranda Nurseries - Products Marketing</title>
 
   <!-- Google Fonts -->
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Sans+Pro:wght@300;400;600;700&display=swap">
@@ -124,7 +124,7 @@
 
   <!-- Page Header -->
   <div class="d-flex justify-content-between align-items-center mb-4">
-    <h1 class="h3 fw-bold">📦 Products Marketing</h1>
+    <h1 class="h3 fw-bold">📦 Jacaranda Nurseries Products</h1>
     <nav aria-label="breadcrumb">
       <ol class="breadcrumb mb-0">
         <li class="breadcrumb-item"><a href="/index">Home</a></li>
@@ -155,7 +155,7 @@
             <b>Category:</b> {{ product.category_name }}<br>
             <b>SKU:</b> {{ product.sku }}<br>
             <b>Price:</b> {{ product.formatted_price }} UGX<br>
-            <b>Quantity:</b> {{ product.quantity }}
+            <!-- Removed: <b>Quantity:</b> {{ product.quantity }} -->
           </p>
           <hr class="my-2">
           <p class="small mb-0">
@@ -165,7 +165,7 @@
               +256757393160 <i class="fab fa-whatsapp"></i>
             </a><br>
             <b>Email:</b> kimulidone@gmail.com<br>
-            <b>Address:</b> Maya, along Masaka Road<br>
+            <b>Address:</b> Bulwanyi - Maya, off Masaka Road<br>
             <b>Means:</b> Deliver or Site Visit
           </p>
         </div>
@@ -196,9 +196,8 @@ $(document).ready(function() {
     const query = $(this).val().toLowerCase();
     $('.product-item').each(function() {
       const name = $(this).find('.card-title').text().toLowerCase();
-      const sku = $(this).find('.card-body p:contains("SKU")').text().toLowerCase();
-      const category = $(this).find('.card-body p:contains("Category")').text().toLowerCase();
-      if (name.includes(query) || sku.includes(query) || category.includes(query)) {
+      const detailsText = $(this).find('.card-body p:first').text().toLowerCase(); 
+      if (name.includes(query) || detailsText.includes(query)) {
         $(this).show();
       } else {
         $(this).hide();

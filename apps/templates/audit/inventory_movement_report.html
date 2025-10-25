@@ -1,0 +1,206 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Inventory Movement Report{% endblock %}
+
+{% block stylesheets %}
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700">
+<link rel="stylesheet" href="{{ url_for('static', filename='assets/plugins/fontawesome-free/css/all.min.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='assets/css/adminlte.min.css') }}">
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css">
+<link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.3.0/css/responsive.dataTables.min.css">
+<!-- DataTables Buttons CSS -->
+<link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.dataTables.min.css">
+<style>
+    /* Custom styling for right-aligned values and movement indicators */
+    .money, .qty { text-align: right; }
+    .movement-in { color: #28a745; font-weight: 600; } /* Green for positive change */
+    .movement-out { color: #dc3545; font-weight: 600; } /* Red for negative change */
+</style>
+{% endblock stylesheets %}
+
+{% block content %}
+<div class="content-wrapper">
+
+    <!-- Page Header -->
+    <section class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6"><h1>Inventory Movement Report</h1></div>
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item"><a href="/index">Home</a></li>
+                        <li class="breadcrumb-item active">Inventory Movement</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Flash Messages -->
+    <section class="content">
+        <div class="container-fluid">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="row mb-3"><div class="col-12">
+                    {% for category, message in messages %}
+                    <div class="alert alert-{{ 'danger' if category=='error' else category }} alert-dismissible fade show">
+                        <i class="fas fa-info-circle"></i> {{ message }}
+                        <button type="button" class="close" data-dismiss="alert">&times;</button>
+                    </div>
+                    {% endfor %}
+                </div></div>
+            {% endif %}
+            {% endwith %}
+        </div>
+    </section>
+
+    <!-- Filter Form -->
+    <section class="content">
+        <div class="container-fluid">
+            <form method="POST" class="card card-primary card-outline p-3 mb-4">
+                <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+                <div class="row">
+                    <div class="col-md-2 col-sm-6 mb-3">
+                        <label>Start Date:</label>
+                        <input type="date" name="start_date" class="form-control" value="{{ start_date }}">
+                    </div>
+                    <div class="col-md-2 col-sm-6 mb-3">
+                        <label>End Date:</label>
+                        <input type="date" name="end_date" class="form-control" value="{{ end_date }}">
+                    </div>
+                    <div class="col-md-3 col-sm-6 mb-3">
+                        <label>Farm:</label>
+                        <select name="farm_id" class="form-control">
+                            <option value="">All Farms</option>
+                            {% for farm in farms %}
+                            <option value="{{ farm.FarmID }}" {% if selected_farm_id|string == farm.FarmID|string %}selected{% endif %}>{{ farm.name|capitalize }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-3 col-sm-6 mb-3">
+                        <label>Product:</label>
+                        <select name="product_id" class="form-control">
+                            <option value="">All Products</option>
+                            {% for product in products %}
+                            <option value="{{ product.ProductID }}" {% if selected_product_id|string == product.ProductID|string %}selected{% endif %}>{{ product.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-2 col-sm-12 d-flex align-items-end mb-3">
+                        <button type="submit" class="btn btn-primary btn-block"><i class="fas fa-search"></i> Search</button>
+                    </div>
+                </div>
+            </form>
+
+            {% if searched %}
+            <!-- Inventory Logs Table -->
+            <div class="card card-info">
+                <div class="card-header">
+                    <h3 class="card-title">Detailed Inventory Movement Log</h3>
+                    <div class="card-tools">
+                        <button type="button" class="btn btn-tool" data-card-widget="collapse">
+                            <i class="fas fa-minus"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if logs %}
+                    <table id="inventoryLogTable" class="table table-bordered table-striped nowrap" width="100%">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Date/Time</th>
+                                <th>Product</th>
+                                <th>Farm</th>
+                                <th class="qty">Qty Change</th>
+                                <th class="money">Price Change</th>
+                                <th class="money">Old Price</th>
+                                <th>Reason</th>
+                                <th>User</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for log in logs %}
+                            <tr>
+                                <td>{{ log.inventory_log_id }}</td>
+                                <td>{{ log.log_date.strftime("%Y-%m-%d %H:%M:%S") }}</td>
+                                <td>{{ log.product_name }}</td>
+                                <td>{{ log.farm_name|capitalize }}</td>
+                                <!-- Highlight quantity changes -->
+                                <td class="qty {{ 'movement-in' if log.quantity_change > 0 else ('movement-out' if log.quantity_change < 0 else '') }}">
+                                    {{ log.quantity_change }}
+                                </td>
+                                <td class="money">{{ log.price_change or '0.00' }}</td>
+                                <td class="money">{{ log.old_price or '0.00' }}</td>
+                                <td>{{ log.reason|truncate(50) }}</td>
+                                <td>{{ log.username }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    {% else %}
+                    <p class="text-center text-muted">No inventory movement records found for the selected filter criteria.</p>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+
+        </div>
+    </section>
+</div>
+{% endblock content %}
+
+{% block javascripts %}
+<script src="{{ url_for('static', filename='assets/plugins/jquery/jquery.min.js') }}"></script>
+<script src="{{ url_for('static', filename='assets/plugins/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
+<script src="{{ url_for('static', filename='assets/js/adminlte.min.js') }}"></script>
+<script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/responsive/2.3.0/js/dataTables.responsive.min.js"></script>
+
+<!-- DataTables Buttons Libraries -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
+
+<script>
+    /**
+     * Formats all elements with class 'money' to display currency-formatted values.
+     */
+    function formatMoneyCells() {
+        $('.money').each(function() {
+            let val = parseFloat($(this).text().replace(/,/g,''));
+            if(!isNaN(val)) {
+                // Format to 2 decimal places with local thousands separator
+                $(this).text(val.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}));
+            } else if ($(this).text().trim() === '') {
+                $(this).text('0.00');
+            }
+        });
+    }
+
+    $(document).ready(function() {
+        // Initialize DataTables for the Inventory Logs
+        $('#inventoryLogTable').DataTable({ 
+            order: [[1, 'desc']], // Default sort by Date/Time descending
+            scrollX: true, 
+            responsive: true,
+            language: { searchPlaceholder: "Search inventory logs..." },
+            dom: 'lBfrtip', // Add 'B' for Buttons
+            buttons: [
+                {
+                    extend: 'excelHtml5',
+                    text: '<i class="fas fa-file-excel"></i> Export Inventory Logs to Excel',
+                    className: 'btn btn-info btn-sm',
+                    // Export all visible columns
+                    exportOptions: {
+                        columns: ':visible'
+                    }
+                }
+            ]
+        });
+        
+        // Format money values after the table is drawn
+        formatMoneyCells();
+    });
+</script>
+{% endblock javascripts %}

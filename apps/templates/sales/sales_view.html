@@ -8,6 +8,8 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='assets/css/adminlte.min.css') }}">
 <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css">
 <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.3.0/css/responsive.dataTables.min.css">
+<!-- New: DataTables Buttons CSS -->
+<link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.dataTables.min.css">
 <style>.money { text-align: right; }</style>
 {% endblock stylesheets %}
 
@@ -228,6 +230,11 @@
 <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/responsive/2.3.0/js/dataTables.responsive.min.js"></script>
 
+<!-- New: DataTables Buttons Libraries -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
+
 <script>
 function formatMoneyCells() {
     $('.money').each(function() {
@@ -239,11 +246,39 @@ $(document).ready(function() {
     // Initialize DataTables
     $('#salesTable').DataTable({ 
         scrollX: true, 
-        responsive: true 
+        responsive: true,
+        // ADDED: Enable Buttons and set layout
+        dom: 'lBfrtip',
+        buttons: [
+            {
+                extend: 'excelHtml5',
+                text: '<i class="fas fa-file-excel"></i> Export Sales to Excel',
+                className: 'btn btn-success btn-sm',
+                // EXPORT OPTION: Exclude the last two columns (Date and Action)
+                exportOptions: {
+                    // Includes columns 0 through 7
+                    columns: [ 0, 1, 2, 3, 4, 5, 6, 7 ]
+                }
+            }
+        ]
     });
     $('#expensesTable').DataTable({ 
         scrollX: true, 
-        responsive: true 
+        responsive: true,
+        // ADDED: Enable Buttons and set layout
+        dom: 'lBfrtip',
+        buttons: [
+            {
+                extend: 'excelHtml5',
+                text: '<i class="fas fa-file-excel"></i> Export Expenses to Excel',
+                className: 'btn btn-danger btn-sm',
+                // EXPORT OPTION: Exclude the last two columns (Date and Action)
+                exportOptions: {
+                    // Includes columns 0 through 6
+                    columns: [ 0, 1, 2, 3, 4, 5, 6 ]
+                }
+            }
+        ]
     });
     
     // Format money values after tables are initialized
