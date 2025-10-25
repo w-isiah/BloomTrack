@@ -96,7 +96,7 @@ def products():
 
 
 
-@blueprint.route('/products_marketing')
+@blueprint.route('/jacaranda_plant_nurseries_maya_bulwanyi')
 def products_marketing():
     connection = get_db_connection()
     cursor = connection.cursor(dictionary=True)

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Jacaranda Nurseries - Products Marketing</title>
+  <title>Jacaranda Nurseries</title>
 
   <!-- Google Fonts -->
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Sans+Pro:wght@300;400;600;700&display=swap">
@@ -17,36 +17,72 @@
   <style>
     body {
       font-family: 'Source Sans Pro', sans-serif;
-      background-color: #f5f7fa;
+      background-color: #f3f6fa;
       color: #1a1a1a;
       margin: 0;
+      scroll-behavior: smooth;
     }
 
     .content-wrapper {
       padding: 20px;
     }
 
-    /* Sticky search */
-    #searchContainer {
+    /* ✨ Sticky Header with Gradient */
+    #stickyHeader {
       position: sticky;
       top: 0;
       z-index: 1050;
-      margin-bottom: 20px;
-      background-color: #f5f7fa;
-      padding-top: 10px;
-      padding-bottom: 10px;
+      background: linear-gradient(135deg, #cfe9d3 0%, #d8ecf3 100%);
+      backdrop-filter: blur(8px);
+      padding: 15px 0 20px;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+      transition: all 0.3s ease;
     }
-    #searchContainer input {
+
+    #stickyHeader:hover {
+      background: linear-gradient(135deg, #d3f2d8 0%, #e2f1f9 100%);
+    }
+
+    .header-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 700;
+      font-size: 1.5rem;
+      color: #1a3d2f;
+    }
+
+    .header-location {
+      font-size: 0.9rem;
+      color: #4a4a4a;
+      font-style: italic;
+    }
+
+    #searchInput {
       width: 100%;
       background-color: #ffffff;
       border: 1px solid #ced4da;
+      border-radius: 8px;
       color: #1a1a1a;
+      transition: all 0.3s;
     }
-    #searchContainer input::placeholder {
+
+    #searchInput:focus {
+      border-color: #0d6efd;
+      box-shadow: 0 0 0 0.2rem rgba(13,110,253,.25);
+    }
+
+    #searchInput::placeholder {
       color: #999999;
     }
 
-    /* Breadcrumb */
+    /* 🪴 Breadcrumb */
+    .breadcrumb {
+      background: transparent;
+      margin: 0;
+      padding: 0;
+    }
     .breadcrumb a {
       color: #0d6efd;
     }
@@ -54,39 +90,62 @@
       color: #495057;
     }
 
-    /* Product card */
+    /* 🌸 Product Card */
     .product-card {
       background-color: #ffffff;
-      border-radius: 12px;
-      transition: transform 0.2s, box-shadow 0.2s, background-color 0.2s;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.08);
-      cursor: pointer;
+      border-radius: 15px;
+      transition: transform 0.25s ease, box-shadow 0.25s ease;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+      overflow: hidden;
     }
+
     .product-card:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 6px 14px rgba(0,0,0,0.12);
-      background-color: #f0f4f8;
+      transform: translateY(-7px);
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.12);
     }
 
     .product-image {
-      height: 200px;
+      height: 220px;
       object-fit: cover;
-      border-radius: 12px 12px 0 0;
+      width: 100%;
+      transition: transform 0.4s ease;
+    }
+
+    .product-card:hover .product-image {
+      transform: scale(1.05);
     }
 
     .card-body h5 {
       color: #1a1a1a;
+      font-weight: 600;
     }
+
     .card-body p {
       color: #555555;
     }
+
     .card-body b {
       color: #0d6efd;
+    }
+
+    .price-tag {
+      display: inline-block;
+      background-color: #e8f5e9;
+      color: #2e7d32;
+      font-weight: 600;
+      border-radius: 8px;
+      padding: 3px 8px;
+      font-size: 0.9rem;
     }
 
     a.whatsapp {
       color: #25D366;
       text-decoration: none;
+      font-weight: 600;
+    }
+
+    a.whatsapp:hover {
+      text-decoration: underline;
     }
 
     hr {
@@ -99,8 +158,18 @@
       border-color: #cfe2ff;
     }
 
-    .btn-close {
-      filter: none;
+    /* 🌿 Footer Info */
+    .footer-info {
+      text-align: center;
+      margin-top: 40px;
+      padding: 20px;
+      font-size: 0.9rem;
+      color: #6c757d;
+    }
+
+    /* Smooth fade for flash messages */
+    .alert {
+      transition: opacity 0.4s ease;
     }
   </style>
 </head>
@@ -122,51 +191,52 @@
   {% endif %}
   {% endwith %}
 
-  <!-- Page Header -->
-  <div class="d-flex justify-content-between align-items-center mb-4">
-    <h1 class="h3 fw-bold">📦 Jacaranda Nurseries Products</h1>
-    <nav aria-label="breadcrumb">
-      <ol class="breadcrumb mb-0">
-        <li class="breadcrumb-item"><a href="/index">Home</a></li>
-        <li class="breadcrumb-item active" aria-current="page">Marketing</li>
-      </ol>
-    </nav>
+  <!-- 🌿 Sticky Header -->
+  <div id="stickyHeader">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-2 px-3">
+      <div>
+        <div class="header-title">📦 Jacaranda Nurseries</div>
+        <div class="header-location">📍 Bulwanyi - Maya, off Masaka Road</div>
+      </div>
+      <nav aria-label="breadcrumb" class="mt-2 mt-md-0">
+        <ol class="breadcrumb mb-0">
+          <li class="breadcrumb-item"><a href="/index">Home</a></li>
+          <li class="breadcrumb-item active" aria-current="page">Marketing</li>
+        </ol>
+      </nav>
+    </div>
+    <div class="px-3">
+      <input type="text" id="searchInput" class="form-control" placeholder="🔍 Search by Name, SKU, or Category">
+    </div>
   </div>
 
-  <!-- Sticky Search Bar -->
-  <div id="searchContainer" class="shadow-sm">
-    <input type="text" id="searchInput" class="form-control" placeholder="🔍 Search by Name, SKU, or Category">
-  </div>
-
-  <!-- Products Grid -->
-  <div class="row g-4" id="productGrid">
+  <!-- 🌸 Products Grid -->
+  <div class="row g-4 mt-3" id="productGrid">
     {% for product in products %}
     <div class="col-sm-6 col-md-4 col-lg-3 product-item">
       <div class="card product-card h-100">
         {% if product.image %}
-        <img src="/static/uploads/{{ product.image }}" class="product-image" alt="{{ product.name }}">
+        <img loading="lazy" src="/static/uploads/{{ product.image }}" class="product-image" alt="{{ product.name }}">
         {% else %}
-        <img src="/static/assets/img/no-image.png" class="product-image" alt="No Image">
+        <img loading="lazy" src="/static/assets/img/no-image.png" class="product-image" alt="No Image">
         {% endif %}
 
         <div class="card-body d-flex flex-column">
-          <h5 class="card-title fw-semibold">{{ product.name }}</h5>
+          <h5 class="card-title">{{ product.name }}</h5>
           <p class="small mb-2">
             <b>Category:</b> {{ product.category_name }}<br>
             <b>SKU:</b> {{ product.sku }}<br>
-            <b>Price:</b> {{ product.formatted_price }} UGX<br>
-            <!-- Removed: <b>Quantity:</b> {{ product.quantity }} -->
+            <span class="price-tag">{{ product.formatted_price }} UGX</span>
           </p>
           <hr class="my-2">
           <p class="small mb-0">
             <b>Contact:</b> +256757393160<br>
-            <b>WhatsApp:</b> 
+            <b>WhatsApp:</b>
             <a href="https://wa.me/256757393160" target="_blank" class="whatsapp">
-              +256757393160 <i class="fab fa-whatsapp"></i>
+              Chat on WhatsApp <i class="fab fa-whatsapp"></i>
             </a><br>
             <b>Email:</b> kimulidone@gmail.com<br>
-            <b>Address:</b> Bulwanyi - Maya, off Masaka Road<br>
-            <b>Means:</b> Deliver or Site Visit
+            <b>Means:</b> Delivery or Site Visit
           </p>
         </div>
       </div>
@@ -174,11 +244,16 @@
     {% endfor %}
   </div>
 
-  <!-- Total Value -->
+  <!-- 💰 Total Value -->
   <div class="mt-4">
     <div class="alert alert-info shadow-sm">
       <h5 class="mb-0">💰 Total Value of All Products: <strong>{{ formatted_total_sum }} UGX</strong></h5>
     </div>
+  </div>
+
+  <!-- 🌱 Footer -->
+  <div class="footer-info">
+    © {{ current_year }} Jacaranda Nurseries — Nurturing nature, one plant at a time 🌿
   </div>
 </div>
 
@@ -194,15 +269,19 @@ $(document).ready(function() {
   // Live search filter
   $('#searchInput').on('keyup', function() {
     const query = $(this).val().toLowerCase();
+    let visibleCount = 0;
     $('.product-item').each(function() {
-      const name = $(this).find('.card-title').text().toLowerCase();
-      const detailsText = $(this).find('.card-body p:first').text().toLowerCase(); 
-      if (name.includes(query) || detailsText.includes(query)) {
-        $(this).show();
-      } else {
-        $(this).hide();
-      }
+      const text = $(this).text().toLowerCase();
+      const match = text.includes(query);
+      $(this).toggle(match);
+      if (match) visibleCount++;
     });
+    if (visibleCount === 0) {
+      if (!$('#noResults').length)
+        $('#productGrid').after('<p id="noResults" class="text-center mt-4 text-muted">No products found.</p>');
+    } else {
+      $('#noResults').remove();
+    }
   });
 });
 </script>
