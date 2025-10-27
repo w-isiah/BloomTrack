@@ -69,55 +69,73 @@
                         </div>
                         <div class="card-body table-responsive">
                             <table id="productTable" class="display stripe nowrap" style="width:100%">
+                                
+
+
                                 <thead>
-                                    <tr>
-                                        <th>SKU</th>
-                                        <th>Name</th>
-                                        <th>Re-Order</th>
-                                        <th>Quantity</th>
-                                        <th>Unit Price</th>
-                                        <th>Total Value</th>
-                                        <th>Image</th>
-                                        <th>Edit</th>
-                                        <th>Del</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for i in products %}
-                                    <tr>
-                                        <td>{{ i.sku }}</td>
-                                        <td>
-                                            {{ i.name }}<br>
-                                            <small><b><i>Category:</i></b> {{ i.category_name }}</small> <br>
-                                            {# UPDATED: Changed from i.farm to i.farm_name to match the Python dictionary key #}
-                                            <small><b><i>Farm:</i></b> {{ i.farm_name }}</small>
-                                        </td>
-                                        <td>{{ i.reorder_level }}</td>
-                                        <td>{{ i.quantity }}</td>
-                                        <td>{{ i.formatted_price }}</td>
-                                        <td>{{ i.formatted_total_price }}</td>
-                                        <td>
-                                            {% if i.image %}
-                                                <img src="/static/uploads/{{ i.image }}" alt="Product Image" style="width:100px; height:100px; object-fit:cover; border-radius:5px;">
-                                            {% else %}
-                                                <span>No Image</span>
-                                            {% endif %}
-                                        </td>
-                                        <td>
-                                            <a href="/edit_product/{{ i.ProductID }}">
-                                                <button type="button" class="btn btn-warning btn-sm">Edit</button>
-                                            </a>
-                                        </td>
-                                        <td>
-                                            {% if session['role'] == 'super_admin' %}
-                                                <a href="/delete_product/{{ i.ProductID }}">
-                                                    <button type="button" class="btn btn-danger btn-sm">Del</button>
-                                                </a>
-                                            {% endif %}
-                                        </td>
-                                    </tr>
-                                    {% endfor %}
-                                </tbody>
+    <tr>
+        <th>SKU</th>
+        <th>Name</th>
+        <th>Re-Order</th>
+        <th>Quantity</th>
+        <th>Stock Status</th> <!-- NEW COLUMN -->
+        <th>Unit Price</th>
+        <th>Total Value</th>
+        <th>Image</th>
+        <th>Edit</th>
+        <th>Del</th>
+    </tr>
+</thead>
+<tbody>
+    {% for i in products %}
+    <tr>
+        <td>{{ i.sku }}</td>
+        <td>
+            {{ i.name }}<br>
+            <small><b><i>Category:</i></b> {{ i.category_name }}</small><br>
+            <small><b><i>Farm:</i></b> {{ i.farm_name }}</small>
+        </td>
+        <td>{{ i.reorder_level }}</td>
+        <td>{{ i.quantity }}</td>
+        <!-- NEW STOCK STATUS COLUMN -->
+        <td>
+            {% if i.stock_status == 'In Stock' %}
+                <span class="badge bg-success">{{ i.stock_status }}</span>
+            {% elif i.stock_status == 'Low Stock' %}
+                <span class="badge bg-warning">{{ i.stock_status }}</span>
+            {% elif i.stock_status == 'Out of Stock' %}
+                <span class="badge bg-danger">{{ i.stock_status }}</span>
+            {% else %}
+                <span class="badge bg-secondary">{{ i.stock_status }}</span>
+            {% endif %}
+        </td>
+        <td>{{ i.formatted_price }}</td>
+        <td>{% if session['role'] == 'super_admin' %} {{ i.formatted_total_price }} {% endif %}</td>
+        <td>
+            {% if i.image %}
+                <img src="/static/uploads/{{ i.image }}" alt="Product Image" style="width:100px; height:100px; object-fit:cover; border-radius:5px;">
+            {% else %}
+                <span>No Image</span>
+            {% endif %}
+        </td>
+        <td>
+            <a href="/edit_product/{{ i.ProductID }}">
+                <button type="button" class="btn btn-warning btn-sm">Edit</button>
+            </a>
+        </td>
+        <td>
+            {% if session['role'] == 'super_admin' %}
+                <a href="/delete_product/{{ i.ProductID }}">
+                    <button type="button" class="btn btn-danger btn-sm">Del</button>
+                </a>
+            {% endif %}
+        </td>
+    </tr>
+    {% endfor %}
+</tbody>
+
+
+
                             </table>
 
                             {% if session['role'] == 'super_admin' %}

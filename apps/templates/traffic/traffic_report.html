@@ -3,14 +3,23 @@
 {% block title %}WebApp Traffic Report{% endblock %}
 
 {% block stylesheets %}
+<!-- Fonts & Core Styles -->
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700">
 <link rel="stylesheet" href="{{ url_for('static', filename='assets/plugins/fontawesome-free/css/all.min.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='assets/css/adminlte.min.css') }}">
+
+<!-- DataTables -->
 <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css">
 <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.3.0/css/responsive.dataTables.min.css">
+
 <style>
-    /* Ensure DataTables fits well on mobile */
+    /* Responsive table and layout fixes */
     .dataTables_wrapper .row { flex-wrap: wrap; }
+    @media (max-width: 768px) {
+        .info-box { font-size: 0.9rem; }
+        .info-box .info-box-number { font-size: 1.2rem; }
+        table.dataTable td, table.dataTable th { white-space: normal; word-break: break-word; }
+    }
 </style>
 {% endblock stylesheets %}
 
@@ -21,7 +30,9 @@
     <section class="content-header">
         <div class="container-fluid">
             <div class="row mb-2">
-                <div class="col-sm-6"><h1><i class="fas fa-chart-bar"></i> WebApp Traffic Report</h1></div>
+                <div class="col-sm-6">
+                    <h1><i class="fas fa-chart-bar"></i> WebApp Traffic Report</h1>
+                </div>
                 <div class="col-sm-6">
                     <ol class="breadcrumb float-sm-right">
                         <li class="breadcrumb-item"><a href="/index">Home</a></li>
@@ -32,19 +43,21 @@
         </div>
     </section>
     
-    <!-- Flash Messages (Copied from Sales/Expenses Report) -->
+    <!-- Flash Messages -->
     <section class="content">
         <div class="container-fluid">
             {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
-                <div class="row mb-3"><div class="col-12">
-                    {% for category, message in messages %}
-                    <div class="alert alert-{{ 'danger' if category=='error' else category }} alert-dismissible fade show">
-                        <i class="fas fa-info-circle"></i> {{ message }}
-                        <button type="button" class="close" data-dismiss="alert">&times;</button>
+                <div class="row mb-3">
+                    <div class="col-12">
+                        {% for category, message in messages %}
+                        <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show">
+                            <i class="fas fa-info-circle"></i> {{ message }}
+                            <button type="button" class="close" data-dismiss="alert">&times;</button>
+                        </div>
+                        {% endfor %}
                     </div>
-                    {% endfor %}
-                </div></div>
+                </div>
             {% endif %}
             {% endwith %}
         </div>
@@ -56,23 +69,25 @@
             <form method="POST" class="card card-primary card-outline p-3 mb-4">
                 <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
                 <div class="row">
-                    <div class="col-md-5">
+                    <div class="col-md-5 col-12 mb-2">
                         <label>Start Date:</label>
                         <input type="date" name="start_date" class="form-control" value="{{ start_date }}">
                     </div>
-                    <div class="col-md-5">
+                    <div class="col-md-5 col-12 mb-2">
                         <label>End Date:</label>
                         <input type="date" name="end_date" class="form-control" value="{{ end_date }}">
                     </div>
-                    <div class="col-md-2 d-flex align-items-end">
-                        <button type="submit" class="btn btn-primary btn-block"><i class="fas fa-search"></i> Search</button>
+                    <div class="col-md-2 col-12 d-flex align-items-end">
+                        <button type="submit" class="btn btn-primary btn-block">
+                            <i class="fas fa-search"></i> Search
+                        </button>
                     </div>
                 </div>
             </form>
 
             {% if searched %}
             
-            <!-- Traffic Summary Box -->
+            <!-- Traffic Summary -->
             <div class="row mb-4">
                 <div class="col-lg-4 col-6">
                     <div class="info-box bg-info">
@@ -88,7 +103,6 @@
                         <span class="info-box-icon"><i class="fas fa-users"></i></span>
                         <div class="info-box-content">
                             <span class="info-box-text">Unique Visitors (IP)</span>
-                            {# Use Jinja map/unique filters to calculate unique IPs in the template #}
                             {% set unique_ips = traffic_logs|map(attribute='ip_address')|unique|list|length %}
                             <span class="info-box-number">{{ unique_ips }}</span>
                         </div>
@@ -99,17 +113,18 @@
                         <span class="info-box-icon"><i class="fas fa-file"></i></span>
                         <div class="info-box-content">
                             <span class="info-box-text">Unique Pages Visited</span>
-                            {# Use Jinja map/unique filters to calculate unique pages in the template #}
                             {% set unique_pages = traffic_logs|map(attribute='page')|unique|list|length %}
                             <span class="info-box-number">{{ unique_pages }}</span>
                         </div>
                     </div>
                 </div>
             </div>
-            
-            <!-- Traffic Log Table -->
+
+            <!-- Detailed Traffic Table -->
             <div class="card card-dark mb-4">
-                <div class="card-header"><h3 class="card-title">Detailed Traffic Log</h3></div>
+                <div class="card-header">
+                    <h3 class="card-title">Detailed Traffic Log</h3>
+                </div>
                 <div class="card-body">
                     {% if traffic_logs %}
                     <table id="trafficTable" class="table table-bordered table-striped nowrap" width="100%">
@@ -119,6 +134,7 @@
                                 <th>Page URL/Path</th>
                                 <th>View Time</th>
                                 <th>IP Address</th>
+                                <th>Device Type</th>
                                 <th>User Agent (Browser/OS)</th>
                             </tr>
                         </thead>
@@ -129,7 +145,22 @@
                                 <td><code class="text-primary">{{ log.page }}</code></td>
                                 <td>{{ log.view_time.strftime("%Y-%m-%d %H:%M:%S") }}</td>
                                 <td>{{ log.ip_address or 'N/A' }}</td>
-                                <td title="{{ log.user_agent }}">{{ log.user_agent[:75] }}{% if log.user_agent|length > 75 %}...{% endif %}</td>
+                                <td>
+                                    {% if log.device_type == 'Android' %}
+                                        <i class="fab fa-android text-success"></i> Android
+                                    {% elif log.device_type == 'iPhone' %}
+                                        <i class="fab fa-apple text-muted"></i> iPhone
+                                    {% elif log.device_type == 'macOS' %}
+                                        <i class="fab fa-apple text-gray"></i> macOS
+                                    {% elif log.device_type == 'Windows' %}
+                                        <i class="fab fa-windows text-primary"></i> Windows
+                                    {% else %}
+                                        <i class="fas fa-globe text-secondary"></i> {{ log.device_type or 'Other' }}
+                                    {% endif %}
+                                </td>
+                                <td title="{{ log.user_agent }}">
+                                    {{ log.user_agent[:75] }}{% if log.user_agent|length > 75 %}...{% endif %}
+                                </td>
                             </tr>
                             {% endfor %}
                         </tbody>
@@ -139,9 +170,10 @@
                     {% endif %}
                 </div>
             </div>
+
             {% else %}
             <div class="alert alert-info">
-                <i class="fas fa-info-circle"></i> Please select a date range and click **Search** to view the traffic log.
+                <i class="fas fa-info-circle"></i> Please select a date range and click <strong>Search</strong> to view the traffic log.
             </div>
             {% endif %}
 
@@ -154,21 +186,19 @@
 <script src="{{ url_for('static', filename='assets/plugins/jquery/jquery.min.js') }}"></script>
 <script src="{{ url_for('static', filename='assets/plugins/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
 <script src="{{ url_for('static', filename='assets/js/adminlte.min.js') }}"></script>
+
+<!-- DataTables -->
 <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/responsive/2.3.0/js/dataTables.responsive.min.js"></script>
 
 <script>
     $(document).ready(function() {
-        // Initialize DataTables for the Traffic Log
-        if ($.fn.DataTable.isDataTable('#trafficTable')) {
-            $('#trafficTable').DataTable().destroy();
-        }
-        
-        $('#trafficTable').DataTable({ 
-            scrollX: true, 
+        // Initialize DataTables
+        $('#trafficTable').DataTable({
+            scrollX: true,
             responsive: true,
             language: { searchPlaceholder: "Search traffic records..." },
-            order: [[2, 'desc']] // Order by View Time (3rd column) descending
+            order: [[2, 'desc']] // Order by View Time descending
         });
     });
 </script>

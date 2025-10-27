@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Jacaranda Nurseries</title>
+  <title>Jacaranda Plant Nurseries</title>
 
   <!-- Google Fonts -->
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Sans+Pro:wght@300;400;600;700&display=swap">
@@ -195,7 +195,7 @@
   <div id="stickyHeader">
     <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-2 px-3">
       <div>
-        <div class="header-title">📦 Jacaranda Nurseries</div>
+        <div class="header-title">📦 Jacaranda Plant Nurseries</div>
         <div class="header-location">📍 Bulwanyi - Maya, off Masaka Road</div>
       </div>
       <nav aria-label="breadcrumb" class="mt-2 mt-md-0">
@@ -221,35 +221,61 @@
         <img loading="lazy" src="/static/assets/img/no-image.png" class="product-image" alt="No Image">
         {% endif %}
 
-        <div class="card-body d-flex flex-column">
-          <h5 class="card-title">{{ product.name }}</h5>
-          <p class="small mb-2">
-            <b>Category:</b> {{ product.category_name }}<br>
-            <b>SKU:</b> {{ product.sku }}<br>
-            <span class="price-tag">{{ product.formatted_price }} UGX</span>
-          </p>
-          <hr class="my-2">
-          <p class="small mb-0">
-            <b>Contact:</b> +256757393160<br>
-            <b>WhatsApp:</b>
-            <a href="https://wa.me/256757393160" target="_blank" class="whatsapp">
-              Chat on WhatsApp <i class="fab fa-whatsapp"></i>
-            </a><br>
-            <b>Email:</b> kimulidone@gmail.com<br>
-            <b>Means:</b> Delivery or Site Visit
-          </p>
-        </div>
+      
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+      <div class="card-body d-flex flex-column">
+  <h5 class="card-title">{{ product.name }}</h5>
+  <p class="small mb-2">
+    <b>Category:</b> {{ product.category_name }}<br>
+    <b>SKU:</b> {{ product.sku }}<br>
+    <span class="price-tag">{{ product.formatted_price }} UGX</span><br>
+
+    <!-- Stock Status Badge -->
+    {% if product.stock_status == 'In Stock' %}
+      <span class="badge bg-success">In Stock</span>
+    {% elif product.stock_status == 'Low Stock' %}
+      <span class="badge bg-warning text-dark">Low Stock</span>
+    {% elif product.stock_status == 'Out of Stock' %}
+      <span class="badge bg-danger">Out of Stock</span>
+    {% else %}
+      <span class="badge bg-secondary">Unknown</span>
+    {% endif %}
+  </p>
+  <hr class="my-2">
+  <p class="small mb-0">
+    <b>Contact:</b> +256757393160<br>
+    <b>WhatsApp:</b>
+    <a href="https://wa.me/256757393160" target="_blank" class="whatsapp">
+      Chat on WhatsApp <i class="fab fa-whatsapp"></i>
+    </a><br>
+    <b>Email:</b> kimulidone@gmail.com<br>
+    <b>Means:</b> Delivery or Site Visit
+  </p>
+</div>
+
+
+
+
       </div>
     </div>
     {% endfor %}
   </div>
 
-  <!-- 💰 Total Value -->
-  <div class="mt-4">
-    <div class="alert alert-info shadow-sm">
-      <h5 class="mb-0">💰 Total Value of All Products: <strong>{{ formatted_total_sum }} UGX</strong></h5>
-    </div>
-  </div>
 
   <!-- 🌱 Footer -->
   <div class="footer-info">

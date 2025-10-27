@@ -43,10 +43,9 @@ def allowed_file(filename):
 
 
 
-# Route for the 'products' page
 @blueprint.route('/products')
 def products():
-    """Renders the 'products' page."""
+    """Renders the 'products' page with stock status included."""
     connection = get_db_connection()
     cursor = connection.cursor(dictionary=True)
 
@@ -55,21 +54,21 @@ def products():
             SELECT 
                 p.*, 
                 c.name AS category_name, 
-                f.name AS farm_name,  -- <-- Added farm name here
+                f.name AS farm_name,        -- Farm name
+                p.stock_status,             -- Stock status
                 (p.quantity * p.price) AS total_price
             FROM 
                 product_list p
             JOIN 
                 category_list c ON p.category_id = c.CategoryID
-            LEFT JOIN -- Using LEFT JOIN ensures products without a farm_id are still shown
-                farm_list f ON p.farm_id = f.farm_id -- <-- Joined farm_list table
+            LEFT JOIN 
+                farm_list f ON p.farm_id = f.farm_id
             ORDER BY 
                 p.name
         ''')
         products = cursor.fetchall()
 
         # Assuming calculate_formatted_totals is defined elsewhere
-        # Calculate totals and format them
         formatted_total_sum, formatted_total_price = calculate_formatted_totals(products)
 
     except Error as e:
@@ -81,11 +80,13 @@ def products():
         cursor.close()
         connection.close()
 
-    return render_template('products/products.html',
-                            formatted_total_price=formatted_total_price,
-                            products=products,
-                            formatted_total_sum=formatted_total_sum,
-                            segment='products')
+    return render_template(
+        'products/products.html',
+        products=products,
+        formatted_total_price=formatted_total_price,
+        formatted_total_sum=formatted_total_sum,
+        segment='products'
+    )
 
 
 
@@ -93,6 +94,10 @@ def products():
 
 
 
+
+
+
+from user_agents import parse  # pip install pyyaml ua-parser user-agents
 
 
 
@@ -102,24 +107,51 @@ def products_marketing():
     cursor = connection.cursor(dictionary=True)
 
     try:
+        # Get user info
+        user_agent_str = request.headers.get('User-Agent', '')
+        user_agent = parse(user_agent_str)
+
+        # Determine platform/device
+        if user_agent.is_mobile:
+            if "Android" in user_agent_str:
+                device_type = "Android"
+            elif "iPhone" in user_agent_str:
+                device_type = "iPhone"
+            else:
+                device_type = "Mobile"
+        elif user_agent.is_tablet:
+            device_type = "Tablet"
+        elif "Mac" in user_agent_str:
+            device_type = "macOS"
+        elif "Windows" in user_agent_str:
+            device_type = "Windows"
+        else:
+            device_type = "Other"
+
         # Log page view
         cursor.execute(
-            "INSERT INTO page_views (page, ip_address, user_agent, view_time) "
-            "VALUES (%s, %s, %s, NOW())",
-            ('products_marketing', request.remote_addr, request.headers.get('User-Agent'))
+            """
+            INSERT INTO page_views (page, ip_address, user_agent, device_type, view_time)
+            VALUES (%s, %s, %s, %s, NOW())
+            """,
+            ('products_marketing', request.remote_addr, user_agent_str, device_type)
         )
         connection.commit()
 
-        # Fetch products
+        # Fetch products with stock_status
         cursor.execute('''
-            SELECT p.*, c.name AS category_name, (p.quantity * p.price) AS total_price
+            SELECT 
+                p.*, 
+                c.name AS category_name, 
+                p.stock_status,                   -- Added stock_status
+                (p.quantity * p.price) AS total_price
             FROM product_list p
             JOIN category_list c ON p.category_id = c.CategoryID
             ORDER BY p.name
         ''')
         products = cursor.fetchall()
 
-        # Calculate totals
+        # Calculate totals (your function)
         formatted_total_sum, formatted_total_price = calculate_formatted_totals(products)
 
     finally:
@@ -132,6 +164,7 @@ def products_marketing():
         formatted_total_sum=formatted_total_sum,
         formatted_total_price=formatted_total_price
     )
+
 
 
 # Endpoint to track product clicks
@@ -209,187 +242,218 @@ def api_products():
 
 
 
-# Route to add a new product
 @blueprint.route('/add_product', methods=['GET', 'POST'])
 def add_product():
     connection = get_db_connection()
     cursor = connection.cursor(dictionary=True)
 
-    # 1. Fetch categories from the database
+    # 1️⃣ Fetch categories and farms for dropdowns
     cursor.execute('SELECT * FROM category_list ORDER BY name')
     categories = cursor.fetchall()
 
-    # 2. Fetch farms (farm_id and name) from the database
-    # Changed from hardcoded list to a database query
     cursor.execute('SELECT farm_id, name FROM farm_list ORDER BY name')
     farm_options = cursor.fetchall()
 
-    # Generate a random SKU
+    # 2️⃣ Generate a unique random SKU
     random_num = random.randint(1005540, 9978799)
-
-    # Ensure the SKU is unique
     while True:
-        cursor.execute('SELECT * FROM product_list WHERE sku = %s', (random_num,))
+        cursor.execute('SELECT 1 FROM product_list WHERE sku = %s', (random_num,))
         if not cursor.fetchone():
-            break  # Unique SKU found
+            break
         random_num = random.randint(1005540, 9978799)
 
+    # 3️⃣ Handle form submission
     if request.method == 'POST':
-        # Retrieve form data
-        category_id = request.form.get('category_id')
-        sku = request.form.get('serial_no') or random_num
-        price = request.form.get('price')
-        name = request.form.get('name')
-        description = request.form.get('description')
-        quantity = 0
-        reorder_level = request.form.get('reorder_level')
-        # IMPORTANT: This now retrieves the farm_id from the dropdown value
-        farm_id = request.form.get('farm_id')
+        try:
+            # --- Retrieve and validate form data ---
+            category_id = int(request.form.get('category_id') or 0)
+            sku = request.form.get('serial_no') or random_num
+            price = float(request.form.get('price') or 0)
+            name = request.form.get('name', '').strip()
+            description = request.form.get('description', '').strip()
+            reorder_level = int(request.form.get('reorder_level') or 0)
+            farm_id = request.form.get('farm_id')
+            farm_id = int(farm_id) if farm_id else None
+            stock_status = request.form.get('stock_status', 'In Stock')
+            quantity = 0  # default quantity for new products
 
-        # Check for existing product with the same name in the selected category
-        cursor.execute('SELECT * FROM product_list WHERE category_id = %s AND name = %s', (category_id, name))
-        existing_product = cursor.fetchone()
+            # --- Basic validation ---
+            if not (category_id and name and price and farm_id and stock_status):
+                flash("Please fill in all required fields!", "warning")
+                return redirect(url_for('products_blueprint.add_product'))
 
-        if existing_product:
-            flash("This product already exists in the selected category!", "danger")
-        else:
-            # Handle image upload (assuming 'allowed_file' and 'current_app' are defined elsewhere)
+            # --- Prevent duplicate: same name + category + farm ---
+            cursor.execute(
+                '''SELECT * FROM product_list
+                   WHERE category_id = %s AND name = %s AND farm_id = %s''',
+                (category_id, name, farm_id)
+            )
+            existing_product = cursor.fetchone()
+            if existing_product:
+                flash("This product already exists for the selected category and farm!", "danger")
+                return redirect(url_for('products_blueprint.add_product'))
+
+            # --- Handle image upload ---
             image_file = request.files.get('image')
-            image_filename = None  # Default if no image is uploaded
-
+            image_filename = None
             if image_file and allowed_file(image_file.filename):
                 filename = secure_filename(image_file.filename)
                 image_filename = f"{random_num}_{filename}"
 
-                # Ensure the directory exists before saving the file
-                # NOTE: current_app must be imported or available in the scope (e.g., from flask import current_app)
                 image_folder = os.path.join(current_app.config['UPLOAD_FOLDER'])
-                if not os.path.exists(image_folder):
-                    os.makedirs(image_folder)
+                os.makedirs(image_folder, exist_ok=True)
 
                 image_path = os.path.join(image_folder, image_filename)
                 image_file.save(image_path)
 
-            # Insert new product into the database
-            # Updated to insert farm_id instead of 'farm' (which should be farm_id in product_list table)
-            cursor.execute('''INSERT INTO product_list 
-                (category_id, sku, price, name, description, quantity, reorder_level, image, farm_id) 
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)''',
-                (category_id, sku, price, name, description, quantity, reorder_level, image_filename, farm_id))
-            
-            connection.commit()
-            flash("Product successfully added!", "success")
+            # --- Insert new product record ---
+            cursor.execute('''
+                INSERT INTO product_list
+                (category_id, sku, price, name, description, quantity, stock_status, reorder_level, image, farm_id)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            ''', (category_id, sku, price, name, description, quantity, stock_status, reorder_level, image_filename, farm_id))
 
-    cursor.close()
-    connection.close()
+            connection.commit()
+            flash("✅ Product successfully added!", "success")
+            return redirect(url_for('products_blueprint.add_product'))
+
+        except mysql.connector.Error as err:
+            connection.rollback()
+            flash(f"Database error: {err}", "danger")
+
+        except ValueError:
+            flash("Invalid input: please check your entries!", "warning")
+
+        finally:
+            cursor.close()
+            connection.close()
+
+    else:
+        # GET request — render the form
+        cursor.close()
+        connection.close()
 
     return render_template(
         'products/add_product.html',
         random_num=random_num,
         categories=categories,
-        farm_options=farm_options,    # Pass fetched farm list
+        farm_options=farm_options,
         segment='add_product'
     )
 
 
 
-# Route to edit an existing product
+
+
+
 @blueprint.route('/edit_product/<int:product_id>', methods=['GET', 'POST'])
 def edit_product(product_id):
-    # Connect to the database
     connection = get_db_connection()
     cursor = connection.cursor(dictionary=True)
 
-    # 1. Fetch the product data from the database
-    # Fetching all details is fine, including the existing farm_id
+    # 1️⃣ Fetch the existing product
     cursor.execute('SELECT * FROM product_list WHERE ProductID = %s', (product_id,))
     product = cursor.fetchone()
-
     if not product:
-        flash("Product not found!")
-        return redirect(url_for('products_blueprint.products'))  # Redirect to products list
-
-    # 2. Fetch categories for dropdown
-    cursor.execute('SELECT * FROM category_list ORDER BY name')
-    categories = cursor.fetchall()
-
-    # 3. Fetch farms (farm_id and name) from the database
-    # Changed from hardcoded list to a database query
-    cursor.execute('SELECT farm_id, name FROM farm_list ORDER BY name')
-    farm_options = cursor.fetchall()
-
-    if request.method == 'POST':
-        # Get form data
-        category_id = request.form.get('category_id')
-        sku = request.form.get('serial_no')
-        price = request.form.get('price')
-        name = request.form.get('name')
-        description = request.form.get('description')
-        reorder_level = request.form.get('reorder_level')
-        # IMPORTANT: Retrieve the farm_id from the dropdown value
-        farm_id = request.form.get('farm_id') 
-
-        # Handle image upload (assuming 'allowed_file' and 'current_app' are defined elsewhere)
-        image_filename = product['image']  # Keep old image unless new uploaded
-        image_file = request.files.get('image')
-
-        if image_file and allowed_file(image_file.filename):
-            filename = secure_filename(image_file.filename)
-            image_filename = f"{product_id}_{filename}"  # Rename with product ID
-            
-            # Ensure directory exists
-            image_folder = os.path.join(current_app.config['UPLOAD_FOLDER'])
-            if not os.path.exists(image_folder):
-                os.makedirs(image_folder)
-
-            image_path = os.path.join(image_folder, image_filename)
-            image_file.save(image_path)
-
-        # Track price change
-        old_price = product['price']
-        price_change = None
-        if price != old_price:
-            # Safely compare and calculate change, ensuring types are floats/decimals
-            try:
-                price_change = float(price) - float(old_price)
-            except (ValueError, TypeError):
-                # Handle case where price conversion fails
-                price_change = None 
-
-
-        # Update product
-        # IMPORTANT: Updated farm parameter to use farm_id and the corresponding database column
-        cursor.execute(''' 
-            UPDATE product_list
-            SET category_id = %s, sku = %s, price = %s, name = %s, description = %s,
-                reorder_level = %s, image = %s, farm_id = %s, updated_at = CURRENT_TIMESTAMP
-            WHERE ProductID = %s
-        ''', (category_id, sku, price, name, description, reorder_level, image_filename, farm_id, product_id))
-
-        # Log price change
-        if price_change is not None:
-            cursor.execute('''
-                INSERT INTO inventory_logs (product_id, quantity_change, log_date, reason, price_change, old_price)
-                VALUES (%s, 0, CURRENT_TIMESTAMP, %s, %s, %s)
-            ''', (product_id, 'Price Update', price_change, old_price))
-
-        connection.commit()
-        flash("Product updated successfully!", "success")
-        
-        # Close connection before redirect
+        flash("Product not found!", "danger")
         cursor.close()
         connection.close()
         return redirect(url_for('products_blueprint.products'))
 
-    # GET request returns render_template
-    cursor.close()
-    connection.close()
+    # 2️⃣ Fetch categories and farms for dropdowns
+    cursor.execute('SELECT * FROM category_list ORDER BY name')
+    categories = cursor.fetchall()
+
+    cursor.execute('SELECT farm_id, name FROM farm_list ORDER BY name')
+    farm_options = cursor.fetchall()
+
+    # 3️⃣ Handle form submission
+    if request.method == 'POST':
+        try:
+            # --- Retrieve and validate form data ---
+            category_id = int(request.form.get('category_id') or 0)
+            sku = request.form.get('serial_no', product['sku'])
+            price = float(request.form.get('price') or product['price'])
+            name = request.form.get('name', '').strip()
+            description = request.form.get('description', '').strip()
+            reorder_level = int(request.form.get('reorder_level') or product['reorder_level'])
+            farm_id = request.form.get('farm_id')
+            farm_id = int(farm_id) if farm_id else None
+            stock_status = request.form.get('stock_status', product.get('stock_status', 'In Stock'))
+
+            # --- Basic validation ---
+            if not (category_id and name and price and farm_id and stock_status):
+                flash("Please fill in all required fields!", "warning")
+                return redirect(url_for('products_blueprint.edit_product', product_id=product_id))
+
+            # --- Prevent duplicate for other products ---
+            cursor.execute('''
+                SELECT * FROM product_list
+                WHERE category_id = %s AND name = %s AND farm_id = %s AND ProductID != %s
+            ''', (category_id, name, farm_id, product_id))
+            if cursor.fetchone():
+                flash("Another product with this name already exists for the selected category and farm!", "danger")
+                return redirect(url_for('products_blueprint.edit_product', product_id=product_id))
+
+            # --- Handle image upload ---
+            image_filename = product['image']  # default to existing
+            image_file = request.files.get('image')
+            if image_file and allowed_file(image_file.filename):
+                filename = secure_filename(image_file.filename)
+                image_filename = f"{product_id}_{filename}"
+
+                image_folder = os.path.join(current_app.config['UPLOAD_FOLDER'])
+                os.makedirs(image_folder, exist_ok=True)
+
+                image_path = os.path.join(image_folder, image_filename)
+                image_file.save(image_path)
+
+            # --- Track price change ---
+            old_price = float(product['price'])
+            price_change = price - old_price if price != old_price else None
+
+            # --- Update product record ---
+            cursor.execute('''
+                UPDATE product_list
+                SET category_id = %s, sku = %s, price = %s, name = %s, description = %s,
+                    reorder_level = %s, image = %s, farm_id = %s, stock_status = %s,
+                    updated_at = CURRENT_TIMESTAMP
+                WHERE ProductID = %s
+            ''', (category_id, sku, price, name, description, reorder_level, image_filename, farm_id, stock_status, product_id))
+
+            # --- Log price change if needed ---
+            if price_change is not None:
+                cursor.execute('''
+                    INSERT INTO inventory_logs (product_id, quantity_change, log_date, reason, price_change, old_price)
+                    VALUES (%s, 0, CURRENT_TIMESTAMP, %s, %s, %s)
+                ''', (product_id, 'Price Update', price_change, old_price))
+
+            connection.commit()
+            flash("✅ Product updated successfully!", "success")
+            return redirect(url_for('products_blueprint.products'))
+
+        except mysql.connector.Error as err:
+            connection.rollback()
+            flash(f"Database error: {err}", "danger")
+
+        except ValueError:
+            flash("Invalid input: please check your entries!", "warning")
+
+        finally:
+            cursor.close()
+            connection.close()
+
+    else:
+        # GET request — render the form
+        cursor.close()
+        connection.close()
 
     return render_template(
         'products/edit_product.html',
         product=product,
         categories=categories,
-        farm_options=farm_options
+        farm_options=farm_options,
+        segment='edit_product'
     )
 
 

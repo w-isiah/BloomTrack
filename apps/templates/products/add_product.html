@@ -107,13 +107,10 @@
                                 <div class="row mb-3">
                                     <label for="farm_id" class="col-sm-2 col-form-label">Farm:</label>
                                     <div class="col-sm-10">
-                                        {# IMPORTANT: Changed name from "farm" to "farm_id" to match the Python update #}
                                         <select name="farm_id" id="farm_id" class="form-control select2" required>
                                             <option value="">-- Select Farm --</option>
-                                            {# Loop over the fetched farm_options list #}
                                             {% for farm in farm_options %}
-                                            {# Use farm.FarmID as the value and farm.name as the display text #}
-                                            <option value="{{ farm.FarmID }}">{{ farm.name }}</option>
+                                            <option value="{{ farm.farm_id }}">{{ farm.name }}</option>
                                             {% endfor %}
                                         </select>
                                     </div>
@@ -139,6 +136,19 @@
                                         <input type="number" name="reorder_level" class="form-control" placeholder="Enter Reorder Level" min="1" required />
                                     </div>
                                 </div>
+
+                                <!-- ✅ NEW FIELD: Stock Status -->
+                                <div class="row mb-3">
+                                    <label for="stock_status" class="col-sm-2 col-form-label">Stock Status:</label>
+                                    <div class="col-sm-10">
+                                        <select name="stock_status" class="form-control select2" required>
+                                            <option value="In Stock" selected>In Stock</option>
+                                            <option value="Low Stock">Low Stock</option>
+                                            <option value="Out of Stock">Out of Stock</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <!-- END Stock Status -->
 
                                 <div class="row mb-3">
                                     <label for="image" class="col-sm-2 col-form-label">Product Image:</label>
@@ -173,7 +183,7 @@
     $(document).ready(function () {
         $('.select2').select2();
 
-        // Flash message fade-in and fade-out effect
+        // Flash message fade-in and fade-out
         if ($('#flashMessageContainer').length) {
             $('#flashMessageContainer').fadeIn(500).delay(3000).fadeOut(1000);
         }
