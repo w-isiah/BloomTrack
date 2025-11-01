@@ -429,6 +429,10 @@
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
+
+
+
+
 <script>
     async function sendDeviceInfo() {
         // Get device ID from localStorage or generate new one
@@ -438,23 +442,27 @@
             localStorage.setItem('jacaranda_device_id', deviceId);
         }
 
-        // Get public IP address with fallback
+        // Get public IP address
         let userIP = 'unknown';
         try {
             const response = await fetch('https://api.ipify.org?format=json');
             const data = await response.json();
             userIP = data.ip;
         } catch (error) {
-            console.warn('Could not fetch IP address, using unknown:', error);
+            console.warn('Could not fetch IP address:', error);
         }
+
+        // Detect country and region from timezone
+        const detectedCountry = getCountryFromTimezone();
+        const detectedRegion = getRegionFromTimezone();
 
         // Prepare device data as URL query parameters
         const params = new URLSearchParams({
             device_id: deviceId,
             ip_address: userIP,
-            mac_address: 'null', // GET can't send null, so use string
-            country: 'Uganda',
-            state: 'Central'
+            mac_address: 'null',
+            country: detectedCountry,
+            state: detectedRegion
         });
 
         console.log("📱 Sending device data via GET:", params.toString());
@@ -462,15 +470,11 @@
         // Send to backend using GET method
         try {
             const response = await fetch(`/api/log_device_info?${params}`, {
-                method: "GET",
-                headers: {
-                    "Content-Type": "application/json",
-                }
+                method: "GET"
             });
             
             if (!response.ok) {
-                const errorText = await response.text();
-                throw new Error(`HTTP ${response.status}: ${errorText}`);
+                throw new Error(`HTTP ${response.status}`);
             }
             
             const result = await response.json();
@@ -480,129 +484,39 @@
         }
     }
 
+    function getCountryFromTimezone() {
+        const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        // Simple timezone to country mapping
+        const timezoneMap = {
+            'Africa': 'Uganda',
+            'Europe': 'Europe', 
+            'America': 'America',
+            'Asia': 'Asia',
+            'Australia': 'Australia',
+            'Pacific': 'Pacific'
+        };
+        
+        for (const [region, country] of Object.entries(timezoneMap)) {
+            if (timezone.includes(region)) return country;
+        }
+        return 'Unknown';
+    }
+
+    function getRegionFromTimezone() {
+        const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        // Extract city/region from timezone string
+        const parts = timezone.split('/');
+        return parts.length > 1 ? parts[1].replace('_', ' ') : 'Unknown';
+    }
+
     // Call when page loads
     document.addEventListener('DOMContentLoaded', function() {
         setTimeout(sendDeviceInfo, 1000);
     });
-
-    // --- REST OF YOUR EXISTING PRODUCT FILTER CODE ---
-    $(document).ready(function() {
-        // Auto-hide alerts
-        setTimeout(() => { 
-            $('.alert').fadeOut(800); 
-        }, 3000);
-
-        // Get all unique categories from products
-        const categories = new Set();
-        $('.product-item').each(function() {
-            categories.add($(this).data('category'));
-        });
-
-        // Generate Category Filter Buttons
-        const categoryBar = $('#categoryFilterBar');
-        categoryBar.attr('role', 'tablist');
-
-        let categoryHtml = `
-            <button class="category-btn active" data-filter="all" role="tab" aria-selected="true" tabindex="0">
-                All Products
-            </button>`;
-        
-        const sortedCategories = Array.from(categories).sort();
-        sortedCategories.forEach(category => {
-            categoryHtml += `<button class="category-btn" data-filter="${category}" role="tab" aria-selected="false" tabindex="-1">${category}</button>`;
-        });
-        categoryBar.html(categoryHtml);
-
-        // Function to set focus and update tabindex
-        function setFocus(newButton) {
-            categoryBar.find('.category-btn').attr('tabindex', '-1');
-            $(newButton).attr('tabindex', '0').focus();
-        }
-
-        // --- Search and Filter Logic ---
-        let currentCategoryFilter = 'all';
-
-        function filterProducts(searchQuery) {
-            let visibleCount = 0;
-            
-            $('#noResults').hide();
-            
-            $('.product-item').each(function() {
-                const productText = $(this).data('search-text');
-                const productCategory = $(this).data('category');
-                
-                const matchesSearch = searchQuery === '' || productText.includes(searchQuery);
-                const matchesCategory = currentCategoryFilter === 'all' || productCategory === currentCategoryFilter;
-                
-                const shouldShow = matchesSearch && matchesCategory;
-                
-                $(this).toggle(shouldShow);
-
-                if (shouldShow) {
-                    visibleCount++;
-                }
-            });
-            
-            $('#totalProducts').text(visibleCount);
-
-            if (visibleCount === 0) {
-                $('#noResults').fadeIn(300);
-            }
-        }
-
-        // Function to handle filter change and ARIA update
-        function selectCategory(button) {
-            const newFilter = $(button).data('filter');
-            
-            if (newFilter === currentCategoryFilter) return;
-
-            $('.category-btn').removeClass('active').attr('aria-selected', 'false');
-            $(button).addClass('active').attr('aria-selected', 'true');
-
-            currentCategoryFilter = newFilter;
-            filterProducts($('#searchInput').val().toLowerCase().trim());
-        }
-
-        // --- Event Handlers ---
-        $('#searchInput').on('keyup', function() {
-            const query = $(this).val().toLowerCase().trim();
-            filterProducts(query);
-        });
-
-        $('#categoryFilterBar').on('click', '.category-btn', function() {
-            selectCategory(this);
-        });
-        
-        $('#categoryFilterBar').on('keydown', '.category-btn', function(e) {
-            const buttons = categoryBar.find('.category-btn');
-            let currentIndex = buttons.index(this);
-            let nextIndex = -1;
-
-            switch (e.key) {
-                case 'ArrowRight':
-                    nextIndex = (currentIndex + 1) % buttons.length;
-                    setFocus(buttons.get(nextIndex));
-                    e.preventDefault();
-                    break;
-                case 'ArrowLeft':
-                    nextIndex = (currentIndex - 1 + buttons.length) % buttons.length;
-                    setFocus(buttons.get(nextIndex));
-                    e.preventDefault();
-                    break;
-                case 'Enter':
-                case ' ': // Spacebar
-                    selectCategory(this);
-                    e.preventDefault();
-                    break;
-                default:
-                    return;
-            }
-        });
-
-        // Run filter on page load to ensure initial product count is correct
-        filterProducts($('#searchInput').val().toLowerCase().trim());
-    });
 </script>
+
+
+
 
 
 
