@@ -97,8 +97,33 @@ def products():
 
 
 
-from user_agents import parse  # pip install pyyaml ua-parser user-agents
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+from flask import request
+import uuid
+import pytz
+from datetime import datetime
+import geoip2.database  # Optional if you want to get country/state from IP
+
+def get_kampala_time():
+    kampala = pytz.timezone("Africa/Kampala")
+    return datetime.now(kampala)
 
 
 @blueprint.route('/jacaranda_plant_nurseries_maya_bulwanyi')
@@ -107,52 +132,60 @@ def products_marketing():
     cursor = connection.cursor(dictionary=True)
 
     try:
-        # Get user info
-        user_agent_str = request.headers.get('User-Agent', '')
-        user_agent = parse(user_agent_str)
-
-        # Determine platform/device
-        if user_agent.is_mobile:
-            if "Android" in user_agent_str:
-                device_type = "Android"
-            elif "iPhone" in user_agent_str:
-                device_type = "iPhone"
-            else:
-                device_type = "Mobile"
-        elif user_agent.is_tablet:
-            device_type = "Tablet"
-        elif "Mac" in user_agent_str:
-            device_type = "macOS"
-        elif "Windows" in user_agent_str:
-            device_type = "Windows"
+        # ✅ STEP 1: Capture IP address
+        if request.headers.getlist("X-Forwarded-For"):
+            ip_address = request.headers.getlist("X-Forwarded-For")[0]
         else:
-            device_type = "Other"
+            ip_address = request.remote_addr
 
-        # Log page view
-        cursor.execute(
-            """
-            INSERT INTO page_views (page, ip_address, user_agent, device_type, view_time)
-            VALUES (%s, %s, %s, %s, NOW())
-            """,
-            ('products_marketing', request.remote_addr, user_agent_str, device_type)
-        )
-        connection.commit()
+        # ✅ STEP 2: Generate a pseudo device_id (if not already present)
+        # You could later replace this with a browser fingerprint or client token
+        device_id = str(uuid.uuid4())  # random unique ID for tracking
+        mac_address = None  # cannot get real MAC from HTTP request
 
-        # Fetch products with stock_status
+        # ✅ STEP 3: Optional — resolve country/state via GeoIP (if you have a GeoLite2 database)
+        try:
+            reader = geoip2.database.Reader('/path/to/GeoLite2-City.mmdb')
+            response = reader.city(ip_address)
+            country = response.country.name
+            state = response.subdivisions.most_specific.name
+            reader.close()
+        except Exception:
+            country = "Unknown"
+            state = "Unknown"
+
+        # ✅ STEP 4: Insert or update system_info
+        cursor.execute("SELECT id FROM system_info WHERE ip_address = %s", (ip_address,))
+        existing = cursor.fetchone()
+
+        if not existing:
+            cursor.execute("""
+                INSERT INTO system_info (ip_address, mac_address, device_id, country, state, received_at)
+                VALUES (%s, %s, %s, %s, %s, %s)
+            """, (ip_address, mac_address, device_id, country, state, get_kampala_time()))
+            connection.commit()
+
+            print(f"[📡 LOGGED] New device: {ip_address} | {country} | {state}")
+        else:
+            print(f"[✅ VISIT] Existing device revisited: {ip_address}")
+
+        # ✅ STEP 5: Fetch products
         cursor.execute('''
             SELECT 
                 p.*, 
                 c.name AS category_name, 
-                p.stock_status,                   -- Added stock_status
-                (p.quantity * p.price) AS total_price
+                p.stock_status
             FROM product_list p
             JOIN category_list c ON p.category_id = c.CategoryID
             ORDER BY p.name
         ''')
         products = cursor.fetchall()
 
-        # Calculate totals (your function)
-        formatted_total_sum, formatted_total_price = calculate_formatted_totals(products)
+        # ✅ STEP 6: Other data
+        cursor.execute('SELECT * FROM category_list')
+        categories = cursor.fetchall()
+
+        current_year = datetime.now().year
 
     finally:
         cursor.close()
@@ -161,9 +194,14 @@ def products_marketing():
     return render_template(
         'products/products_marketing.html',
         products=products,
-        formatted_total_sum=formatted_total_sum,
-        formatted_total_price=formatted_total_price
+        categories=categories,
+        current_year=current_year
     )
+
+
+
+
+
 
 
 

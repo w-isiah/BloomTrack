@@ -122,7 +122,7 @@
                                         <select id="farm_id" name="farm_id" class="form-control select2" required>
                                             <option value="" disabled selected>Select the associated farm</option>
                                             {% for farm in farms %}
-                                            <option value="{{ farm.FarmID }}">{{ farm.name | capitalize }}</option>
+                                            <option value="{{ farm.farm_id }}">{{ farm.name | capitalize }}</option>
                                             {% endfor %}
                                         </select>
                                     </div>

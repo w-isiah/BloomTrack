@@ -47,6 +47,7 @@ def add_expense():
         description = request.form.get('description', '').strip()
 
         # Basic validation (Updated to include farm_id)
+        print('1',expense_name,'2',price,'3',customer_id,'4',category_id,'5',farm_id)
         if not expense_name or not price or not customer_id or not category_id or not farm_id:
             flash("Please fill in all required fields", "danger")
             return redirect(request.url)
