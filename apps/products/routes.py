@@ -114,62 +114,104 @@ def products():
 
 
 
-
-from flask import request
+from flask import request, jsonify, render_template, Blueprint
 import uuid
 import pytz
 from datetime import datetime
-import geoip2.database  # Optional if you want to get country/state from IP
+from apps import get_db_connection
 
+
+# Helper: Kampala time
 def get_kampala_time():
     kampala = pytz.timezone("Africa/Kampala")
     return datetime.now(kampala)
 
+# ------------------------
+# 1️⃣ AJAX endpoint to log device info
+# ------------------------
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+from flask import Blueprint, request, jsonify
+import uuid
+
+
+
+@blueprint.route('/api/log_device_info', methods=['GET'])
+def log_device_info():
+    """
+    GET endpoint to log device information from front-end via query parameters.
+    """
+    try:
+        # Extract device info from query parameters
+        ip_address = request.args.get('ip_address', request.remote_addr)
+        device_id = request.args.get('device_id', str(uuid.uuid4()))
+        mac_address = request.args.get('mac_address', None)
+        country = request.args.get('country', 'Unknown')
+        state = request.args.get('state', 'Unknown')
+        received_at = get_kampala_time()
+
+        print(f"📱 GET Device data: {device_id} | {ip_address} | {country}")
+
+        # Save to DB
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        cursor.execute("""
+            INSERT INTO system_info 
+            (ip_address, mac_address, device_id, country, state, received_at)
+            VALUES (%s, %s, %s, %s, %s, %s)
+        """, (ip_address, mac_address, device_id, country, state, received_at))
+        
+        conn.commit()
+
+        return jsonify({
+            "status": "success",
+            "device_id": device_id,
+            "method": "GET",
+            "message": "Device info logged successfully via GET"
+        }), 200
+
+    except Exception as e:
+        print(f"❌ ERROR: {str(e)}")
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+    finally:
+        if 'cursor' in locals():
+            cursor.close()
+        if 'conn' in locals():
+            conn.close()
+
+            
+
+
+
+
+
+# ------------------------
+# 2️⃣ Main products route
+# ------------------------
 @blueprint.route('/jacaranda_plant_nurseries_maya_bulwanyi')
 def products_marketing():
-    connection = get_db_connection()
-    cursor = connection.cursor(dictionary=True)
+    """
+    Render products page. Device info will be logged via AJAX.
+    """
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
 
     try:
-        # ✅ STEP 1: Capture IP address
-        if request.headers.getlist("X-Forwarded-For"):
-            ip_address = request.headers.getlist("X-Forwarded-For")[0]
-        else:
-            ip_address = request.remote_addr
-
-        # ✅ STEP 2: Generate a pseudo device_id (if not already present)
-        # You could later replace this with a browser fingerprint or client token
-        device_id = str(uuid.uuid4())  # random unique ID for tracking
-        mac_address = None  # cannot get real MAC from HTTP request
-
-        # ✅ STEP 3: Optional — resolve country/state via GeoIP (if you have a GeoLite2 database)
-        try:
-            reader = geoip2.database.Reader('/path/to/GeoLite2-City.mmdb')
-            response = reader.city(ip_address)
-            country = response.country.name
-            state = response.subdivisions.most_specific.name
-            reader.close()
-        except Exception:
-            country = "Unknown"
-            state = "Unknown"
-
-        # ✅ STEP 4: Insert or update system_info
-        cursor.execute("SELECT id FROM system_info WHERE ip_address = %s", (ip_address,))
-        existing = cursor.fetchone()
-
-        if not existing:
-            cursor.execute("""
-                INSERT INTO system_info (ip_address, mac_address, device_id, country, state, received_at)
-                VALUES (%s, %s, %s, %s, %s, %s)
-            """, (ip_address, mac_address, device_id, country, state, get_kampala_time()))
-            connection.commit()
-
-            print(f"[📡 LOGGED] New device: {ip_address} | {country} | {state}")
-        else:
-            print(f"[✅ VISIT] Existing device revisited: {ip_address}")
-
-        # ✅ STEP 5: Fetch products
+        # Fetch products
         cursor.execute('''
             SELECT 
                 p.*, 
@@ -181,7 +223,6 @@ def products_marketing():
         ''')
         products = cursor.fetchall()
 
-        # ✅ STEP 6: Other data
         cursor.execute('SELECT * FROM category_list')
         categories = cursor.fetchall()
 
@@ -189,7 +230,7 @@ def products_marketing():
 
     finally:
         cursor.close()
-        connection.close()
+        conn.close()
 
     return render_template(
         'products/products_marketing.html',
